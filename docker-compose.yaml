@@ -1,0 +1,30 @@
+services:
+  api-server:
+    build:
+      context: ./backend/
+      args:
+        - "db_type=postgres"
+    env_file:
+      - ./.env
+    restart: unless-stopped
+    depends_on:
+      - db_init
+
+  db_init:
+    build:
+      context: ./db_init/
+      args:
+        - "db_type=postgres"
+    env_file:
+      - ./.env
+    restart: unless-stopped
+
+  reverse_proxy:
+    build: ./reverse_proxy/
+    env_file:
+      - ./.env
+    restart: unless-stopped
+    depends_on:
+      - api-server
+    ports:
+      - "8000:80"

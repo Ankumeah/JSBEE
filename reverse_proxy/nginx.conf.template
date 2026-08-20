@@ -1,0 +1,22 @@
+worker_processes auto;
+events { worker_connections 1024; }
+
+http {
+  include /etc/nginx/mime.types;
+
+  upstream backend_cluster {
+    server $HOSTNAME:$PORT;
+  }
+
+  server {
+    listen 80;
+    server_name "";
+
+    location /api/ {
+      proxy_pass http://backend_cluster;
+
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+    }
+  }
+}
