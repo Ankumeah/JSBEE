@@ -3,21 +3,12 @@ services:
     build:
       context: ./backend/
       args:
-        - "db_type=postgres"
+        - "db_type=sqlite"
     env_file:
       - ./.env
     restart: unless-stopped
-    depends_on:
-      - db_init
-
-  db_init:
-    build:
-      context: ./db_init/
-      args:
-        - "db_type=postgres"
-    env_file:
-      - ./.env
-    restart: unless-stopped
+    volumes:
+      - ./data/:/data/
 
   reverse_proxy:
     build: ./reverse_proxy/

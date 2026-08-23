@@ -9,7 +9,7 @@ import (
 
 	"context"
 	"log"
-  "sync"
+	"sync"
 )
 
 var Ctx = context.Background()
@@ -18,10 +18,14 @@ var app = &a.App{Config: &a.Config{}}
 func main() {
 	loadEnv(app.Config)
 
-  var wg sync.WaitGroup
-	wg.Go(func(){initFirebase(Ctx, app)})
-  wg.Go(func(){getDBConnection(Ctx, app)})
-  wg.Wait()
+	var wg sync.WaitGroup
+	wg.Go(func() { initFirebase(Ctx, app) })
+	wg.Go(func() { getComponentUpdater(app) })
+	wg.Go(func() {
+		getDBConnection(Ctx, app)
+		runDBMigrations(Ctx, app)
+	})
+	wg.Wait()
 
 	log.Println("Starting http server")
 	r := gin.Default()

@@ -52,6 +52,10 @@ _sanitize string:
   @echo $(basename "{{ string }}" | tr '[:upper:]' '[:lower:]' | sed "s/:/-/g" | sed "s/\//_/g" )
 
 [linux, macos]
+gen:
+  cd ./backend && go tool templ generate ./internal/frontend/
+
+[linux, macos]
 _pre_commit *options="-tags='sqlite'":
   #!/bin/env sh
   export $(cat ./env.example)
@@ -65,3 +69,5 @@ _pre_commit *options="-tags='sqlite'":
 
   echo go fmt ./...
   go fmt ./...
+
+  git add .

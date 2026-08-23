@@ -3,11 +3,16 @@ FROM golang:alpine@sha256:d9b2e14101f27ec8d09674cd01186798d227bb0daec90e032aeb1c
 WORKDIR /opt/backend/
 
 COPY go.mod go.sum ./
-RUN go mod download
+RUN --mount=type=cache,target=/root/go/pkg/mod \
+  --mount=type=cache,target=/root/.cache/go-build \
+  go mod download
+
+RUN go tool templ generate
 
 ARG db_type=sqlite
 COPY . .
-RUN --mount=type=cache,target=/root/.cache/go-build \
+RUN  --mount=type=cache,target=/root/go/pkg/mod \
+  --mount=type=cache,target=/root/.cache/go-build \
   go build \
   -ldflags="-s -w" \
   -tags=${db_type} \

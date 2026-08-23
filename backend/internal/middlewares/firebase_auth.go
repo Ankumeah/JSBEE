@@ -71,7 +71,15 @@ func FireBaseAuthMiddleware(app *a.App) gin.HandlerFunc {
 			)
 			return
 		}
+		name, ok := token.Claims["name"].(string)
+		if !ok {
+			c.AbortWithStatusJSON(
+				http.StatusUnprocessableEntity,
+				gin.H{"error": "No name claim in token"},
+			)
+		}
 
+		c.Set(NameField, name)
 		c.Set(EmailField, email)
 		c.Next()
 	}

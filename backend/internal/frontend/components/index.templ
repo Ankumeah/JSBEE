@@ -1,0 +1,15 @@
+package components
+
+var indexInfo = pageInfo {
+  title: siteName,
+  description: siteDescription,
+  content: index(),
+}
+
+templ index() {
+  @navBar()
+}
+
+templ Index() {
+  @base(indexInfo)
+}
