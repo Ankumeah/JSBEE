@@ -22,20 +22,17 @@ func (v2) Apply(
 	tx *sqlx.Tx,
 ) error {
 	query := `
-    CREATE TABLE papers (
+    CREATE TABLE issues (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      approved INTEGER NOT NULL DEFAULT 0,
-      filename TEXT NOT NULL,
-      owner_id INTEGER,
-      issue_id INTEGER,
-      FOREIGN KEY (owner_id) REFERENCES users(id),
-      FOREIGN KEY (issue_id) REFERENCES issues(id)
+      number INTEGER NOT NULL,
+      volume INTEGER NOT NULL,
+      filename TEXT NOT NULL
     );
 
     INSERT INTO migrations (version, applied_at)
     VALUES (2, ?);
   `
+
 	if _, err := tx.ExecContext(
 		ctx, query, time.Now().Unix(),
 	); err != nil {
