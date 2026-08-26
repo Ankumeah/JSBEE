@@ -88,19 +88,74 @@ func (s *SqlxDBController) UpdateUser(
 
 func (s *SqlxDBController) GetUser(
 	ctx context.Context,
-	email string,
+	name string,
 ) (User, error) {
 	query := s.db.Rebind(`
     SELECT name, email, role
     FROM users
-    WHERE email = ?;
+    WHERE name = ?;
   `)
 
 	var user User
-	err := s.db.QueryRowContext(ctx, query, email).Scan(&user)
+	err := s.db.QueryRowxContext(ctx, query, name).Scan(&user)
 	if errors.Is(err, sql.ErrNoRows) {
 		return user, ErrInvalidUser
 	}
 
 	return user, err
+}
+
+func (s *SqlxDBController) GetVolumes(
+	ctx context.Context,
+) ([]Volume, error) {
+	query := s.db.Rebind(`
+    SELECT p.title, p.number, p.filename,
+      p.volume, p.issue, u.name
+    FROM papers AS p
+    LEFT JOIN users AS u ON p.owner_id = u.id
+    ORDER BY p.volume, p.issue, p.number;
+  `)
+
+	rows, err := s.db.QueryxContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var volumes []Volume
+	for rows.Next() {
+		var paper Paper
+		var volume uint64
+		var issue uint64
+		var owner sql.NullString
+
+		if err := rows.Scan(
+			&paper.Title, &paper.Number, &paper.Filename,
+			&volume, &issue, &owner,
+		); err != nil {
+			return nil, err
+		}
+
+		if owner.Valid {
+			paper.Owner = owner.String
+		}
+
+		if len(volumes) == 0 || volumes[len(volumes)-1].Number != volume {
+			volumes = append(volumes, Volume{Number: volume})
+		}
+		vol := &volumes[len(volumes)-1]
+
+		if len(vol.Issues) == 0 || vol.Issues[len(vol.Issues)-1].Number != issue {
+			vol.Issues = append(vol.Issues, Issue{Number: issue})
+		}
+		iss := &vol.Issues[len(vol.Issues)-1]
+
+		iss.Papers = append(iss.Papers, paper)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return volumes, nil
 }

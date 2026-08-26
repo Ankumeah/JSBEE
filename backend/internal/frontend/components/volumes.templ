@@ -1,0 +1,16 @@
+package components
+
+import "github.com/Ankumeah/JSBEE/backend/internal/database"
+
+var volumesInfo = pageInfo {
+  title: "Volumes",
+  description: "View all volumes",
+}
+
+templ volumesPage(volumes []database.Volume) {
+  @navBar()
+}
+
+templ VolumesPage(volumes []database.Volume) {
+  @base(volumesInfo, volumesPage(volumes))
+}

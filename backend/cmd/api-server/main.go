@@ -24,6 +24,8 @@ func main() {
 	wg.Go(func() {
 		getDBConnection(Ctx, app)
 		runDBMigrations(Ctx, app)
+
+		generateInitalComponents(Ctx, app)
 	})
 	wg.Wait()
 

@@ -1,6 +1,6 @@
 package components
 
-templ base(info pageInfo) {
+templ base(info pageInfo, content templ.Component) {
   <!DOCTYPE html>
   <html lang="en">
   <head>
@@ -11,7 +11,7 @@ templ base(info pageInfo) {
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    @info.content
+    @content
     <script src="script.js"></script>
   </body>
   </html>

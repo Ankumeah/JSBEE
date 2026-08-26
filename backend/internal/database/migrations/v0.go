@@ -15,8 +15,23 @@ func (v0) Version() uint64 {
 
 func (v0) Apply(
 	ctx context.Context,
-	tx *sqlx.Tx,
+	db *sqlx.DB,
 ) error {
+	conifgQuery := `
+    PRAGMA foreign_keys = ON;
+    PRAGMA journal_mode = WAL;
+  `
+
+	if _, err := db.ExecContext(ctx, conifgQuery); err != nil {
+		return err
+	}
+
+	tx, err := db.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	query := tx.Rebind(`
     CREATE TABLE IF NOT EXISTS migrations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

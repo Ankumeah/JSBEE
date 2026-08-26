@@ -55,8 +55,27 @@ func runDBMigrations(ctx context.Context, app *a.App) {
 
 func getComponentUpdater(app *a.App) {
 	log.Println("Getting component updater")
-	app.ComponentUpdater = frontend.GetComponentUpdater(
+	var err error
+	app.ComponentUpdater, err = frontend.GetComponentUpdater(
 		app.Config.FrontendSaveDir,
 	)
+	if err != nil {
+		log.Fatalf("Error while getting component updater: %v\n", err.Error())
+	}
 	log.Println("Got component updater")
+}
+
+func generateInitalComponents(ctx context.Context, app *a.App) {
+	log.Println("Generating inital components")
+
+	volumes, err := app.DBController.GetVolumes(ctx)
+	if err != nil {
+		log.Fatalf("Error while getting volumes: %v\n", err.Error())
+	}
+
+	if err := app.ComponentUpdater.UpdateAll(ctx, volumes); err != nil {
+		log.Fatalf("Error while generating inital components: %v\n", err.Error())
+	}
+
+	log.Println("Generated inital components")
 }

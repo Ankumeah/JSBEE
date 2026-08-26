@@ -24,8 +24,8 @@ func (v1) Apply(
 	query := tx.Rebind(`
     CREATE TABLE users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      email TEXT NOT NULL,
+      name TEXT NOT NULL UNIQUE,
+      email TEXT NOT NULL UNIQUE,
       role TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN (
         'owner',
         'admin',

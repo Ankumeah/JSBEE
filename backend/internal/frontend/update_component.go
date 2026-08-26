@@ -42,5 +42,5 @@ func updateComponent(
 		return err
 	}
 
-	return nil
+	return os.Rename(savePath+".temp", savePath)
 }

@@ -33,20 +33,9 @@ func ApplyMigrations(ctx context.Context, db *sqlx.DB) error {
 		return errors.New("Two migrations have matching version numbers")
 	}
 
-	if err := func() error {
-		tx, err := db.BeginTxx(ctx, &sql.TxOptions{})
-		if err != nil {
-			return err
-		}
-		defer tx.Rollback()
-
-		err = v0{}.Apply(ctx, tx)
-		if err != nil {
-			return fmt.Errorf("Migration 0: %w", err)
-		}
-		return nil
-	}(); err != nil {
-		return err
+	err := v0{}.Apply(ctx, db)
+	if err != nil {
+		return fmt.Errorf("Migration 0: %w", err)
 	}
 
 	currentVersion, err := getCurrentMigration(ctx, db)

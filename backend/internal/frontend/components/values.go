@@ -1,4 +1,4 @@
 package components
 
 const siteName = "JSBEE"
-const siteDescription = "desc"
+const siteDescription = "Journal of Sustainable Businesses in Emerging Economies"

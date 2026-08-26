@@ -22,11 +22,19 @@ func (v2) Apply(
 	tx *sqlx.Tx,
 ) error {
 	query := `
-    CREATE TABLE issues (
+    CREATE TABLE papers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      approved INTEGER NOT NULL DEFAULT 0 CHECK (approved IN (0, 1)),
       number INTEGER NOT NULL,
-      volume INTEGER NOT NULL,
-      filename TEXT NOT NULL
+      filename TEXT NOT NULL UNIQUE,
+      volume INTEGER NOT NULL CHECK (volume > 0),
+      issue INTEGER NOT NULL CHECK (issue > 0),
+
+      owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+
+      UNIQUE(title, owner_id),
+      UNIQUE(volume, number, issue)
     );
 
     INSERT INTO migrations (version, applied_at)

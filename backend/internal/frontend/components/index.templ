@@ -3,13 +3,12 @@ package components
 var indexInfo = pageInfo {
   title: siteName,
   description: siteDescription,
-  content: index(),
 }
 
-templ index() {
+templ indexPage() {
   @navBar()
 }
 
-templ Index() {
-  @base(indexInfo)
+templ IndexPage() {
+  @base(indexInfo, indexPage())
 }
