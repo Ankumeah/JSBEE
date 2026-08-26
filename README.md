@@ -1,5 +1,9 @@
 # JSBEE
-This is a website to share and upload research papers to
+JSBEE (Journal of Sustainable Businesses in Emerging Economies) is a website to share and read research papers at
+> [!WARNING]
+> This repo is still a work in progress and missign many core features
+currently its not good for more then just a learning exmaple
+(if you think the code is good enough to learn from that it)
 
 ## Stack
 
@@ -7,15 +11,23 @@ This is a website to share and upload research papers to
 |------------------|-------------------------------------------|
 | Primary Language | [Golang](https://go.dev/)                 |
 | Web server       | [Gin](https://gin-gonic.com/)             |
-| Database         | [Postgresql](https://www.postgresql.org/) |
+| Database         | [SQLite](https://sqlite.org/)             |
+| Reverse Proxy    | [Nginx](https://nginx.org/)               |
 | Cache            | [Redis](https://redis.io/)                |
 | Auth             | [Firebase](https://firebase.google.com/)  |
 
 ## How to run
 > [!NOTE]
-> This repo requires database (postgresql), cache (redis) and auth (firebase) credentials.
+> This repo requires cache (redis) and auth (firebase) credentials.
 These are expected to be provided by the user in .env
 
 - Clone the repo
 - Copy env.exmaple to .env and fill/replace the values to your liking
 - `docker compose up`!
+
+## Contributing
+- Follow commit prefix conventions
+- Give commits clear messages, use commit bodies for longer messages
+- AI assisted is allowed, Slop written isen't
+- Make regular use of comments
+- Make sure to either use the githooks provided (./githooks/) or manually run them before commting

@@ -5,8 +5,6 @@ import (
 	"github.com/Ankumeah/JSBEE/backend/internal/frontend"
 
 	"firebase.google.com/go/v4/auth"
-
-	"time"
 )
 
 type Config struct {
@@ -15,10 +13,6 @@ type Config struct {
 	DBURL               string
 	CacheURL            string
 	FireBaseCredentials []byte
-	DBMaxConn           int
-	DBMaxIdleConn       int
-	DBMaxLifetime       time.Duration
-	DBMaxIdleTime       time.Duration
 	FrontendSaveDir     string
 }
 

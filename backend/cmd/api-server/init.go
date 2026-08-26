@@ -25,14 +25,7 @@ func initFirebase(ctx context.Context, app *a.App) {
 
 func getDBConnection(ctx context.Context, app *a.App) {
 	log.Println("Getting DB connection")
-	db, err := database.GetDBConnection(ctx, app.Config.DBURL,
-		database.NewSqlConfig(
-			app.Config.DBMaxConn,
-			app.Config.DBMaxIdleConn,
-			app.Config.DBMaxLifetime,
-			app.Config.DBMaxIdleTime,
-		),
-	)
+	db, err := database.GetDBConnection(ctx, app.Config.DBURL)
 	if err != nil {
 		log.Fatalf("Error while getting db connection: %v\n", err.Error())
 	}
