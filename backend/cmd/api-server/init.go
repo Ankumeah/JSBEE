@@ -11,6 +11,8 @@ import (
 	"log"
 )
 
+// Initalises connection with firebase
+// Exits program on connection failure
 func initFirebase(ctx context.Context, app *a.App) {
 	log.Println("Initializeing firebase client")
 	var err error
@@ -23,6 +25,8 @@ func initFirebase(ctx context.Context, app *a.App) {
 	log.Println("Firebase client initialized")
 }
 
+// Initalises connection with DB
+// Exits program on connection failure
 func getDBConnection(ctx context.Context, app *a.App) {
 	log.Println("Getting DB connection")
 	db, err := database.GetDBConnection(ctx, app.Config.DBURL)
@@ -34,6 +38,8 @@ func getDBConnection(ctx context.Context, app *a.App) {
 	log.Println("DB connected")
 }
 
+// Runs DB migrations
+// Exits program on any errors
 func runDBMigrations(ctx context.Context, app *a.App) {
 	log.Println("Running DB migrations")
 
@@ -46,6 +52,9 @@ func runDBMigrations(ctx context.Context, app *a.App) {
 	log.Println("DB migrations completed")
 }
 
+// Creates the ComponentUpdater struct
+// Creates the save dir if it dosent exist
+// Exits program on any errors with mkdir
 func getComponentUpdater(app *a.App) {
 	log.Println("Getting component updater")
 	var err error
@@ -58,6 +67,8 @@ func getComponentUpdater(app *a.App) {
 	log.Println("Got component updater")
 }
 
+// Component files may not exist at launch, this generates
+// them and updates them if they alreday exist
 func generateInitalComponents(ctx context.Context, app *a.App) {
 	log.Println("Generating inital components")
 

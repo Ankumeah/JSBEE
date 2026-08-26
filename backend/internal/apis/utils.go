@@ -9,6 +9,14 @@ import (
 	"net/http"
 )
 
+// Any errors obtained can be passed to this func to
+// check for nil, handle and properly respond to. If you
+// add any new defined errors which require special
+// treatment then consider adding it here
+//
+// If this func returns false that means it received a
+// non nil error in which case you are to return immediately
+// else you can continue with the route
 func handleError(c *gin.Context, err error) bool {
 	if errors.Is(err, database.ErrInvalid) {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
@@ -16,7 +24,7 @@ func handleError(c *gin.Context, err error) bool {
 	} else if errors.Is(err, database.ErrExists) {
 		c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 		return false
-	} else if err != nil {
+	} else if err != nil { // Fallback, any new cases should be added above this
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return false
 	}

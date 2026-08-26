@@ -9,6 +9,7 @@ import (
 	"path"
 )
 
+// This struct is responsible for updating fronted components
 type ComponentUpdater struct {
 	savePath string
 }
@@ -37,6 +38,8 @@ func (u *ComponentUpdater) UpdateVolumes(
 	)
 }
 
+// This function is to be called at application startup
+// to make sure the static files always exist
 func (u *ComponentUpdater) UpdateAll(
 	ctx context.Context,
 	volumes []database.Volume,

@@ -13,6 +13,9 @@ import (
 	"strings"
 )
 
+// This initalises the connection to firebase
+// and must be called before any request can be served
+// with FireBaseAuthMiddleware
 func InitFirebase(ctx context.Context, creds []byte) (*auth.Client, error) {
 	opts := []option.ClientOption{
 		option.WithAuthCredentialsJSON(option.ServiceAccount, creds),
@@ -32,11 +35,26 @@ func InitFirebase(ctx context.Context, creds []byte) (*auth.Client, error) {
 	return client, nil
 }
 
+// This middleware check every request for a
+// firebase JWT within the "Authorization" header
+//
+// Abort if:
+//   - header dosent have "Bearer " prefix or
+//   - token is invalid or
+//   - email is not provided or unverified or
+//   - name is not provided
+//
+// This middleware also sets:
+//   - user's email in `EmailField`
+//   - user's name in `NameField`
+//
+// InitFirebase must be called before this middleware can be used
 func FireBaseAuthMiddleware(app *a.App) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		ctx := c.Request.Context()
 		authHeader := c.GetHeader("Authorization")
 
+		// Reject on unexpected prefix
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
@@ -45,6 +63,7 @@ func FireBaseAuthMiddleware(app *a.App) gin.HandlerFunc {
 			return
 		}
 
+		// Verify the JWT
 		idToken := strings.TrimPrefix(authHeader, "Bearer ")
 		token, err := app.FireBaseClient.VerifyIDToken(ctx, idToken)
 		if err != nil {
@@ -55,6 +74,7 @@ func FireBaseAuthMiddleware(app *a.App) gin.HandlerFunc {
 			return
 		}
 
+		// Extracct needed feilds
 		email, ok := token.Claims["email"].(string)
 		if !ok {
 			c.AbortWithStatusJSON(

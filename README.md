@@ -30,4 +30,5 @@ These are expected to be provided by the user in .env
 - Give commits clear messages, use commit bodies for longer messages
 - AI assisted is allowed, Slop written isen't
 - Make regular use of comments
-- Make sure to either use the githooks provided (./githooks/) or manually run them before commting
+- Make sure to either use the githooks provided (`./githooks/`) or manually run them before commting
+- Every package within `./backend/internal/` contains a README.md, make sure to read those to get details for every package

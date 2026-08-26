@@ -14,10 +14,17 @@ func GetSqlxDBController(db *sqlx.DB) DBController {
 	return &SqlxDBController{db}
 }
 
+// This exposes the raw underlying DB object.
+// This is only to be used to execute migrations
 func (s *SqlxDBController) DB() *sqlx.DB {
 	return s.db
 }
 
+// Add a new user
+//
+// May return the following errors:
+//   - `ErrExistUser`
+//   - Errors by the underlying DB
 func (s *SqlxDBController) AddUser(
 	ctx context.Context,
 	user User,
@@ -36,6 +43,11 @@ func (s *SqlxDBController) AddUser(
 	return err
 }
 
+// Delete a user
+//
+// May return the following errors:
+//   - `ErrInvalidUser`
+//   - Errors by the underlying DB
 func (s *SqlxDBController) DeleteUser(
 	ctx context.Context,
 	email string,
@@ -49,6 +61,7 @@ func (s *SqlxDBController) DeleteUser(
 	if err != nil {
 		return err
 	}
+	// return `ErrInvalidUser` if no user was deleted
 	affected, err := res.RowsAffected()
 	if err != nil {
 		return err
@@ -59,6 +72,14 @@ func (s *SqlxDBController) DeleteUser(
 	return nil
 }
 
+// Update a user
+// This should not be directly exposed as a user
+// user accessible API as it has the power to
+// change a user's role
+//
+// May return the following errors:
+//   - `ErrInvalidUser`
+//   - Errors by the underlying DB
 func (s *SqlxDBController) UpdateUser(
 	ctx context.Context,
 	email string,
@@ -76,6 +97,7 @@ func (s *SqlxDBController) UpdateUser(
 	if err != nil {
 		return err
 	}
+	// return `ErrInvalidUser` if no user was updated
 	affected, err := res.RowsAffected()
 	if err != nil {
 		return err
@@ -86,6 +108,11 @@ func (s *SqlxDBController) UpdateUser(
 	return nil
 }
 
+// Get the details of a user
+//
+// May return the following errors:
+//   - `ErrInvalidUser`
+//   - Errors by the underlying DB
 func (s *SqlxDBController) GetUser(
 	ctx context.Context,
 	name string,
@@ -105,6 +132,13 @@ func (s *SqlxDBController) GetUser(
 	return user, err
 }
 
+// Get all volumes
+//
+// In case any paper's author has been deleted the
+// User.Name feild will be `nil`
+//
+// May return the following errors:
+//   - Errors by the underlying DB
 func (s *SqlxDBController) GetVolumes(
 	ctx context.Context,
 ) ([]Volume, error) {
@@ -140,11 +174,13 @@ func (s *SqlxDBController) GetVolumes(
 			paper.Owner = owner.String
 		}
 
+		// If the current paper's volume is greater then the last then create a new volume
 		if len(volumes) == 0 || volumes[len(volumes)-1].Number != volume {
 			volumes = append(volumes, Volume{Number: volume})
 		}
 		vol := &volumes[len(volumes)-1]
 
+		// If the current paper's issue is greater then the last then create a new issue
 		if len(vol.Issues) == 0 || vol.Issues[len(vol.Issues)-1].Number != issue {
 			vol.Issues = append(vol.Issues, Issue{Number: issue})
 		}

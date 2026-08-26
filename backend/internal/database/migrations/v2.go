@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// This creats the `papers` table
 type v2 struct{}
 
 func init() {

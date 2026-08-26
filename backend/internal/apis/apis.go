@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// This func registers all routes within the passed router
 func Apis(r *gin.RouterGroup, app *a.App) {
 	ping(r)
 	account(r, app)

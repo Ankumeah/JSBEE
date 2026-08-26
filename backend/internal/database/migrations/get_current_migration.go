@@ -8,6 +8,8 @@ import (
 	"errors"
 )
 
+// This function returns the max migration
+// present in the DB
 func getCurrentMigration(
 	ctx context.Context,
 	db *sqlx.DB,

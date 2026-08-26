@@ -10,9 +10,11 @@ import (
 	"net/http"
 )
 
+// This route deals with account logic
 func account(r *gin.RouterGroup, app *a.App) {
 	group := r.Group("/account", middlewares.FireBaseAuthMiddleware(app))
 
+	// This route handles creating of a user
 	group.POST("", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		name := c.GetString(middlewares.NameField)
@@ -28,6 +30,7 @@ func account(r *gin.RouterGroup, app *a.App) {
 		c.Status(http.StatusCreated)
 	})
 
+	// This route handles deletion of a user
 	group.DELETE("", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		email := c.GetString(middlewares.EmailField)

@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+// This migration adds the `users` table
+// and creats an index on it
 type v1 struct{}
 
 func init() {

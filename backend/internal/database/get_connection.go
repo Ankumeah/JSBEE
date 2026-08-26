@@ -6,6 +6,7 @@ import (
 	"context"
 )
 
+// Get a raw DB connection
 func GetDBConnection(ctx context.Context, url string) (*sqlx.DB, error) {
 	db, err := sqlx.Open(driverName, url)
 	if err != nil {

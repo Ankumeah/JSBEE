@@ -8,6 +8,8 @@ import (
 	"context"
 )
 
+// This struct is reposonsible for executing all
+// DB queries and returning the results ina type safe manner
 type DBController interface {
 	DB() *sqlx.DB
 	AddUser(ctx context.Context, user User) error

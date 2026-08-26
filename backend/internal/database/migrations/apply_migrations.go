@@ -11,8 +11,19 @@ import (
 	"slices"
 )
 
+// This applies checks current DB migration version
+// and all applies all migrations having a higher version.
+// All migrations are run within a DB transaction
+//
+// # This function is safe to run on a new DB
+//
+// This function will error on any DB error or
+// if any two migrations have the same number
 func ApplyMigrations(ctx context.Context, db *sqlx.DB) error {
 	var matchingVersions = false
+
+	// Sort the migrations as they may be out of order as they
+	// are registered via init functions
 	slices.SortFunc(migrations,
 		func(a migration, b migration) int {
 			if a.Version() > b.Version() {
@@ -20,6 +31,7 @@ func ApplyMigrations(ctx context.Context, db *sqlx.DB) error {
 			} else if a.Version() < b.Version() {
 				return -1
 			} else { // Just put the fries in the bag bro
+				// We use this to exit the function later
 				matchingVersions = true
 				log.Printf(
 					"Matching migration numbers: %v and %v\n",
@@ -33,6 +45,8 @@ func ApplyMigrations(ctx context.Context, db *sqlx.DB) error {
 		return errors.New("Two migrations have matching version numbers")
 	}
 
+	// v0 is applied no matter what so that
+	// `getCurrentMigration` does not fail
 	err := v0{}.Apply(ctx, db)
 	if err != nil {
 		return fmt.Errorf("Migration 0: %w", err)

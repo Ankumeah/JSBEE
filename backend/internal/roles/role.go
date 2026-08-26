@@ -1,5 +1,10 @@
 package roles
 
+// This stuct reprents a new role
+// with its own permissions
+//
+// This stuct is not to be used
+// as, rather use the vars in `roles.go`
 type Role struct {
 	Value     string `json:"value" binding:"required"`
 	CanReview bool   `json:"can_review" binding:"required"`

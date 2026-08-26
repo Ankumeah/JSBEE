@@ -7,6 +7,9 @@ import (
 	"time"
 )
 
+// This is the core migration whihc tracks
+// all other migrations.
+// It also sets up WAL mode and `foreign_keys`
 type v0 struct{}
 
 func (v0) Version() uint64 {

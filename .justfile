@@ -60,6 +60,7 @@ _pre_commit *options="-tags='sqlite'":
   #!/bin/env sh
   export $(cat ./env.example)
   cd backend
+  just gen
 
   echo go vet {{ options }} ./...
   go vet {{ options }} ./...
