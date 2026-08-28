@@ -30,11 +30,13 @@ func (s *SqlxDBController) AddUser(
 	user User,
 ) error {
 	query := s.db.Rebind(`
-    INSERT INTO users (name, email)
-    VALUES (?, ?);
+    INSERT INTO users (name, email, subscribed)
+    VALUES (?, ?, ?);
   `)
 
-	_, err := s.db.ExecContext(ctx, query, user.Name, user.Email)
+	_, err := s.db.ExecContext(
+		ctx, query, user.Name, user.Email, user.Subscribed,
+	)
 
 	if isUniqueViolation(err) {
 		return ErrExistUser
@@ -87,12 +89,13 @@ func (s *SqlxDBController) UpdateUser(
 ) error {
 	query := s.db.Rebind(`
     UPDATE users
-    SET name = ?, email = ?, role = ?
+    SET name = ?, email = ?, role = ?, subscribed = ?
     WHERE (email = ?);
   `)
 
 	res, err := s.db.ExecContext(
-		ctx, query, newUser.Name, newUser.Email, newUser.Role, email,
+		ctx, query,
+		newUser.Name, newUser.Email, newUser.Role, newUser.Subscribed, email,
 	)
 	if err != nil {
 		return err
@@ -130,6 +133,115 @@ func (s *SqlxDBController) GetUser(
 	}
 
 	return user, err
+}
+
+// Adds a new unapproved paper
+//
+// May return the following errors:
+//   - `ErrInvalidUser`
+//   - `ErrExistPaper`
+//   - Errors by the underlying DB
+func (s *SqlxDBController) AddPaper(
+	ctx context.Context, paper Paper,
+) error {
+	tx, err := s.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	queryId := s.db.Rebind(`
+    SELECT id FROM users
+    WHERE (name = ?);
+  `)
+
+	var ownerId *uint64
+	if err := tx.QueryRowxContext(
+		ctx, queryId, paper.Owner,
+	).Scan(&ownerId); err != nil {
+		return err
+	} else if ownerId == nil {
+		return ErrInvalidUser
+	}
+
+	query := s.db.Rebind(`
+    INSERT INTO papers (title, filename, owner_id)
+    VALUES (?, ?, ?);
+  `)
+
+	if _, err := tx.ExecContext(
+		ctx, query, paper.Title, paper.Filename, *ownerId,
+	); isUniqueViolation(err) {
+		return ErrExistPaper
+	} else if err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
+// Updates a paper to approved and gives
+// it max + 1 number and max volume and issue
+//
+// May return the following errors:
+//   - `ErrInvalidPaper`
+//   - Errors by the underlying DB
+func (s *SqlxDBController) ApprovePaper(
+	ctx context.Context,
+	filename string,
+) error {
+	query := s.db.Rebind(`
+    UPDATE papers
+    SET
+      approved = 1,
+      number = (SELECT COALESCE(MAX(number), 0) + 1
+      volume = (SELECT volume FROM state)
+      issue = (SELECT volume FROM state)
+    WHERE (filename = ?);
+  `)
+
+	res, err := s.db.ExecContext(ctx, query, filename)
+	if err != nil {
+		return nil
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	} else if affected < 1 {
+		return ErrInvalidPaper
+	}
+
+	return nil
+}
+
+// Delete a paper
+//
+// May return the following errors:
+//   - `ErrInvalidPaper`
+//   - Errors by the underlying DB
+func (s *SqlxDBController) DeletePaper(
+	ctx context.Context,
+	filename string,
+) error {
+	query := s.db.Rebind(`
+    DELETE FROM papers
+    WHERE (filename = ?);
+  `)
+
+	res, err := s.db.ExecContext(ctx, query)
+	if err != nil {
+		return nil
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return nil
+	} else if affected < 1 {
+		return ErrInvalidPaper
+	}
+
+	return nil
 }
 
 // Get all volumes

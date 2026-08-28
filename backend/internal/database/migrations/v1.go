@@ -28,6 +28,7 @@ func (v1) Apply(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL UNIQUE,
       email TEXT NOT NULL UNIQUE,
+      subscribed INTEGER NOT NULL DEFAULT 0 CHECK (subscribed IN (0, 1)),
       role TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN (
         'owner',
         'admin',

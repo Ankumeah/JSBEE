@@ -8,8 +8,8 @@ import (
 	"context"
 )
 
-// This struct is reposonsible for executing all
-// DB queries and returning the results ina type safe manner
+// This interface is reposonsible for executing all
+// DB queries and returning type safe results
 type DBController interface {
 	DB() *sqlx.DB
 	AddUser(ctx context.Context, user User) error
@@ -17,13 +17,18 @@ type DBController interface {
 	UpdateUser(ctx context.Context, email string, newUser User) error
 	GetUser(ctx context.Context, name string) (User, error)
 
+	AddPaper(ctx context.Context, paper Paper) error
+	ApprovePaper(ctx context.Context, filename string) error
+	DeletePaper(ctx context.Context, filename string) error
+
 	GetVolumes(ctx context.Context) ([]Volume, error)
 }
 
 type User struct {
-	Name  string     `json:"name" binding:"required"`
-	Email string     `json:"email" binding:"required"`
-	Role  roles.Role `json:"role" binding:"required"`
+	Name       string     `json:"name" binding:"required"`
+	Email      string     `json:"email" binding:"required"`
+	Role       roles.Role `json:"role" binding:"required"`
+	Subscribed bool       `json:"subscribed" binding:"required"`
 }
 
 type Paper struct {

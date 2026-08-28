@@ -27,7 +27,7 @@ func (v2) Apply(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       approved INTEGER NOT NULL DEFAULT 0 CHECK (approved IN (0, 1)),
-      number INTEGER NOT NULL,
+      number INTEGER,
       filename TEXT NOT NULL UNIQUE,
       volume INTEGER NOT NULL CHECK (volume > 0),
       issue INTEGER NOT NULL CHECK (issue > 0),
