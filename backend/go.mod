@@ -1,6 +1,6 @@
 module github.com/Ankumeah/JSBEE/backend
 
-go 1.25.6
+go 1.27.0
 
 require (
 	firebase.google.com/go/v4 v4.21.0

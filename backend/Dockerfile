@@ -1,4 +1,4 @@
-FROM golang:alpine@sha256:d9b2e14101f27ec8d09674cd01186798d227bb0daec90e032aeb1cd22ac0f029 AS builder
+FROM golang:1.27.0-alpine3.23@sha256:3747dcba41c8b0db3211fda4db61638b980e17ac5bb3c94460a975a9cfe19395 AS builder
 
 WORKDIR /opt/backend/
 
@@ -7,6 +7,7 @@ RUN --mount=type=cache,target=/root/go/pkg/mod \
   --mount=type=cache,target=/root/.cache/go-build \
   go mod download
 
+COPY internal/frontend/ internal/frontend/
 RUN go tool templ generate
 
 ARG db_type=sqlite
