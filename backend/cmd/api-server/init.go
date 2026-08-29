@@ -2,7 +2,6 @@ package main
 
 import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
-	"github.com/Ankumeah/JSBEE/backend/internal/database"
 	"github.com/Ankumeah/JSBEE/backend/internal/database/migrations"
 	"github.com/Ankumeah/JSBEE/backend/internal/frontend"
 	"github.com/Ankumeah/JSBEE/backend/internal/middlewares"
@@ -23,19 +22,6 @@ func initFirebase(ctx context.Context, app *a.App) {
 		log.Fatalf("Error while getting firebase client: %v\n", err.Error())
 	}
 	log.Println("Firebase client initialized")
-}
-
-// Initalises connection with DB
-// Exits program on connection failure
-func getDBConnection(ctx context.Context, app *a.App) {
-	log.Println("Getting DB connection")
-	db, err := database.GetDBConnection(ctx, app.Config.DBURL)
-	if err != nil {
-		log.Fatalf("Error while getting db connection: %v\n", err.Error())
-	}
-
-	app.DBController = database.GetSqlxDBController(db)
-	log.Println("DB connected")
 }
 
 // Runs DB migrations

@@ -7,8 +7,8 @@ import (
 )
 
 // Get a raw DB connection
-func GetDBConnection(ctx context.Context, url string) (*sqlx.DB, error) {
-	db, err := sqlx.Open(driverName, url)
+func GetDBConnection(ctx context.Context, url string, driver string) (*sqlx.DB, error) {
+	db, err := sqlx.Open(driver, url)
 	if err != nil {
 		return nil, err
 	}

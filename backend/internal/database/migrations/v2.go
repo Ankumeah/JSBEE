@@ -27,11 +27,10 @@ func (v2) Apply(
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid TEXT NOT NULL UNIQUE CHECK (uuid != ''),
       title TEXT NOT NULL CHECK (title != ''),
-      approved INTEGER NOT NULL DEFAULT 0 CHECK (approved IN (0, 1)),
       number INTEGER,
       filename TEXT NOT NULL UNIQUE CHECK (filename != ''),
-      volume INTEGER NOT NULL CHECK (volume > 0),
-      issue INTEGER NOT NULL CHECK (issue > 0),
+      volume INTEGER CHECK (volume > 0),
+      issue INTEGER CHECK (issue > 0),
 
       owner_uuid INTEGER REFERENCES users(uuid) ON DELETE SET NULL,
 

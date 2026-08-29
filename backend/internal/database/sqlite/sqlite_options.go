@@ -1,6 +1,6 @@
 //go:build sqlite
 
-package database
+package sqlite
 
 import (
 	"modernc.org/sqlite"
@@ -9,7 +9,7 @@ import (
 	"errors"
 )
 
-const driverName = "sqlite"
+const DriverName = "sqlite"
 
 func isUniqueViolation(err error) bool {
 	var sqliteErr *sqlite.Error
