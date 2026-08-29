@@ -6,6 +6,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"uuid"
 )
 
 type SqlxDBController struct{ db *sqlx.DB }
@@ -30,12 +31,13 @@ func (s *SqlxDBController) AddUser(
 	user User,
 ) error {
 	query := s.db.Rebind(`
-    INSERT INTO users (name, email, subscribed)
-    VALUES (?, ?, ?);
+    INSERT INTO users (uuid, name, email, subscribed, role)
+    VALUES (?, ?, ?, ?, ?);
   `)
 
 	_, err := s.db.ExecContext(
-		ctx, query, user.Name, user.Email, user.Subscribed,
+		ctx, query,
+		user.UUID, user.Name, user.Email, user.Subscribed, user.Role.Role,
 	)
 
 	if isUniqueViolation(err) {
@@ -52,14 +54,14 @@ func (s *SqlxDBController) AddUser(
 //   - Errors by the underlying DB
 func (s *SqlxDBController) DeleteUser(
 	ctx context.Context,
-	email string,
+	uuid uuid.UUID,
 ) error {
 	query := s.db.Rebind(`
     DELETE FROM users
-    WHERE (email = ?);
+    WHERE (uuid = ?);
   `)
 
-	res, err := s.db.ExecContext(ctx, query, email)
+	res, err := s.db.ExecContext(ctx, query, uuid)
 	if err != nil {
 		return err
 	}
@@ -77,25 +79,26 @@ func (s *SqlxDBController) DeleteUser(
 // Update a user
 // This should not be directly exposed as a user
 // user accessible API as it has the power to
-// change a user's role
+// change a user's role. This function does not update
+// a user's UUID
 //
 // May return the following errors:
 //   - `ErrInvalidUser`
 //   - Errors by the underlying DB
 func (s *SqlxDBController) UpdateUser(
 	ctx context.Context,
-	email string,
+	uuid uuid.UUID,
 	newUser User,
 ) error {
 	query := s.db.Rebind(`
     UPDATE users
     SET name = ?, email = ?, role = ?, subscribed = ?
-    WHERE (email = ?);
+    WHERE (uuid = ?);
   `)
 
 	res, err := s.db.ExecContext(
 		ctx, query,
-		newUser.Name, newUser.Email, newUser.Role, newUser.Subscribed, email,
+		newUser.Name, newUser.Email, newUser.Role, newUser.Subscribed, uuid,
 	)
 	if err != nil {
 		return err
@@ -118,16 +121,16 @@ func (s *SqlxDBController) UpdateUser(
 //   - Errors by the underlying DB
 func (s *SqlxDBController) GetUser(
 	ctx context.Context,
-	name string,
+	uuid uuid.UUID,
 ) (User, error) {
 	query := s.db.Rebind(`
-    SELECT name, email, role
+    SELECT uuid, name, email, role, subscribed
     FROM users
-    WHERE name = ?;
+    WHERE (uuid = ?);
   `)
 
 	var user User
-	err := s.db.QueryRowxContext(ctx, query, name).Scan(&user)
+	err := s.db.QueryRowxContext(ctx, query, uuid).StructScan(&user)
 	if errors.Is(err, sql.ErrNoRows) {
 		return user, ErrInvalidUser
 	}
@@ -142,42 +145,25 @@ func (s *SqlxDBController) GetUser(
 //   - `ErrExistPaper`
 //   - Errors by the underlying DB
 func (s *SqlxDBController) AddPaper(
-	ctx context.Context, paper Paper,
+	ctx context.Context,
+	paper Paper,
 ) error {
-	tx, err := s.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	queryId := s.db.Rebind(`
-    SELECT id FROM users
-    WHERE (name = ?);
-  `)
-
-	var ownerId *uint64
-	if err := tx.QueryRowxContext(
-		ctx, queryId, paper.Owner,
-	).Scan(&ownerId); err != nil {
-		return err
-	} else if ownerId == nil {
-		return ErrInvalidUser
-	}
-
 	query := s.db.Rebind(`
-    INSERT INTO papers (title, filename, owner_id)
+    INSERT INTO papers (title, filename, owner_uuid)
     VALUES (?, ?, ?);
   `)
 
-	if _, err := tx.ExecContext(
-		ctx, query, paper.Title, paper.Filename, *ownerId,
+	if _, err := s.db.ExecContext(
+		ctx, query, paper.Title, paper.Filename, paper.OwnerUUID,
 	); isUniqueViolation(err) {
 		return ErrExistPaper
+	} else if isForeignKeyViolation(err) {
+		return ErrInvalidUser
 	} else if err != nil {
 		return err
 	}
 
-	return tx.Commit()
+	return nil
 }
 
 // Updates a paper to approved and gives
@@ -188,7 +174,7 @@ func (s *SqlxDBController) AddPaper(
 //   - Errors by the underlying DB
 func (s *SqlxDBController) ApprovePaper(
 	ctx context.Context,
-	filename string,
+	uuid uuid.UUID,
 ) error {
 	query := s.db.Rebind(`
     UPDATE papers
@@ -197,10 +183,10 @@ func (s *SqlxDBController) ApprovePaper(
       number = (SELECT COALESCE(MAX(number), 0) + 1
       volume = (SELECT volume FROM state)
       issue = (SELECT volume FROM state)
-    WHERE (filename = ?);
+    WHERE (uuid = ?);
   `)
 
-	res, err := s.db.ExecContext(ctx, query, filename)
+	res, err := s.db.ExecContext(ctx, query, uuid)
 	if err != nil {
 		return nil
 	}
@@ -222,14 +208,14 @@ func (s *SqlxDBController) ApprovePaper(
 //   - Errors by the underlying DB
 func (s *SqlxDBController) DeletePaper(
 	ctx context.Context,
-	filename string,
+	uuid uuid.UUID,
 ) error {
 	query := s.db.Rebind(`
     DELETE FROM papers
-    WHERE (filename = ?);
+    WHERE (uuid = ?);
   `)
 
-	res, err := s.db.ExecContext(ctx, query)
+	res, err := s.db.ExecContext(ctx, query, uuid)
 	if err != nil {
 		return nil
 	}
@@ -256,9 +242,9 @@ func (s *SqlxDBController) GetVolumes(
 ) ([]Volume, error) {
 	query := s.db.Rebind(`
     SELECT p.title, p.number, p.filename,
-      p.volume, p.issue, u.name
+      p.volume, p.issue, u.uuid
     FROM papers AS p
-    LEFT JOIN users AS u ON p.owner_id = u.id
+    LEFT JOIN users AS u ON p.owner_uuid = u.uuid
     ORDER BY p.volume, p.issue, p.number;
   `)
 
@@ -273,17 +259,12 @@ func (s *SqlxDBController) GetVolumes(
 		var paper Paper
 		var volume uint64
 		var issue uint64
-		var owner sql.NullString
 
 		if err := rows.Scan(
 			&paper.Title, &paper.Number, &paper.Filename,
-			&volume, &issue, &owner,
+			&volume, &issue, &paper.OwnerUUID,
 		); err != nil {
 			return nil, err
-		}
-
-		if owner.Valid {
-			paper.Owner = owner.String
 		}
 
 		// If the current paper's volume is greater then the last then create a new volume

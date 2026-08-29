@@ -6,6 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"context"
+	"uuid"
 )
 
 // This interface is reposonsible for executing all
@@ -13,18 +14,19 @@ import (
 type DBController interface {
 	DB() *sqlx.DB
 	AddUser(ctx context.Context, user User) error
-	DeleteUser(ctx context.Context, email string) error
-	UpdateUser(ctx context.Context, email string, newUser User) error
-	GetUser(ctx context.Context, name string) (User, error)
+	DeleteUser(ctx context.Context, uuid uuid.UUID) error
+	UpdateUser(ctx context.Context, uuid uuid.UUID, newUser User) error
+	GetUser(ctx context.Context, uuid uuid.UUID) (User, error)
 
 	AddPaper(ctx context.Context, paper Paper) error
-	ApprovePaper(ctx context.Context, filename string) error
-	DeletePaper(ctx context.Context, filename string) error
+	ApprovePaper(ctx context.Context, uuid uuid.UUID) error
+	DeletePaper(ctx context.Context, uuid uuid.UUID) error
 
 	GetVolumes(ctx context.Context) ([]Volume, error)
 }
 
 type User struct {
+	UUID       uuid.UUID  `json:"uuid" binding:"required"`
 	Name       string     `json:"name" binding:"required"`
 	Email      string     `json:"email" binding:"required"`
 	Role       roles.Role `json:"role" binding:"required"`
@@ -32,10 +34,11 @@ type User struct {
 }
 
 type Paper struct {
-	Title    string  `json:"title" binding:"required"`
-	Number   *uint64 `json:"number" binding:"required"`
-	Filename string  `json:"filename" binding:"required"`
-	Owner    string  `json:"owner" binding:"required"`
+	UUID      uuid.UUID  `json:"uuid" binding:"required"`
+	Title     string     `json:"title" binding:"required"`
+	Number    *uint64    `json:"number" binding:"required"`
+	Filename  string     `json:"filename" binding:"required"`
+	OwnerUUID *uuid.UUID `json:"owner" binding:"required"`
 }
 
 type Issue struct {

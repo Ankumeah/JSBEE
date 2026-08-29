@@ -1,12 +1,16 @@
 package components
 
+import (
+  "github.com/Ankumeah/JSBEE/backend/internal/provider"
+)
+
 var indexInfo = pageInfo {
-  title: siteName,
-  description: siteDescription,
+  title: provider.SiteName,
+  description: provider.SiteDescription,
 }
 
 templ indexPage() {
-  @navBar()
+  @navBar(provider.SiteName)
 }
 
 templ IndexPage() {

@@ -1,6 +1,9 @@
 package components
 
-import "github.com/Ankumeah/JSBEE/backend/internal/database"
+import (
+  "github.com/Ankumeah/JSBEE/backend/internal/database"
+  "github.com/Ankumeah/JSBEE/backend/internal/provider"
+)
 
 var volumesInfo = pageInfo {
   title: "Volumes",
@@ -8,7 +11,7 @@ var volumesInfo = pageInfo {
 }
 
 templ volumesPage(volumes []database.Volume) {
-  @navBar()
+  @navBar(provider.SiteName)
 }
 
 templ VolumesPage(volumes []database.Volume) {

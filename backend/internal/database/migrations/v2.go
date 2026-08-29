@@ -25,16 +25,17 @@ func (v2) Apply(
 	query := `
     CREATE TABLE papers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
+      uuid TEXT NOT NULL UNIQUE CHECK (uuid != ''),
+      title TEXT NOT NULL CHECK (title != ''),
       approved INTEGER NOT NULL DEFAULT 0 CHECK (approved IN (0, 1)),
       number INTEGER,
-      filename TEXT NOT NULL UNIQUE,
+      filename TEXT NOT NULL UNIQUE CHECK (filename != ''),
       volume INTEGER NOT NULL CHECK (volume > 0),
       issue INTEGER NOT NULL CHECK (issue > 0),
 
-      owner_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      owner_uuid INTEGER REFERENCES users(uuid) ON DELETE SET NULL,
 
-      UNIQUE(title, owner_id),
+      UNIQUE(title, owner_uuid),
       UNIQUE(volume, number, issue)
     );
 
