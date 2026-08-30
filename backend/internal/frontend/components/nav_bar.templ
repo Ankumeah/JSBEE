@@ -1,0 +1,58 @@
+package components
+
+templ navBar(siteName string, current string) {
+	<header
+		class="sticky top-0 z-40 border-b border-stone-200/80 bg-stone-50/90 backdrop-blur"
+		x-data="{ open: false }"
+	>
+		<nav class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+			<a href="/" class="font-serif text-xl font-semibold tracking-tight text-emerald-900 sm:text-2xl">
+				{ siteName }
+			</a>
+			<button
+				type="button"
+				class="inline-flex items-center rounded-md border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 md:hidden"
+				@click="open = !open"
+				:aria-expanded="open.toString()"
+				aria-controls="site-menu"
+			>
+				Menu
+			</button>
+			<ul
+				id="site-menu"
+				class="hidden items-center gap-8 text-sm font-medium text-stone-600 md:flex"
+			>
+				<li>
+					<a
+						href="/"
+						class={ "hover:text-emerald-900", templ.KV("text-emerald-900 underline decoration-amber-700 decoration-2 underline-offset-8", current == "home") }
+					>
+						Home
+					</a>
+				</li>
+				<li>
+					<a
+						href="/volumes"
+						class={ "hover:text-emerald-900", templ.KV("text-emerald-900 underline decoration-amber-700 decoration-2 underline-offset-8", current == "volumes") }
+					>
+						Volumes
+					</a>
+				</li>
+			</ul>
+		</nav>
+		<ul
+			id="site-menu-mobile"
+			class="space-y-1 border-t border-stone-200 px-4 py-3 text-sm font-medium md:hidden"
+			x-cloak
+			x-show="open"
+			x-transition
+		>
+			<li>
+				<a href="/" class="block rounded px-2 py-2 hover:bg-stone-100">Home</a>
+			</li>
+			<li>
+				<a href="/volumes" class="block rounded px-2 py-2 hover:bg-stone-100">Volumes</a>
+			</li>
+		</ul>
+	</header>
+}

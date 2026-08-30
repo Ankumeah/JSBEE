@@ -16,13 +16,12 @@ RUN  --mount=type=cache,target=/root/go/pkg/mod \
   --mount=type=cache,target=/root/.cache/go-build \
   go build \
   -ldflags="-s -w" \
-  -tags="${db_type}" \
-  -o ./bin/api-server \
-  ./cmd/api-server/
+  -tags="${db_type},init" \
+  -o ./bin/init \
+  ./cmd/init/
 
 FROM scratch
 
-ENV GIN_MODE=release
-COPY --from=builder /opt/backend/bin/api-server .
+COPY --from=builder /opt/backend/bin/init .
 
-ENTRYPOINT [ "./api-server" ]
+ENTRYPOINT [ "./init" ]

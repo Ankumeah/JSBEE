@@ -21,12 +21,7 @@ func main() {
 	var wg sync.WaitGroup
 	wg.Go(func() { initFirebase(Ctx, app) })
 	wg.Go(func() { getComponentUpdater(app) })
-	wg.Go(func() {
-		getDBConnection(Ctx, app)
-		runDBMigrations(Ctx, app)
-
-		generateInitalComponents(Ctx, app)
-	})
+	wg.Go(func() { getDBConnection(Ctx, app) })
 	wg.Wait()
 
 	log.Println("Starting http server")

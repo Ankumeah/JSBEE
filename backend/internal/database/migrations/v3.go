@@ -31,6 +31,10 @@ func (v3) Apply(
       CHECK (id = 1)
     );
 
+    INSERT INTO state (volume, issue)
+    VALUES (1, 1)
+    ON CONFLICT DO NOTHING;
+
     INSERT INTO migrations (version, applied_at)
     VALUES (3, ?);
   `

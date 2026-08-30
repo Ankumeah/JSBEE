@@ -1,19 +1,120 @@
 package components
 
 import (
-  "github.com/Ankumeah/JSBEE/backend/internal/database"
-  "github.com/Ankumeah/JSBEE/backend/internal/provider"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/Ankumeah/JSBEE/backend/internal/database"
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
 )
 
-var volumesInfo = pageInfo {
-  title: "Volumes",
-  description: "View all volumes",
+var volumesInfo = pageInfo{
+	title:       "Volumes",
+	description: "View all volumes",
+}
+
+templ paperItem(paper database.Paper) {
+	<li
+		class="flex flex-col gap-1 border-b border-stone-100 py-3 last:border-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6"
+		data-title={ strings.ToLower(paper.Title) }
+		x-show="q === '' || $el.dataset.title.includes(q.toLowerCase())"
+	>
+		<div>
+			if paper.Number != nil {
+				<span class="mr-2 font-mono text-xs text-amber-800">#{ strconv.FormatUint(*paper.Number, 10) }</span>
+			}
+			<span class="font-medium text-stone-900">{ paper.Title }</span>
+		</div>
+		if paper.Filename != "" {
+			<a
+				href={ templ.SafeURL("/" + paper.Filename) }
+				class="shrink-0 text-sm font-medium text-emerald-800 hover:underline"
+			>
+				{ paper.Filename }
+			</a>
+		}
+	</li>
+}
+
+templ issueBlock(issue database.Issue) {
+	<div class="mt-4 rounded-lg border border-stone-200 bg-white/70 p-4">
+		<h3 class="text-sm font-semibold uppercase tracking-wide text-stone-500">
+			Issue { fmt.Sprintf("%d", issue.Number) }
+		</h3>
+		if len(issue.Papers) == 0 {
+			<p class="mt-2 text-sm text-stone-500">No papers in this issue.</p>
+		} else {
+			<ul class="mt-1">
+				for _, paper := range issue.Papers {
+					@paperItem(paper)
+				}
+			</ul>
+		}
+	</div>
+}
+
+templ volumeBlock(volume database.Volume) {
+	<section
+		class="rounded-xl border border-stone-200 bg-white/50 p-5 shadow-sm"
+		x-data="{ open: true }"
+	>
+		<button
+			type="button"
+			class="flex w-full items-center justify-between gap-4 text-left"
+			@click="open = !open"
+			:aria-expanded="open.toString()"
+		>
+			<h2 class="font-serif text-2xl font-semibold text-stone-900">
+				Volume { fmt.Sprintf("%d", volume.Number) }
+			</h2>
+			<span class="text-sm text-stone-500" x-text="open ? 'Hide' : 'Show'"></span>
+		</button>
+		<div x-show="open" x-cloak>
+			if len(volume.Issues) == 0 {
+				<p class="mt-4 text-sm text-stone-500">No issues in this volume.</p>
+			} else {
+				for _, issue := range volume.Issues {
+					@issueBlock(issue)
+				}
+			}
+		</div>
+	</section>
 }
 
 templ volumesPage(volumes []database.Volume) {
-  @navBar(provider.SiteName)
+	<div class="flex min-h-screen flex-col" x-data="{ q: '' }">
+		@navBar(provider.SiteName, "volumes")
+		<main class="mx-auto w-full max-w-5xl flex-1 px-4 py-12 sm:px-6">
+			<header class="border-b border-stone-200 pb-8">
+				<h1 class="font-serif text-4xl font-semibold text-stone-900">Volumes</h1>
+				<p class="mt-3 max-w-2xl text-stone-600">
+					Published papers grouped by volume and issue.
+				</p>
+				<label class="mt-6 block max-w-md">
+					<span class="sr-only">Filter papers</span>
+					<input
+						type="search"
+						placeholder="Filter by title"
+						class="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-800 focus:ring-2 focus:ring-emerald-800/30"
+						x-model="q"
+					/>
+				</label>
+			</header>
+			if len(volumes) == 0 {
+				<p class="mt-10 text-stone-500">No volumes have been published yet.</p>
+			} else {
+				<div class="mt-8 space-y-6">
+					for _, volume := range volumes {
+						@volumeBlock(volume)
+					}
+				</div>
+			}
+		</main>
+		@siteFooter(provider.SiteName)
+	</div>
 }
 
 templ VolumesPage(volumes []database.Volume) {
-  @base(volumesInfo, volumesPage(volumes))
+	@base(volumesInfo, volumesPage(volumes))
 }

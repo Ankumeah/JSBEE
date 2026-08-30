@@ -38,17 +38,31 @@ func (u *ComponentUpdater) UpdateVolumes(
 	)
 }
 
-// This function is to be called at application startup
+func (u *ComponentUpdater) UpdateNotFound(
+	ctx context.Context,
+) error {
+	return updateComponent(
+		ctx,
+		path.Join(u.savePath, notFoundFile),
+		components.NotFoundPage(),
+	)
+}
+
+// This function updates all frontend files and
+// is to be called at application startup
 // to make sure the static files always exist
 func (u *ComponentUpdater) UpdateAll(
 	ctx context.Context,
 	volumes []database.Volume,
 ) error {
-	if err := u.UpdateIndex(ctx); err != nil {
-		return err
-	}
-	if err := u.UpdateVolumes(ctx, volumes); err != nil {
-		return err
+	for _, f := range []func() error{
+		func() error { return u.UpdateIndex(ctx) },
+		func() error { return u.UpdateVolumes(ctx, volumes) },
+		func() error { return u.UpdateNotFound(ctx) },
+	} {
+		if err := f(); err != nil {
+			return err
+		}
 	}
 
 	return nil

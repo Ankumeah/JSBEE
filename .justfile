@@ -56,6 +56,19 @@ gen:
   cd ./backend && go tool templ generate ./internal/frontend/
 
 [linux, macos]
+test *options:
+  #!/bin/env sh
+  export $(cat ./env.example)
+  cd backend
+
+  echo go test {{ options }} -tags=sqlite,init ./...
+  go test {{ options }} -tags=sqlite,init ./...
+
+[linux, macos]
+up:
+  docker compose up --build
+
+[linux, macos]
 _pre_commit *options="-tags='sqlite'":
   #!/bin/env sh
   export $(cat ./env.example)

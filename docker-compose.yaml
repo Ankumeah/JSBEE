@@ -1,4 +1,16 @@
 services:
+  init:
+    build:
+      context: ./backend/
+      dockerfile: Dockerfile.init
+      args:
+        - "db_type=sqlite"
+    env_file:
+      - ./.env
+    restart: on-failure
+    volumes:
+      - ./data/:/data/
+
   api-server:
     build:
       context: ./backend/
@@ -9,6 +21,8 @@ services:
     restart: unless-stopped
     volumes:
       - ./data/:/data/
+    depends_on:
+      - init
 
   reverse_proxy:
     build: ./reverse_proxy/

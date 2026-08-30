@@ -23,6 +23,7 @@ type DBController interface {
 	DeletePaper(ctx context.Context, uuid uuid.UUID) error
 
 	GetVolumes(ctx context.Context) ([]Volume, error)
+	GetUnapprovedPapers(ctx context.Context) ([]Paper, error)
 }
 
 type User struct {
