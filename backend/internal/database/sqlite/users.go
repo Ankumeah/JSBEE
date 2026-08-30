@@ -19,13 +19,13 @@ func (s *SqlxDBController) AddUser(
 	user database.User,
 ) error {
 	query := s.db.Rebind(`
-    INSERT INTO users (uuid, name, email, subscribed, role)
-    VALUES (?, ?, ?, ?, ?);
+    INSERT INTO users (uuid, name, email, subscribed)
+    VALUES (?, ?, ?, ?);
   `)
 
 	_, err := s.db.ExecContext(
 		ctx, query,
-		user.UUID, user.Name, user.Email, user.Subscribed, user.Role.Role,
+		user.UUID, user.Name, user.Email, user.Subscribed,
 	)
 
 	if isUniqueViolation(err) {

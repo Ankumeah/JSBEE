@@ -14,7 +14,7 @@ func main() {
 	log.Println("Init started")
 
 	loadEnv(app.Config)
-  getComponentUpdater(app)
+	getComponentUpdater(app)
 	getDBConnection(Ctx, app)
 	runDBMigrations(Ctx, app)
 	generateInitalComponents(Ctx, app)

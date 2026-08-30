@@ -69,7 +69,7 @@ up:
   docker compose up --build
 
 [linux, macos]
-_pre_commit *options="-tags='sqlite'":
+_pre_commit *options="-tags='sqlite,init'":
   #!/bin/env sh
   export $(cat ./env.example)
   cd backend
