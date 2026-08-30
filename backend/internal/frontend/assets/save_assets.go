@@ -1,23 +1,37 @@
-package frontend
+//go:build init
+
+package assets
 
 import (
-	"github.com/a-h/templ"
 	"golang.org/x/sys/unix"
 
 	"context"
 	"os"
+	"path"
 )
 
-// This function generates the given component at the given
+// This function saves all assets needed by the
+// frontend and is to be called at application
+// startup to make sure all assets always exist
+func SaveAssets(ctx context.Context, baseDir string) error {
+	for asset, data := range assets {
+		if err := writeStaticFile(
+			path.Join(baseDir, asset),
+			data,
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// This function writes the given data at the given
 // save path. As we cannot rely on `os.CreateTemp` due
 // to running this on a scratch docker image
 // we make use of the underlying kernals FSLock
 // and then later call `os.Rename` to ensure atomic behaviour
-func updateComponent(
-	ctx context.Context,
-	savePath string,
-	component templ.Component,
-) error {
+func writeStaticFile(savePath string, data []byte) error {
 	// Open or create the temp file
 	file, err := os.OpenFile(
 		savePath+".temp",
@@ -28,7 +42,7 @@ func updateComponent(
 	}
 	defer file.Close()
 
-	// Accquire the FSLock
+	// Aqquire the FSLock
 	if err = unix.Flock(int(file.Fd()), unix.LOCK_EX); err != nil {
 		return err
 	}
@@ -41,8 +55,8 @@ func updateComponent(
 		return err
 	}
 
-	// Render the component into the temp file
-	if err := component.Render(ctx, file); err != nil {
+	// Write the data
+	if _, err := file.Write(data); err != nil {
 		return err
 	}
 
@@ -50,6 +64,6 @@ func updateComponent(
 		return err
 	}
 
-	// Atomic rename to final desination
+	// Atomic rename to final destination
 	return os.Rename(savePath+".temp", savePath)
 }

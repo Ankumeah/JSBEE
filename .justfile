@@ -61,8 +61,12 @@ test *options:
   export $(cat ./env.example)
   cd backend
 
-  echo go test {{ options }} -tags=sqlite ./...
-  go test {{ options }} -tags=sqlite ./...
+  echo go test {{ options }} -tags=sqlite,init ./...
+  go test {{ options }} -tags=sqlite,init ./...
+
+[linux, macos]
+up:
+  docker compose up --build
 
 [linux, macos]
 _pre_commit *options="-tags='sqlite'":

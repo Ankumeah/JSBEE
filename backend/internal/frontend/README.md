@@ -1,7 +1,7 @@
 # frontend
 
 This package contains the files to generate the frontend's static files.
-Its is reccamended to call `*ComponentUpdater.UpdateAll` dueing the apps
+Its is reccamended to call `*ComponentUpdater.UpdateAll` and `assets.SaveAssets` dueing the apps
 initalisation to make sure that all assets exist at all times
 
 This project uses "github.com/a-h/templ" to generate its frontend files
@@ -13,5 +13,8 @@ or CDN's cache. Volumes page cache is perged and the page is rebuilt everytime a
 paper is approved to refrect and cache the newly generated page
 
 For every new file to be generated keep the file name in `values.go`
+
+Any new static asset such as images are to be kept in the `assets` package
+Take a look at `assets/README.md` for more info
 
 Happy Coding and Good Luck!
