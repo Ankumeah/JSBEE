@@ -51,7 +51,7 @@ func (s *SqlxDBController) ApprovePaper(
     SET
       number = (SELECT COALESCE(MAX(number), 0) FROM papers) + 1,
       volume = (SELECT volume FROM state),
-      issue = (SELECT volume FROM state)
+      issue = (SELECT issue FROM state)
     WHERE (uuid = ?);
   `)
 
@@ -86,12 +86,12 @@ func (s *SqlxDBController) DeletePaper(
 
 	res, err := s.db.ExecContext(ctx, query, uuid)
 	if err != nil {
-		return nil
+		return err
 	}
 
 	affected, err := res.RowsAffected()
 	if err != nil {
-		return nil
+		return err
 	} else if affected < 1 {
 		return database.ErrInvalidPaper
 	}
@@ -110,7 +110,7 @@ func (s *SqlxDBController) GetPaper(
   `)
 
 	var paper database.Paper
-	err := s.db.QueryRowxContext(ctx, query, uuid).Scan(&paper)
+	err := s.db.QueryRowxContext(ctx, query, uuid).StructScan(&paper)
 	if errors.Is(err, sql.ErrNoRows) {
 		return paper, database.ErrInvalidPaper
 	}
@@ -121,7 +121,7 @@ func (s *SqlxDBController) GetPaper(
 // Get all volumes
 //
 // In case any paper's author has been deleted the
-// User.Name feild will be `nil`
+// `Paper.OwnerUUID` feild will be `nil`
 //
 // May return the following errors:
 //   - Errors by the underlying DB
@@ -129,7 +129,7 @@ func (s *SqlxDBController) GetVolumes(
 	ctx context.Context,
 ) ([]database.Volume, error) {
 	query := `
-    SELECT title, number, filename, volume, issue, uuid
+    SELECT title, number, filename, volume, issue, uuid, owner_uuid
     FROM papers
     WHERE (number IS NOT NULL)
     ORDER BY volume, issue, number;
@@ -149,7 +149,7 @@ func (s *SqlxDBController) GetVolumes(
 
 		if err := rows.Scan(
 			&paper.Title, &paper.Number, &paper.Filename,
-			&volume, &issue, &paper.OwnerUUID,
+			&volume, &issue, &paper.UUID, &paper.OwnerUUID,
 		); err != nil {
 			return nil, err
 		}
@@ -180,13 +180,13 @@ func (s *SqlxDBController) GetUnapprovedPapers(
 	ctx context.Context,
 ) ([]database.Paper, error) {
 	query := `
-    SELECT uuid, title, number, filename, owner_id
+    SELECT uuid, title, number, filename, owner_uuid
     FROM papers
     WHERE (number IS NULL)
   `
 
 	var papers []database.Paper
-	err := s.db.SelectContext(ctx, papers, query)
+	err := s.db.SelectContext(ctx, &papers, query)
 
 	return papers, err
 }

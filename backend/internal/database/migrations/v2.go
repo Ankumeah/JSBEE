@@ -32,7 +32,7 @@ func (v2) Apply(
       volume INTEGER CHECK (volume > 0),
       issue INTEGER CHECK (issue > 0),
 
-      owner_uuid INTEGER REFERENCES users(uuid) ON DELETE SET NULL,
+      owner_uuid TEXT REFERENCES users(uuid) ON DELETE SET NULL,
 
       UNIQUE(title, owner_uuid),
       UNIQUE(volume, number, issue)

@@ -53,7 +53,9 @@ _sanitize string:
 
 [linux, macos]
 gen:
-  cd ./backend && go tool templ generate ./internal/frontend/
+  #!/bin/env sh
+  cd ./backend
+  go tool templ generate ./internal/frontend/
 
 [linux, macos]
 test *options:

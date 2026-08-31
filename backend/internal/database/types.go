@@ -17,6 +17,7 @@ type DBController interface {
 	DeleteUser(ctx context.Context, uuid uuid.UUID) error
 	UpdateUser(ctx context.Context, uuid uuid.UUID, newUser User) error
 	GetUser(ctx context.Context, uuid uuid.UUID) (User, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 
 	AddPaper(ctx context.Context, paper Paper) error
 	ApprovePaper(ctx context.Context, uuid uuid.UUID) error

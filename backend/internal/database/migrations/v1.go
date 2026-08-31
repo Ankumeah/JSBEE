@@ -27,7 +27,7 @@ func (v1) Apply(
     CREATE TABLE users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       uuid TEXT NOT NULL UNIQUE CHECK (uuid != ''),
-      name TEXT NOT NULL UNIQUE CHECK (name != ''),
+      name TEXT NOT NULL CHECK (name != ''),
       email TEXT NOT NULL UNIQUE CHECK (email LIKE '%@%'),
       subscribed INTEGER NOT NULL DEFAULT 0 CHECK (subscribed IN (0, 1)),
       role TEXT NOT NULL DEFAULT 'viewer' CHECK (role IN (

@@ -62,6 +62,8 @@ func account(r *gin.RouterGroup, app *a.App) {
 		if err := app.DBController.DeleteUser(ctx, userUUID); !handleError(c, err) {
 			return
 		}
+
+		c.Status(http.StatusNoContent)
 	})
 
 	// TODO: Add PATCH sometime later
