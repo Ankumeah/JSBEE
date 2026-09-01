@@ -46,7 +46,7 @@ func saveAssets(ctx context.Context, app *a.App) {
 	log.Println("Saveing assets")
 
 	if err := assets.SaveAssets(
-		ctx, app.Config.FrontendSaveDir,
+		app.Config.FrontendSaveDir,
 	); err != nil {
 		log.Fatalf("Error while saveing assets: %v\n", err.Error())
 	}

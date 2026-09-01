@@ -70,35 +70,6 @@ func (s *SqlxDBController) ApprovePaper(
 	return nil
 }
 
-// Delete a paper
-//
-// May return the following errors:
-//   - `database.ErrInvalidPaper`
-//   - Errors by the underlying DB
-func (s *SqlxDBController) DeletePaper(
-	ctx context.Context,
-	uuid uuid.UUID,
-) error {
-	query := s.db.Rebind(`
-    DELETE FROM papers
-    WHERE (uuid = ?);
-  `)
-
-	res, err := s.db.ExecContext(ctx, query, uuid)
-	if err != nil {
-		return err
-	}
-
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	} else if affected < 1 {
-		return database.ErrInvalidPaper
-	}
-
-	return nil
-}
-
 func (s *SqlxDBController) GetPaper(
 	ctx context.Context,
 	uuid uuid.UUID,
@@ -174,19 +145,4 @@ func (s *SqlxDBController) GetVolumes(
 	}
 
 	return volumes, nil
-}
-
-func (s *SqlxDBController) GetUnapprovedPapers(
-	ctx context.Context,
-) ([]database.Paper, error) {
-	query := `
-    SELECT uuid, title, number, filename, owner_uuid
-    FROM papers
-    WHERE (number IS NULL)
-  `
-
-	var papers []database.Paper
-	err := s.db.SelectContext(ctx, &papers, query)
-
-	return papers, err
 }

@@ -5,7 +5,6 @@ package assets
 import (
 	"golang.org/x/sys/unix"
 
-	"context"
 	"os"
 	"path"
 )
@@ -13,7 +12,7 @@ import (
 // This function saves all assets needed by the
 // frontend and is to be called at application
 // startup to make sure all assets always exist
-func SaveAssets(ctx context.Context, baseDir string) error {
+func SaveAssets(baseDir string) error {
 	for asset, data := range assets {
 		if err := writeStaticFile(
 			path.Join(baseDir, asset),

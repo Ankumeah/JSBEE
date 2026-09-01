@@ -21,10 +21,12 @@ type DBController interface {
 
 	AddPaper(ctx context.Context, paper Paper) error
 	ApprovePaper(ctx context.Context, uuid uuid.UUID) error
-	DeletePaper(ctx context.Context, uuid uuid.UUID) error
 
 	GetVolumes(ctx context.Context) ([]Volume, error)
 	GetUnapprovedPapers(ctx context.Context) ([]Paper, error)
+
+	IncrementVolume(ctx context.Context) error
+	IncrementIssue(ctx context.Context) error
 }
 
 type User struct {
