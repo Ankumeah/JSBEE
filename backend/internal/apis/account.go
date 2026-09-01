@@ -16,7 +16,10 @@ import (
 func account(r *gin.RouterGroup, app *a.App) {
 	group := r.Group("/account", middlewares.FireBaseAuthMiddleware(app))
 
-	// This route handles creating of a user
+	// This route handles creates a user
+	// Techinally it just sets the subscribed
+	// value in the db as the `FireBaseAuthMiddleware`
+	// creates the user
 	group.POST("", func(c *gin.Context) {
 		subscribedString := c.Query("sub")
 		subscribed, err := strconv.ParseBool(subscribedString)
@@ -58,7 +61,7 @@ func account(r *gin.RouterGroup, app *a.App) {
 			return
 		}
 
-		c.Status(http.StatusCreated)
+		c.JSON(http.StatusCreated, gin.H{"uuid": userUUID})
 	})
 
 	// This route handles deletion of a user
