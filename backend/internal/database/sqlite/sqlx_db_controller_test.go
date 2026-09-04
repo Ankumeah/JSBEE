@@ -80,6 +80,14 @@ func TestUser(t *testing.T) {
 			t.FailNow()
 		}
 
+		gotByEmail, err := sqlxDB.GetUserByEmail(Ctx, user.Email)
+		if err != nil {
+			t.Fatalf("Error while getting user by email: %v\n", err.Error())
+		}
+		if gotByEmail.UUID != user.UUID {
+			t.Fatal("User looked up by email did not match")
+		}
+
 		if err := sqlxDB.DeleteUser(Ctx, user.UUID); err != nil {
 			t.Fatalf("Error while deleting user: %v\n", err.Error())
 		}

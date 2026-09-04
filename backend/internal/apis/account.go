@@ -18,15 +18,6 @@ func account(r *gin.RouterGroup, app *a.App) {
 
 	// This route handles creating of a user
 	group.POST("", func(c *gin.Context) {
-		ctx := c.Request.Context()
-		name := c.GetString(middlewares.NameField)
-		email := c.GetString(middlewares.EmailField)
-
-		userUUID, err := uuid.Parse(c.GetString(middlewares.UUIDFeild))
-		if !handleError(c, err) {
-			return
-		}
-
 		subscribedString := c.Query("sub")
 		subscribed, err := strconv.ParseBool(subscribedString)
 		if subscribedString == "" {
@@ -37,13 +28,33 @@ func account(r *gin.RouterGroup, app *a.App) {
 			})
 			return
 		}
+		// `FireBaseAuthMiddleware` alreday created the user
+		// and subscribed is the only unset var, and false is
+		// the default, if user alreday wanted it to be false
+		// no need to further waste compute
+		if !subscribed {
+			c.Status(http.StatusCreated)
+		}
 
-		if err := app.DBController.AddUser(ctx, database.User{
-			UUID:       userUUID,
-			Name:       name,
-			Email:      email,
-			Subscribed: subscribed,
-		}); !handleError(c, err) {
+		ctx := c.Request.Context()
+		name := c.GetString(middlewares.NameField)
+		email := c.GetString(middlewares.EmailField)
+
+		userUUID, err := uuid.Parse(c.GetString(middlewares.UUIDFeild))
+		if !handleError(c, err) {
+			return
+		}
+
+		// Update insted of add as `FireBaseAuthMiddleware`
+		// user exists in db but subscribed isent set
+		if err := app.DBController.UpdateUser(
+			ctx, userUUID,
+			database.User{
+				Name:       name,
+				Email:      email,
+				Subscribed: subscribed,
+			},
+		); !handleError(c, err) {
 			return
 		}
 
@@ -62,6 +73,8 @@ func account(r *gin.RouterGroup, app *a.App) {
 		if err := app.DBController.DeleteUser(ctx, userUUID); !handleError(c, err) {
 			return
 		}
+
+		c.Status(http.StatusNoContent)
 	})
 
 	// TODO: Add PATCH sometime later

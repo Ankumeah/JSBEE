@@ -19,13 +19,13 @@ func (s *SqlxDBController) AddUser(
 	user database.User,
 ) error {
 	query := s.db.Rebind(`
-    INSERT INTO users (uuid, name, email, subscribed, role)
-    VALUES (?, ?, ?, ?, ?);
+    INSERT INTO users (uuid, name, email, subscribed)
+    VALUES (?, ?, ?, ?);
   `)
 
 	_, err := s.db.ExecContext(
 		ctx, query,
-		user.UUID, user.Name, user.Email, user.Subscribed, user.Role.Role,
+		user.UUID, user.Name, user.Email, user.Subscribed,
 	)
 
 	if isUniqueViolation(err) {
@@ -80,14 +80,14 @@ func (s *SqlxDBController) UpdateUser(
 ) error {
 	query := s.db.Rebind(`
     UPDATE users
-  "github.com/Ankumeah/JSBEE/backend/internal/database"
     SET name = ?, email = ?, role = ?, subscribed = ?
     WHERE (uuid = ?);
   `)
 
 	res, err := s.db.ExecContext(
 		ctx, query,
-		newUser.Name, newUser.Email, newUser.Role, newUser.Subscribed, uuid,
+		newUser.Name, newUser.Email, newUser.Role.Role,
+		newUser.Subscribed, uuid,
 	)
 	if err != nil {
 		return err
@@ -120,6 +120,30 @@ func (s *SqlxDBController) GetUser(
 
 	var user database.User
 	err := s.db.QueryRowxContext(ctx, query, uuid).StructScan(&user)
+	if errors.Is(err, sql.ErrNoRows) {
+		return user, database.ErrInvalidUser
+	}
+
+	return user, err
+}
+
+// Get the details of a user by email
+//
+// May return the following errors:
+//   - `database.ErrInvalidUser`
+//   - Errors by the underlying DB
+func (s *SqlxDBController) GetUserByEmail(
+	ctx context.Context,
+	email string,
+) (database.User, error) {
+	query := s.db.Rebind(`
+    SELECT uuid, name, email, role, subscribed
+    FROM users
+    WHERE (email = ?);
+  `)
+
+	var user database.User
+	err := s.db.QueryRowxContext(ctx, query, email).StructScan(&user)
 	if errors.Is(err, sql.ErrNoRows) {
 		return user, database.ErrInvalidUser
 	}

@@ -17,13 +17,16 @@ type DBController interface {
 	DeleteUser(ctx context.Context, uuid uuid.UUID) error
 	UpdateUser(ctx context.Context, uuid uuid.UUID, newUser User) error
 	GetUser(ctx context.Context, uuid uuid.UUID) (User, error)
+	GetUserByEmail(ctx context.Context, email string) (User, error)
 
 	AddPaper(ctx context.Context, paper Paper) error
 	ApprovePaper(ctx context.Context, uuid uuid.UUID) error
-	DeletePaper(ctx context.Context, uuid uuid.UUID) error
 
 	GetVolumes(ctx context.Context) ([]Volume, error)
 	GetUnapprovedPapers(ctx context.Context) ([]Paper, error)
+
+	IncrementVolume(ctx context.Context) error
+	IncrementIssue(ctx context.Context) error
 }
 
 type User struct {

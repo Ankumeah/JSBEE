@@ -24,7 +24,7 @@ func (v3) Apply(
 ) error {
 	query := `
     CREATE TABLE state (
-      id INT PRIMARY KEY,
+      id INTEGER PRIMARY KEY,
       volume INTEGER NOT NULL,
       issue INTEGER NOT NULL,
 

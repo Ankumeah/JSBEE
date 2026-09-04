@@ -23,6 +23,9 @@ RUN  --mount=type=cache,target=/root/go/pkg/mod \
 FROM scratch
 
 ENV GIN_MODE=release
+COPY --from=builder \
+  /etc/ssl/certs/ca-certificates.crt \
+  /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /opt/backend/bin/api-server .
 
 ENTRYPOINT [ "./api-server" ]
