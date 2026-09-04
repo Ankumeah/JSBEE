@@ -1,0 +1,51 @@
+package apis
+
+import (
+	a "github.com/Ankumeah/JSBEE/backend/internal/app"
+
+	"github.com/gin-gonic/gin"
+
+	"net/http"
+	"uuid"
+)
+
+func user(r *gin.RouterGroup, app *a.App) {
+	group := r.Group("/user")
+
+	// This route returns the details of a user
+	group.GET("/", func(c *gin.Context) {
+		ctx := c.Request.Context()
+		unparsedUserUUID := c.Query("uuid")
+		userEmail := c.Query("email")
+
+		if unparsedUserUUID != "" {
+			userUUID, err := uuid.Parse(unparsedUserUUID)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID"})
+				return
+			}
+
+			user, err := app.DBController.GetUser(ctx, userUUID)
+			if !handleError(c, err) {
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{"user": user})
+			return
+		} else if userEmail != "" {
+			user, err := app.DBController.GetUserByEmail(ctx, userEmail)
+			if !handleError(c, err) {
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{"user": user})
+			return
+		} else {
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{"error": "Must provider either user uuid or email"},
+			)
+			return
+		}
+	})
+}
