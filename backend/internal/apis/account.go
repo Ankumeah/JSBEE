@@ -2,24 +2,27 @@ package apis
 
 import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
+	"github.com/Ankumeah/JSBEE/backend/internal/database"
 	"github.com/Ankumeah/JSBEE/backend/internal/middlewares"
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
 
 	"github.com/gin-gonic/gin"
 
+	"errors"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"uuid"
 )
 
 // This route deals with account logic
 func account(r *gin.RouterGroup, app *a.App) {
-	group := r.Group("/account", middlewares.FireBaseAuthMiddleware(app))
-
 	// This route handles creates a user
-	// Techinally it just sets the subscribed
-	// value in the db as the `FireBaseAuthMiddleware`
-	// creates the user
-	group.POST("", func(c *gin.Context) {
+	r.POST("/account", func(c *gin.Context) {
+		ctx := c.Request.Context()
+		authHeader := c.GetHeader("Authorization")
+
 		subscribedString := c.Query("sub")
 		subscribed, err := strconv.ParseBool(subscribedString)
 		if subscribedString == "" {
@@ -30,37 +33,126 @@ func account(r *gin.RouterGroup, app *a.App) {
 			})
 			return
 		}
-		// `FireBaseAuthMiddleware` alreday created the user
-		// and subscribed is the only unset var, and false is
-		// the default, if user alreday wanted it to be false
-		// no need to further waste compute
-		if !subscribed {
-			c.Status(http.StatusCreated)
-		}
 
-		ctx := c.Request.Context()
-
-		userUUID, err := uuid.Parse(c.GetString(middlewares.UUIDFeild))
-		if !handleError(c, err) {
+		// Reject on unexpected prefix
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{"error": "No auth token provided"},
+			)
 			return
 		}
 
-		// Set subscribed of add as `FireBaseAuthMiddleware`
-		// user exists in db but subscribed isent set
-		if err := app.DBController.SetSubscription(
-			ctx, subscribed, userUUID,
-		); !handleError(c, err) {
+		// Verify the JWT
+		idToken := strings.TrimPrefix(authHeader, "Bearer ")
+		token, err := app.FireBaseClient.VerifyIDToken(ctx, idToken)
+		if err != nil {
+			c.JSON(
+				http.StatusUnauthorized,
+				gin.H{"error": "Invalid token"},
+			)
 			return
+		}
+
+		// Get needed feilds
+		email, ok := token.Claims["email"].(string)
+		if !ok {
+			c.AbortWithStatusJSON(
+				http.StatusUnprocessableEntity,
+				gin.H{"error": "No email claim in token"},
+			)
+			return
+		}
+		verified, ok := token.Claims["email_verified"].(bool)
+		if !ok || !verified {
+			c.AbortWithStatusJSON(
+				http.StatusUnprocessableEntity,
+				gin.H{"error": "Email not verified"},
+			)
+			return
+		}
+		name, ok := token.Claims["name"].(string)
+		if !ok {
+			c.AbortWithStatusJSON(
+				http.StatusUnprocessableEntity,
+				gin.H{"error": "No name claim in token"},
+			)
+			return
+		}
+
+		// Get UUID is user exists or else create it
+		var userUUID uuid.UUID
+		uuidInToken, ok := token.Claims[provider.SiteName+"-uuid"]
+		if !ok {
+			userUUID = uuid.New()
+			if err := app.DBController.AddUser(ctx, database.User{
+				UUID:       userUUID,
+				Name:       name,
+				Email:      email,
+				Subscribed: subscribed,
+			}); errors.Is(err, database.ErrExistUser) {
+				existing, lookupErr := app.DBController.GetUserByEmail(ctx, email)
+				if lookupErr != nil {
+					c.JSON(
+						http.StatusInternalServerError,
+						gin.H{"error": "Internal server error"},
+					)
+					log.Printf("Error while looking up user uuid: %v\n", lookupErr.Error())
+					return
+				}
+				userUUID = existing.UUID
+			} else if err != nil {
+				c.JSON(
+					http.StatusInternalServerError,
+					gin.H{"error": "Internal server error"},
+				)
+				log.Printf("Error while creating user uuid: %v\n", err.Error())
+				return
+			} else if err := app.FireBaseClient.SetCustomUserClaims(
+				ctx,
+				token.UID,
+				map[string]interface{}{
+					provider.SiteName + "-uuid": userUUID.String(),
+				},
+			); err != nil {
+				app.DBController.DeleteUser(ctx, userUUID)
+				c.JSON(
+					http.StatusInternalServerError,
+					gin.H{"error": "Internal server error"},
+				)
+				log.Printf("Error while issueing custom user claim: %v\n", err.Error())
+				return
+			}
+		} else {
+			uuidInTokenString, ok := uuidInToken.(string)
+			if !ok {
+				c.AbortWithStatusJSON(
+					http.StatusBadRequest,
+					gin.H{"error": "Invalid user uuid in auth token"},
+				)
+				return
+			}
+
+			userUUID, err = uuid.Parse(uuidInTokenString)
+			if err != nil {
+				c.AbortWithStatusJSON(
+					http.StatusBadRequest,
+					gin.H{"error": "Invalid uuid in auth token"},
+				)
+				return
+			}
 		}
 
 		c.JSON(http.StatusCreated, gin.H{"uuid": userUUID})
 	})
 
+	group := r.Group("/account", middlewares.FireBaseAuthMiddleware(app))
+
 	// This route handles deletion of a user
 	group.DELETE("", func(c *gin.Context) {
 		ctx := c.Request.Context()
 
-		userUUID, err := uuid.Parse(c.GetString(middlewares.UUIDFeild))
+		userUUID, err := uuid.Parse(c.GetString(middlewares.UUIDField))
 		if !handleError(c, err) {
 			return
 		}
@@ -72,5 +164,38 @@ func account(r *gin.RouterGroup, app *a.App) {
 		c.Status(http.StatusNoContent)
 	})
 
-	// TODO: Add PATCH sometime later
+	// TODO: Add email change
+	group.PATCH("", func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		userUUID, err := uuid.Parse(
+			c.GetString(middlewares.UUIDField),
+		)
+		if err != nil {
+			c.JSON(
+				http.StatusInternalServerError,
+				gin.H{"error": "Internal server error"},
+			)
+			return
+		}
+
+		subscribedString := c.Query("sub")
+		if subscribedString != "" {
+			subscribed, err := strconv.ParseBool(c.Query("sub"))
+			if err != nil {
+				c.JSON(
+					http.StatusBadRequest,
+					gin.H{"error": err.Error()},
+				)
+				return
+			}
+
+			err = app.DBController.SetSubscription(ctx, subscribed, userUUID)
+			if !handleError(c, err) {
+				return
+			}
+		}
+
+		c.Status(http.StatusOK)
+	})
 }
