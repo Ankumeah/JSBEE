@@ -32,6 +32,7 @@ func getComponentUpdater(app *a.App) {
 	var err error
 	app.ComponentUpdater, err = frontend.GetComponentUpdater(
 		app.Config.FrontendSaveDir,
+		app.Config.FireBaseClientConfig,
 	)
 	if err != nil {
 		log.Fatalf("Error while getting component updater: %v\n", err.Error())

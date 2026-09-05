@@ -9,8 +9,9 @@ import (
 
 // Temprory map to store type unsafe env vars
 var envVars = map[string]string{
-	"DB_URL":            "",
-	"FRONTEND_SAVE_DIR": "",
+	"DB_URL":                 "",
+	"FRONTEND_SAVE_DIR":      "",
+	"FIREBASE_CLIENT_CONFIG": "",
 }
 
 // Loads all needed env vars into passsed config.
@@ -34,4 +35,5 @@ func loadEnv(s *a.Config) {
 func setSettings(s *a.Config) {
 	s.DBURL = envVars["DB_URL"]
 	s.FrontendSaveDir = envVars["FRONTEND_SAVE_DIR"]
+	s.FireBaseClientConfig = envVars["FIREBASE_CLIENT_CONFIG"]
 }

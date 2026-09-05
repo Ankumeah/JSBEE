@@ -1,6 +1,6 @@
 package components
 
-templ base(info pageInfo, content templ.Component) {
+templ base(info pageInfo, content templ.Component, firebaseClientConfig string) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
@@ -20,16 +20,7 @@ templ base(info pageInfo, content templ.Component) {
 			<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 			<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 			<script>
-				const firebaseConfig = {
-          apiKey: "AIzaSyCQxr4FalXseh9S-KiiUgs-UfRU7pIl8KQ",
-          authDomain: "jsbee-500eb.firebaseapp.com",
-          projectId: "jsbee-500eb",
-          storageBucket: "jsbee-500eb.firebasestorage.app",
-          messagingSenderId: "582828257642",
-          appId: "1:582828257642:web:014c0dadbc8d2a050a7513"
-        };
-
-				const firebaseApp = firebase.initializeApp(firebaseConfig);
+				const firebaseApp = firebase.initializeApp({{ jsObjectFromJSON(firebaseClientConfig) }});
 				const firebaseAuth = firebase.auth();
 
 				function firebaseSignIn() {
@@ -61,10 +52,38 @@ templ base(info pageInfo, content templ.Component) {
 				function setFirebaseJwt(token) {
 					localStorage.setItem('firebase_jwt', token);
 				}
+
+				function getFirebaseUuid() {
+					return localStorage.getItem('jsbee_uuid');
+				}
+
+				function setFirebaseUuid(uuid) {
+					localStorage.setItem('jsbee_uuid', uuid);
+				}
+
+				function showToast(message) {
+					var body = document.getElementById('toast-body');
+					if (!body) {
+						return;
+					}
+					if (message === null) {
+						body.classList.add('opacity-0', '-translate-y-2');
+						body.classList.remove('opacity-100', 'translate-y-0');
+						return;
+					}
+					document.getElementById('toast-msg').textContent = message;
+					body.classList.remove('opacity-0', '-translate-y-2');
+					body.classList.add('opacity-100', 'translate-y-0');
+					clearTimeout(showToast._timer);
+					showToast._timer = setTimeout(function() {
+						showToast(null);
+					}, 3000);
+				}
 			</script>
 		</head>
 		<body class="min-h-screen bg-stone-50 font-sans text-stone-800 antialiased">
 			@content
+			@popUp("")
 			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
 		</body>
 	</html>

@@ -14,12 +14,13 @@ import (
 //
 // It should not be mutated except in its inital loading
 type Config struct {
-	Port                string
-	APIVersion          string
-	DBURL               string
-	CacheURL            string
-	FireBaseCredentials []byte
-	FrontendSaveDir     string
+	Port                 string
+	APIVersion           string
+	DBURL                string
+	CacheURL             string
+	FireBaseCredentials  []byte
+	FrontendSaveDir      string
+	FireBaseClientConfig string
 }
 
 // This struct containing shared structs

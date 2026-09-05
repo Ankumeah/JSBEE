@@ -14,11 +14,71 @@ templ profilePage() {
 		@navBar(provider.SiteName, "profile")
 		<main class="mx-auto w-full max-w-5xl flex-1 px-4 py-12 sm:px-6">
 			<h1 class="font-serif text-4xl font-semibold text-stone-900">My Profile</h1>
+			<div id="profile-loading" class="mt-8 text-sm text-stone-500">Loading your profile...</div>
+			<div id="profile-error" class="mt-8 hidden text-sm text-red-600"></div>
+			<div
+				id="profile-card"
+				class="mt-8 max-w-xl rounded-xl border border-stone-200 bg-white/50 p-6 shadow-sm"
+			>
+				<dl class="space-y-4 text-sm">
+					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">Name</dt>
+						<dd id="profile-name" class="text-stone-900"></dd>
+					</div>
+					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">Email</dt>
+						<dd id="profile-email" class="text-stone-900"></dd>
+					</div>
+					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">Role</dt>
+						<dd id="profile-role" class="text-stone-900"></dd>
+					</div>
+					<div class="flex items-center justify-between gap-4">
+						<dt class="font-medium text-stone-500">Subscribed</dt>
+						<dd id="profile-subscribed" class="text-stone-900"></dd>
+					</div>
+				</dl>
+				@myPapers()
+			</div>
 		</main>
 		@siteFooter(provider.SiteName)
+		<script>
+			(function() {
+				var uuid = getFirebaseUuid();
+				var loading = document.getElementById('profile-loading');
+				var errorEl = document.getElementById('profile-error');
+				var card = document.getElementById('profile-card');
+				if (!uuid) {
+					loading.textContent = 'Please sign in to view your profile.';
+					return;
+				}
+				fetch('/api/v1/user?uuid=' + encodeURIComponent(uuid))
+					.then(function(resp) {
+						if (!resp.ok) {
+							throw new Error('Failed to load profile');
+						}
+						return resp.json();
+					})
+					.then(function(data) {
+						var user = data.user;
+						document.getElementById('profile-name').textContent = user.name;
+						document.getElementById('profile-email').textContent = user.email;
+						document.getElementById('profile-role').textContent = user.role ? user.role.role : 'Unknown';
+						document.getElementById('profile-subscribed').textContent = user.subscribed ? 'Yes' : 'No';
+						loading.classList.add('hidden');
+						errorEl.classList.add('hidden');
+						card.classList.remove('hidden');
+					})
+					.catch(function(err) {
+						loading.classList.add('hidden');
+						errorEl.textContent = 'Failed to load profile: ' + err.message;
+						errorEl.classList.remove('hidden');
+					});
+			})();
+		</script>
 	</div>
 }
 
-templ ProfilePage() {
-	@base(profileInfo, profilePage())
+templ ProfilePage(firebaseClientConfig string) {
+	@base(profileInfo, profilePage(), firebaseClientConfig)
 }
