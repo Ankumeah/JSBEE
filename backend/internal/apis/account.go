@@ -2,7 +2,6 @@ package apis
 
 import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
-	"github.com/Ankumeah/JSBEE/backend/internal/database"
 	"github.com/Ankumeah/JSBEE/backend/internal/middlewares"
 
 	"github.com/gin-gonic/gin"
@@ -40,23 +39,16 @@ func account(r *gin.RouterGroup, app *a.App) {
 		}
 
 		ctx := c.Request.Context()
-		name := c.GetString(middlewares.NameField)
-		email := c.GetString(middlewares.EmailField)
 
 		userUUID, err := uuid.Parse(c.GetString(middlewares.UUIDFeild))
 		if !handleError(c, err) {
 			return
 		}
 
-		// Update insted of add as `FireBaseAuthMiddleware`
+		// Set subscribed of add as `FireBaseAuthMiddleware`
 		// user exists in db but subscribed isent set
-		if err := app.DBController.UpdateUser(
-			ctx, userUUID,
-			database.User{
-				Name:       name,
-				Email:      email,
-				Subscribed: subscribed,
-			},
+		if err := app.DBController.SetSubscription(
+			ctx, subscribed, userUUID,
 		); !handleError(c, err) {
 			return
 		}

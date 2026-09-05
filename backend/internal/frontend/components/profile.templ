@@ -1,0 +1,24 @@
+package components
+
+import (
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
+)
+
+var profileInfo = pageInfo{
+	title:       "Profile",
+	description: "Your profile",
+}
+
+templ profilePage() {
+	<div class="flex min-h-screen flex-col">
+		@navBar(provider.SiteName, "profile")
+		<main class="mx-auto w-full max-w-5xl flex-1 px-4 py-12 sm:px-6">
+			<h1 class="font-serif text-4xl font-semibold text-stone-900">My Profile</h1>
+		</main>
+		@siteFooter(provider.SiteName)
+	</div>
+}
+
+templ ProfilePage() {
+	@base(profileInfo, profilePage())
+}

@@ -48,6 +48,16 @@ func (u *ComponentUpdater) UpdateNotFound(
 	)
 }
 
+func (u *ComponentUpdater) UpdateProfile(
+	ctx context.Context,
+) error {
+	return updateComponent(
+		ctx,
+		path.Join(u.savePath, profileFile),
+		components.ProfilePage(),
+	)
+}
+
 // This function updates all frontend files and
 // is to be called at application startup
 // to make sure the static files always exist
@@ -59,6 +69,7 @@ func (u *ComponentUpdater) UpdateAll(
 		func() error { return u.UpdateIndex(ctx) },
 		func() error { return u.UpdateVolumes(ctx, volumes) },
 		func() error { return u.UpdateNotFound(ctx) },
+		func() error { return u.UpdateProfile(ctx) },
 	} {
 		if err := f(); err != nil {
 			return err

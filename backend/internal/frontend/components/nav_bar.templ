@@ -38,6 +38,39 @@ templ navBar(siteName string, current string) {
 						Volumes
 					</a>
 				</li>
+				<li>
+					<button
+						type="button"
+						class="inline-flex items-center rounded-md bg-emerald-900 px-4 py-1.5 text-sm font-semibold text-white hover:bg-emerald-800"
+						onclick="
+							var jwt = getFirebaseJwt();
+							if (jwt) {
+								window.location.href = '/profile';
+							} else {
+								firebaseSignIn().then(function(idToken) {
+									return fetch('/api/v1/account', {
+										method: 'POST',
+										headers: { 'Authorization': 'Bearer ' + idToken }
+									}).then(function(resp) {
+										if (resp.status === 201 || resp.status === 400) {
+											return firebaseRefreshToken();
+										}
+										throw new Error('Backend registration failed');
+									});
+								}).then(function(refreshedToken) {
+									setFirebaseJwt(refreshedToken);
+									window.location.href = '/profile';
+								}).catch(function(err) {
+									if (err.code !== 'auth/popup-closed-by-user') {
+										alert('Sign in failed: ' + err.message);
+									}
+								});
+							}
+						"
+					>
+						My Profile
+					</button>
+				</li>
 			</ul>
 		</nav>
 		<ul
@@ -52,6 +85,39 @@ templ navBar(siteName string, current string) {
 			</li>
 			<li>
 				<a href="/volumes" class="block rounded px-2 py-2 hover:bg-stone-100">Volumes</a>
+			</li>
+			<li>
+				<button
+					type="button"
+					class="block w-full rounded px-2 py-2 text-left text-emerald-900 font-semibold hover:bg-stone-100"
+					onclick="
+						var jwt = getFirebaseJwt();
+						if (jwt) {
+							window.location.href = '/profile';
+						} else {
+							firebaseSignIn().then(function(idToken) {
+								return fetch('/api/v1/account', {
+									method: 'POST',
+									headers: { 'Authorization': 'Bearer ' + idToken }
+								}).then(function(resp) {
+									if (resp.status === 201 || resp.status === 400) {
+										return firebaseRefreshToken();
+									}
+									throw new Error('Backend registration failed');
+								});
+							}).then(function(refreshedToken) {
+								setFirebaseJwt(refreshedToken);
+								window.location.href = '/profile';
+							}).catch(function(err) {
+								if (err.code !== 'auth/popup-closed-by-user') {
+									alert('Sign in failed: ' + err.message);
+								}
+							});
+						}
+					"
+				>
+					My Profile
+				</button>
 			</li>
 		</ul>
 	</header>

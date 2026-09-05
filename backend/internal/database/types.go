@@ -15,7 +15,7 @@ type DBController interface {
 	DB() *sqlx.DB
 	AddUser(ctx context.Context, user User) error
 	DeleteUser(ctx context.Context, uuid uuid.UUID) error
-	UpdateUser(ctx context.Context, uuid uuid.UUID, newUser User) error
+	SetSubscription(ctx context.Context, subscribed bool, uuid uuid.UUID) error
 	GetUser(ctx context.Context, uuid uuid.UUID) (User, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 

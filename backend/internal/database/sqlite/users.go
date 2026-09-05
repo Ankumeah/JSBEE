@@ -64,30 +64,24 @@ func (s *SqlxDBController) DeleteUser(
 	return nil
 }
 
-// Update a user
-// This should not be directly exposed as a user
-// user accessible API as it has the power to
-// change a user's role. This function does not update
-// a user's UUID
+// Sets a user's subscription
 //
 // May return the following errors:
 //   - `database.ErrInvalidUser`
 //   - Errors by the underlying DB
-func (s *SqlxDBController) UpdateUser(
+func (s *SqlxDBController) SetSubscription(
 	ctx context.Context,
+	subscribed bool,
 	uuid uuid.UUID,
-	newUser database.User,
 ) error {
 	query := s.db.Rebind(`
     UPDATE users
-    SET name = ?, email = ?, role = ?, subscribed = ?
+    SET subscribed = ?
     WHERE (uuid = ?);
   `)
 
 	res, err := s.db.ExecContext(
-		ctx, query,
-		newUser.Name, newUser.Email, newUser.Role.Role,
-		newUser.Subscribed, uuid,
+		ctx, query, subscribed, uuid,
 	)
 	if err != nil {
 		return err
