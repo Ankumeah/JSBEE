@@ -12,20 +12,86 @@ import (
 // This interface is reposonsible for executing all
 // DB queries and returning type safe results
 type DBController interface {
+  // This exposes the raw underlying DB object.
+  // This is only to be used to execute migrations
 	DB() *sqlx.DB
+
+  // Add a new user
+  //
+  // May return the following errors:
+  //   - `database.ErrExistUser`
+  //   - Errors by the underlying DB
 	AddUser(ctx context.Context, user User) error
+
+  // Delete a user
+  //
+  // May return the following errors:
+  //   - `database.ErrInvalidUser`
+  //   - Errors by the underlying DB
 	DeleteUser(ctx context.Context, uuid uuid.UUID) error
+
+  // Sets a user's subscription
+  //
+  // May return the following errors:
+  //   - `database.ErrInvalidUser`
+  //   - Errors by the underlying DB
 	SetSubscription(ctx context.Context, subscribed bool, uuid uuid.UUID) error
+
+  // Get the details of a user
+  //
+  // May return the following errors:
+  //   - `database.ErrInvalidUser`
+  //   - Errors by the underlying DB
 	GetUser(ctx context.Context, uuid uuid.UUID) (User, error)
+
+  // Get the details of a user by email
+  //
+  // May return the following errors:
+  //   - `database.ErrInvalidUser`
+  //   - Errors by the underlying DB
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 
+  // Adds a new unapproved paper
+  //
+  // May return the following errors:
+  //   - `database.ErrInvalidUser`
+  //   - `database.ErrExistPaper`
+  //   - Errors by the underlying DB
 	AddPaper(ctx context.Context, paper Paper) error
+
+  // Updates a paper to max + 1 number and max volume and issue
+  //
+  // May return the following errors:
+  //   - `database.ErrInvalidPaper`
+  //   - Errors by the underlying DB
 	ApprovePaper(ctx context.Context, uuid uuid.UUID) error
 
+  // Get all volumes
+  //
+  // In case any paper's author has been deleted the
+  // `Paper.OwnerUUID` feild will be `nil`
+  //
+  // May return the following errors:
+  //   - Errors by the underlying DB
 	GetVolumes(ctx context.Context) ([]Volume, error)
+
+
+  // Get all unapproved papers
+  //
+  // May return the following errors:
+  //   - Errors by the underlying DB
 	GetUnapprovedPapers(ctx context.Context) ([]Paper, error)
 
+  // Increment state.volume by 1
+  //
+  // May return the following errors:
+  //   - Errors by the underlying DB
 	IncrementVolume(ctx context.Context) error
+
+  // Increment state.issue by 1
+  //
+  // May return the following errors:
+  //   - Errors by the underlying DB
 	IncrementIssue(ctx context.Context) error
 }
 

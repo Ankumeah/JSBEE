@@ -9,11 +9,6 @@ import (
 	"uuid"
 )
 
-// Add a new user
-//
-// May return the following errors:
-//   - `database.ErrExistUser`
-//   - Errors by the underlying DB
 func (s *SqlxDBController) AddUser(
 	ctx context.Context,
 	user database.User,
@@ -35,11 +30,6 @@ func (s *SqlxDBController) AddUser(
 	return err
 }
 
-// Delete a user
-//
-// May return the following errors:
-//   - `database.ErrInvalidUser`
-//   - Errors by the underlying DB
 func (s *SqlxDBController) DeleteUser(
 	ctx context.Context,
 	uuid uuid.UUID,
@@ -64,11 +54,6 @@ func (s *SqlxDBController) DeleteUser(
 	return nil
 }
 
-// Sets a user's subscription
-//
-// May return the following errors:
-//   - `database.ErrInvalidUser`
-//   - Errors by the underlying DB
 func (s *SqlxDBController) SetSubscription(
 	ctx context.Context,
 	subscribed bool,
@@ -97,11 +82,6 @@ func (s *SqlxDBController) SetSubscription(
 	return nil
 }
 
-// Get the details of a user
-//
-// May return the following errors:
-//   - `database.ErrInvalidUser`
-//   - Errors by the underlying DB
 func (s *SqlxDBController) GetUser(
 	ctx context.Context,
 	uuid uuid.UUID,
@@ -121,11 +101,6 @@ func (s *SqlxDBController) GetUser(
 	return user, err
 }
 
-// Get the details of a user by email
-//
-// May return the following errors:
-//   - `database.ErrInvalidUser`
-//   - Errors by the underlying DB
 func (s *SqlxDBController) GetUserByEmail(
 	ctx context.Context,
 	email string,

@@ -12,8 +12,6 @@ func GetSqlxDBController(db *sqlx.DB) database.DBController {
 	return &SqlxDBController{db}
 }
 
-// This exposes the raw underlying DB object.
-// This is only to be used to execute migrations
 func (s *SqlxDBController) DB() *sqlx.DB {
 	return s.db
 }

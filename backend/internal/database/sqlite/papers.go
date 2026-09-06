@@ -9,12 +9,6 @@ import (
 	"uuid"
 )
 
-// Adds a new unapproved paper
-//
-// May return the following errors:
-//   - `database.ErrInvalidUser`
-//   - `database.ErrExistPaper`
-//   - Errors by the underlying DB
 func (s *SqlxDBController) AddPaper(
 	ctx context.Context,
 	paper database.Paper,
@@ -37,11 +31,6 @@ func (s *SqlxDBController) AddPaper(
 	return nil
 }
 
-// Updates a paper to max + 1 number and max volume and issue
-//
-// May return the following errors:
-//   - `database.ErrInvalidPaper`
-//   - Errors by the underlying DB
 func (s *SqlxDBController) ApprovePaper(
 	ctx context.Context,
 	uuid uuid.UUID,
@@ -89,13 +78,6 @@ func (s *SqlxDBController) GetPaper(
 	return paper, err
 }
 
-// Get all volumes
-//
-// In case any paper's author has been deleted the
-// `Paper.OwnerUUID` feild will be `nil`
-//
-// May return the following errors:
-//   - Errors by the underlying DB
 func (s *SqlxDBController) GetVolumes(
 	ctx context.Context,
 ) ([]database.Volume, error) {
