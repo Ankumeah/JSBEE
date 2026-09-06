@@ -34,6 +34,6 @@ templ notFoundPage() {
 	</div>
 }
 
-templ NotFoundPage() {
-	@base(notFoundInfo, notFoundPage())
+templ NotFoundPage(firebaseClientConfig string) {
+	@base(notFoundInfo, notFoundPage(), firebaseClientConfig)
 }

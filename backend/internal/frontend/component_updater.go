@@ -11,11 +11,15 @@ import (
 
 // This struct is responsible for updating fronted components
 type ComponentUpdater struct {
-	savePath string
+	savePath             string
+	firebaseClientConfig string
 }
 
-func GetComponentUpdater(savePath string) (*ComponentUpdater, error) {
-	return &ComponentUpdater{savePath}, os.MkdirAll(savePath, 0o755)
+func GetComponentUpdater(savePath string, firebaseClientConfig string) (*ComponentUpdater, error) {
+	return &ComponentUpdater{
+		savePath:             savePath,
+		firebaseClientConfig: firebaseClientConfig,
+	}, os.MkdirAll(savePath, 0o755)
 }
 
 func (u *ComponentUpdater) UpdateIndex(
@@ -24,7 +28,7 @@ func (u *ComponentUpdater) UpdateIndex(
 	return updateComponent(
 		ctx,
 		path.Join(u.savePath, indexFile),
-		components.IndexPage(),
+		components.IndexPage(u.firebaseClientConfig),
 	)
 }
 
@@ -34,7 +38,7 @@ func (u *ComponentUpdater) UpdateVolumes(
 ) error {
 	return updateComponent(
 		ctx, path.Join(u.savePath, volumeFile),
-		components.VolumesPage(volumes),
+		components.VolumesPage(volumes, u.firebaseClientConfig),
 	)
 }
 
@@ -44,7 +48,17 @@ func (u *ComponentUpdater) UpdateNotFound(
 	return updateComponent(
 		ctx,
 		path.Join(u.savePath, notFoundFile),
-		components.NotFoundPage(),
+		components.NotFoundPage(u.firebaseClientConfig),
+	)
+}
+
+func (u *ComponentUpdater) UpdateProfile(
+	ctx context.Context,
+) error {
+	return updateComponent(
+		ctx,
+		path.Join(u.savePath, profileFile),
+		components.ProfilePage(u.firebaseClientConfig),
 	)
 }
 
@@ -59,6 +73,7 @@ func (u *ComponentUpdater) UpdateAll(
 		func() error { return u.UpdateIndex(ctx) },
 		func() error { return u.UpdateVolumes(ctx, volumes) },
 		func() error { return u.UpdateNotFound(ctx) },
+		func() error { return u.UpdateProfile(ctx) },
 	} {
 		if err := f(); err != nil {
 			return err

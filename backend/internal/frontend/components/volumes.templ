@@ -115,6 +115,6 @@ templ volumesPage(volumes []database.Volume) {
 	</div>
 }
 
-templ VolumesPage(volumes []database.Volume) {
-	@base(volumesInfo, volumesPage(volumes))
+templ VolumesPage(volumes []database.Volume, firebaseClientConfig string) {
+	@base(volumesInfo, volumesPage(volumes), firebaseClientConfig)
 }

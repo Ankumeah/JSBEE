@@ -2,7 +2,6 @@ package middlewares
 
 import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
-	"github.com/Ankumeah/JSBEE/backend/internal/database"
 	"github.com/Ankumeah/JSBEE/backend/internal/provider"
 
 	"firebase.google.com/go/v4"
@@ -11,8 +10,6 @@ import (
 	"google.golang.org/api/option"
 
 	"context"
-	"errors"
-	"log"
 	"net/http"
 	"strings"
 	"uuid"
@@ -48,12 +45,12 @@ func InitFirebase(ctx context.Context, creds []byte) (*auth.Client, error) {
 //   - token is invalid or
 //   - email is not provided or unverified or
 //   - name is not provided
+//   - uuid is not provided
 //
 // This middleware also sets:
 //   - user's email in `EmailField`
 //   - user's name in `NameField`
-//   - user's uuid in `UUIDFeild` (reused from the DB if the email
-//     already exists, otherwise issued and stored as a custom claim)
+//   - user's uuid in `UUIDFeild`
 //
 // InitFirebase must be called before this middleware can be used
 func FireBaseAuthMiddleware(app *a.App) gin.HandlerFunc {
@@ -83,7 +80,7 @@ func FireBaseAuthMiddleware(app *a.App) gin.HandlerFunc {
 			return
 		}
 
-		// Extracct needed feilds
+		// Extract needed feilds
 
 		email, ok := token.Claims["email"].(string)
 		if !ok {
@@ -110,51 +107,14 @@ func FireBaseAuthMiddleware(app *a.App) gin.HandlerFunc {
 			return
 		}
 
-		// Check for uuid and issue if it dosent exist.
-		// Insert first so concurrent requests without a claim cannot
-		// mint two UUIDs: the winner writes the row, the loser reads it.
-
 		var userUUID uuid.UUID
 		uuidInToken, ok := token.Claims[provider.SiteName+"-uuid"]
 		if !ok {
-			userUUID = uuid.New()
-			err = app.DBController.AddUser(ctx, database.User{
-				UUID:  userUUID,
-				Name:  name,
-				Email: email,
-			})
-			if errors.Is(err, database.ErrExistUser) {
-				existing, lookupErr := app.DBController.GetUserByEmail(ctx, email)
-				if lookupErr != nil {
-					c.AbortWithStatusJSON(
-						http.StatusInternalServerError,
-						gin.H{"error": "Internal server error"},
-					)
-					log.Printf("Error while looking up user uuid: %v\n", lookupErr.Error())
-					return
-				}
-				userUUID = existing.UUID
-			} else if err != nil {
-				c.AbortWithStatusJSON(
-					http.StatusInternalServerError,
-					gin.H{"error": "Internal server error"},
-				)
-				log.Printf("Error while creating user uuid: %v\n", err.Error())
-				return
-			} else if err := app.FireBaseClient.SetCustomUserClaims(
-				ctx,
-				token.UID,
-				map[string]interface{}{
-					provider.SiteName + "-uuid": userUUID.String(),
-				},
-			); err != nil {
-				c.AbortWithStatusJSON(
-					http.StatusInternalServerError,
-					gin.H{"error": "Internal server error"},
-				)
-				log.Printf("Error while issueing custom user claim: %v\n", err.Error())
-				return
-			}
+			c.AbortWithStatusJSON(
+				http.StatusBadRequest,
+				gin.H{"error": "Inavlid user, sign up first"},
+			)
+			return
 		} else {
 			uuidInTokenString, ok := uuidInToken.(string)
 			if !ok {
@@ -175,7 +135,7 @@ func FireBaseAuthMiddleware(app *a.App) gin.HandlerFunc {
 			}
 		}
 
-		c.Set(UUIDFeild, userUUID.String())
+		c.Set(UUIDField, userUUID.String())
 		c.Set(NameField, name)
 		c.Set(EmailField, email)
 		c.Next()

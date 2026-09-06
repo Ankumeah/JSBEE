@@ -19,6 +19,16 @@ http {
       proxy_set_header X-Real-IP $remote_addr;
     }
 
+    location /api/$API_VERSION/papers {
+      proxy_pass http://backend_cluster;
+
+      client_max_body_size 500m;
+      proxy_request_buffering off;
+
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+    }
+
     location = / {
       root /data;
       index index.html;

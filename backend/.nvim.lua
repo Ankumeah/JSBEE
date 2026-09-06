@@ -1,7 +1,7 @@
 local lsp = "gopls"
 local capabilities = require('cmp_nvim_lsp').default_capabilities()
 local opts = { capabilities = capabilities }
-opts.settings = { gopls = { buildFlags = { "-tags=sqlite,init" } } }
+opts.settings = { gopls = { buildFlags = { "-tags='sqlite,init'" } } }
 vim.lsp.config(lsp, opts)
 for _, client in ipairs(vim.lsp.get_clients({ name = "gopls" })) do
   client:stop({ force = true })

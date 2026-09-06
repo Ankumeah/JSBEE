@@ -4,6 +4,7 @@ import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
 	"github.com/Ankumeah/JSBEE/backend/internal/frontend"
 	"github.com/Ankumeah/JSBEE/backend/internal/middlewares"
+	"github.com/Ankumeah/JSBEE/backend/internal/objectstore"
 
 	"context"
 	"log"
@@ -31,9 +32,30 @@ func getComponentUpdater(app *a.App) {
 	var err error
 	app.ComponentUpdater, err = frontend.GetComponentUpdater(
 		app.Config.FrontendSaveDir,
+		app.Config.FireBaseClientConfig,
 	)
 	if err != nil {
 		log.Fatalf("Error while getting component updater: %v\n", err.Error())
 	}
 	log.Println("Got component updater")
+}
+
+func connectObjectStore(ctx context.Context, app *a.App) {
+	log.Println("Connecting to object store")
+
+	config, err := objectstore.NewS3StaticConfigFromJSON(
+		app.Config.ObjectStoreConfig,
+	)
+	if err != nil {
+		log.Fatalf("Error while getting s3 config: %v\n", err.Error())
+	}
+
+	app.ObjectStore, err = objectstore.GetStaticS3Client(
+		ctx, config,
+	)
+	if err != nil {
+		log.Fatalf("Error while getting s3 client: %v\n", err.Error())
+	}
+
+	log.Println("Connected to object store")
 }

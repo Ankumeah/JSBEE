@@ -8,7 +8,9 @@ RUN --mount=type=cache,target=/root/go/pkg/mod \
   go mod download
 
 COPY internal/frontend/ internal/frontend/
-RUN go tool templ generate
+RUN  --mount=type=cache,target=/root/go/pkg/mod \
+  --mount=type=cache,target=/root/.cache/go-build \
+  go tool templ generate
 
 ARG db_type=sqlite
 COPY . .

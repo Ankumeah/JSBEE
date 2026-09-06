@@ -12,8 +12,10 @@ var envVars = map[string]string{
 	"API_VERSION": "",
 	"PORT":        "",
 
-	"CACHE_URL":            "",
-	"DB_URL":               "",
+	"CACHE_URL": "",
+	"DB_URL":    "",
+
+	"OBJECT_STORE_CONFIG":  "",
 	"FIREBASE_CREDENTIALS": "",
 
 	"FRONTEND_SAVE_DIR": "",
@@ -43,6 +45,8 @@ func setSettings(s *a.Config) {
 
 	s.CacheURL = envVars["CACHE_URL"]
 	s.DBURL = envVars["DB_URL"]
+
 	s.FireBaseCredentials = []byte(envVars["FIREBASE_CREDENTIALS"])
 	s.FrontendSaveDir = envVars["FRONTEND_SAVE_DIR"]
+	s.ObjectStoreConfig = []byte(envVars["OBJECT_STORE_CONFIG"])
 }

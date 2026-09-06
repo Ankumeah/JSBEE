@@ -9,11 +9,6 @@ import (
 	"uuid"
 )
 
-// Add a new user
-//
-// May return the following errors:
-//   - `database.ErrExistUser`
-//   - Errors by the underlying DB
 func (s *SqlxDBController) AddUser(
 	ctx context.Context,
 	user database.User,
@@ -35,11 +30,6 @@ func (s *SqlxDBController) AddUser(
 	return err
 }
 
-// Delete a user
-//
-// May return the following errors:
-//   - `database.ErrInvalidUser`
-//   - Errors by the underlying DB
 func (s *SqlxDBController) DeleteUser(
 	ctx context.Context,
 	uuid uuid.UUID,
@@ -64,30 +54,19 @@ func (s *SqlxDBController) DeleteUser(
 	return nil
 }
 
-// Update a user
-// This should not be directly exposed as a user
-// user accessible API as it has the power to
-// change a user's role. This function does not update
-// a user's UUID
-//
-// May return the following errors:
-//   - `database.ErrInvalidUser`
-//   - Errors by the underlying DB
-func (s *SqlxDBController) UpdateUser(
+func (s *SqlxDBController) SetSubscription(
 	ctx context.Context,
+	subscribed bool,
 	uuid uuid.UUID,
-	newUser database.User,
 ) error {
 	query := s.db.Rebind(`
     UPDATE users
-    SET name = ?, email = ?, role = ?, subscribed = ?
+    SET subscribed = ?
     WHERE (uuid = ?);
   `)
 
 	res, err := s.db.ExecContext(
-		ctx, query,
-		newUser.Name, newUser.Email, newUser.Role.Role,
-		newUser.Subscribed, uuid,
+		ctx, query, subscribed, uuid,
 	)
 	if err != nil {
 		return err
@@ -103,11 +82,6 @@ func (s *SqlxDBController) UpdateUser(
 	return nil
 }
 
-// Get the details of a user
-//
-// May return the following errors:
-//   - `database.ErrInvalidUser`
-//   - Errors by the underlying DB
 func (s *SqlxDBController) GetUser(
 	ctx context.Context,
 	uuid uuid.UUID,
@@ -127,11 +101,6 @@ func (s *SqlxDBController) GetUser(
 	return user, err
 }
 
-// Get the details of a user by email
-//
-// May return the following errors:
-//   - `database.ErrInvalidUser`
-//   - Errors by the underlying DB
 func (s *SqlxDBController) GetUserByEmail(
 	ctx context.Context,
 	email string,
