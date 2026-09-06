@@ -83,7 +83,7 @@ func (s s3StaticClient) AddFile(
 	size int64,
 ) error {
 	_, err := s.client.PutObject(
-		ctx, publicBucket, filename, content, size,
+		ctx, privateBucket, filename, content, size,
 		minio.PutObjectOptions{
 			ContentType: "application/pdf",
 		},
