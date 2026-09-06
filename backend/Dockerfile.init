@@ -24,6 +24,9 @@ RUN  --mount=type=cache,target=/root/go/pkg/mod \
 
 FROM scratch
 
+COPY --from=builder \
+  /etc/ssl/certs/ca-certificates.crt \
+  /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /opt/backend/bin/init .
 
 ENTRYPOINT [ "./init" ]

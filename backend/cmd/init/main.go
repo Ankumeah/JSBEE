@@ -5,6 +5,7 @@ import (
 
 	"context"
 	"log"
+	"sync"
 )
 
 var Ctx = context.Background()
@@ -13,12 +14,21 @@ var app = &a.App{Config: &a.Config{}}
 func main() {
 	log.Println("Init started")
 
+	var wg sync.WaitGroup
+
 	loadEnv(app.Config)
-	getComponentUpdater(app)
-	getDBConnection(Ctx, app)
-	runDBMigrations(Ctx, app)
-	generateInitalComponents(Ctx, app)
-	saveAssets(Ctx, app)
+	wg.Go(func() { getComponentUpdater(app) })
+	wg.Go(func() {
+		getDBConnection(Ctx, app)
+		runDBMigrations(Ctx, app)
+		generateInitalComponents(Ctx, app)
+		saveAssets(Ctx, app)
+	})
+	wg.Go(func() {
+		connectObjectStore(Ctx, app)
+		initObjectStore(Ctx, app)
+	})
+	wg.Wait()
 
 	log.Println("Init completed")
 }

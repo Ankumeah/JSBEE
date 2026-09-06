@@ -22,6 +22,7 @@ func main() {
 	wg.Go(func() { initFirebase(Ctx, app) })
 	wg.Go(func() { getComponentUpdater(app) })
 	wg.Go(func() { getDBConnection(Ctx, app) })
+	wg.Go(func() { connectObjectStore(Ctx, app) })
 	wg.Wait()
 
 	log.Println("Starting http server")

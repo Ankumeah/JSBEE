@@ -3,6 +3,7 @@ package app
 import (
 	"github.com/Ankumeah/JSBEE/backend/internal/database"
 	"github.com/Ankumeah/JSBEE/backend/internal/frontend"
+	"github.com/Ankumeah/JSBEE/backend/internal/objectstore"
 
 	"firebase.google.com/go/v4/auth"
 )
@@ -21,6 +22,7 @@ type Config struct {
 	FireBaseCredentials  []byte
 	FrontendSaveDir      string
 	FireBaseClientConfig string
+	ObjectStoreConfig    []byte
 }
 
 // This struct containing shared structs
@@ -34,4 +36,5 @@ type App struct {
 	FireBaseClient   *auth.Client
 	DBController     database.DBController
 	ComponentUpdater *frontend.ComponentUpdater
+	ObjectStore      objectstore.ObjectStore
 }
