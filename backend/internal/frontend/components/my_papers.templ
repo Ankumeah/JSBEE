@@ -1,15 +1,19 @@
 package components
 
 templ myPapers() {
-	<div class="mt-6 max-w-xl" x-data="{ open: false }">
+	<div
+		id="my-papers-box"
+		class="mt-6 hidden rounded-xl border border-stone-200 bg-white/50 p-6 shadow-sm"
+		x-data="{ open: false }"
+	>
 		<button
 			type="button"
-			class="inline-flex w-full items-center justify-between rounded-lg border border-stone-300 bg-white/60 px-4 py-2.5 text-sm font-semibold text-stone-800 transition-colors hover:bg-stone-100"
+			class="flex w-full items-center justify-between gap-4 text-left"
 			@click="open = !open"
 			:aria-expanded="open.toString()"
 			aria-controls="my-papers-panel"
 		>
-			My papers
+			<span class="text-sm font-semibold text-stone-800">My papers</span>
 			<svg
 				class="h-4 w-4 text-stone-500 transition-transform"
 				:class="open ? 'rotate-180' : ''"
@@ -23,12 +27,16 @@ templ myPapers() {
 		</button>
 		<div
 			id="my-papers-panel"
-			class="mt-2 rounded-lg border border-stone-200 bg-white/70 px-4 py-4 text-sm text-stone-600 shadow-sm"
+			class="mt-4 text-sm text-stone-600"
 			x-cloak
 			x-show="open"
 			x-transition
 		>
-			<span class="font-mono text-xs text-stone-400">{ "// TODO: Get papers" }</span>
+			<div id="my-papers-loading" class="font-mono text-xs text-stone-400">Loading...</div>
+			<div id="my-papers-empty" class="hidden text-stone-500">You haven't uploaded any papers yet.</div>
+			<ul id="my-papers-list" class="hidden divide-y divide-stone-100"></ul>
+			<div id="my-papers-error" class="hidden text-red-600"></div>
 		</div>
+		<span class="hidden flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 mr-2 font-mono text-xs text-amber-800 font-medium text-stone-900 shrink-0 text-sm text-stone-500 rounded hover:bg-stone-100/50"></span>
 	</div>
 }

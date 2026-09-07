@@ -17,6 +17,7 @@ type s3StaticConfig struct {
 	Region         string `json:"region"`
 	MaxDBSnapshots uint   `json:"max_db_snapshots"`
 	Url            string `json:"url"`
+	Secure         bool   `json:"secure"`
 }
 
 func NewS3StaticConfigFromJSON(
@@ -44,7 +45,7 @@ func GetStaticS3Client(
 			config.SecretKey,
 			"",
 		),
-		Secure:       true,
+		Secure:       config.Secure,
 		BucketLookup: minio.BucketLookupPath,
 		Region:       config.Region,
 	})

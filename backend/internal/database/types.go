@@ -59,6 +59,23 @@ type DBController interface {
 	//   - Errors by the underlying DB
 	AddPaper(ctx context.Context, paper Paper) error
 
+	// Gets the details of a paper
+	//
+	// If the owner of a paper has been deleted
+	// `paper.OwnerUUID` will be `nil`
+	//
+	// May return the following errors:
+	//   - `database.ErrInvalidPaper`
+	//   - Errors by the underlying DB
+	GetPaper(ctx context.Context, uuid uuid.UUID) (Paper, error)
+
+	// Get all papers by a user
+	//
+	// May return the following errors:
+	//   - `database.ErrInvalidUser`
+	//   - Errors by the underlying DB
+	GetUserPapers(ctx context.Context, userUUID uuid.UUID) ([]Paper, error)
+
 	// Updates a paper to max + 1 number and max volume and issue
 	//
 	// May return the following errors:
@@ -95,19 +112,19 @@ type DBController interface {
 }
 
 type User struct {
-	UUID       uuid.UUID  `json:"uuid" binding:"required"`
-	Name       string     `json:"name" binding:"required"`
-	Email      string     `json:"email" binding:"required"`
-	Role       roles.Role `json:"role" binding:"required"`
-	Subscribed bool       `json:"subscribed" binding:"required"`
+	UUID       uuid.UUID  `json:"uuid" binding:"required" db:"uuid"`
+	Name       string     `json:"name" binding:"required" db:"name"`
+	Email      string     `json:"email" binding:"required" db:"email"`
+	Role       roles.Role `json:"role" binding:"required" db:"role"`
+	Subscribed bool       `json:"subscribed" binding:"required" db:"subscribed"`
 }
 
 type Paper struct {
-	UUID      uuid.UUID  `json:"uuid" binding:"required"`
-	Title     string     `json:"title" binding:"required"`
-	Number    *uint64    `json:"number" binding:"required"`
-	Filename  string     `json:"filename" binding:"required"`
-	OwnerUUID *uuid.UUID `json:"owner" binding:"required"`
+	UUID      uuid.UUID  `json:"uuid" binding:"required" db:"uuid"`
+	Title     string     `json:"title" binding:"required" db:"title"`
+	Number    *uint64    `json:"number" binding:"required" db:"number"`
+	Filename  string     `json:"filename" binding:"required" db:"filename"`
+	OwnerUUID *uuid.UUID `json:"owner_uuid" binding:"required" db:"owner_uuid"`
 }
 
 type Issue struct {

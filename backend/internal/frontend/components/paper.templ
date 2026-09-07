@@ -1,0 +1,118 @@
+package components
+
+import (
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
+)
+
+var paperInfo = pageInfo{
+	title:       "Paper",
+	description: "Paper details",
+}
+
+templ paperPage() {
+	<div class="flex min-h-screen flex-col">
+		@navBar(provider.SiteName, "")
+		<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6">
+			<h1 id="paper-title" class="text-center font-serif text-4xl font-semibold text-stone-900">Paper</h1>
+			<div id="paper-loading" class="mt-8 text-center text-sm text-stone-500">Loading paper...</div>
+			<div id="paper-error" class="mt-8 hidden text-center text-sm text-red-600"></div>
+			<div
+				id="paper-card"
+				class="mt-8 hidden rounded-xl border border-stone-200 bg-white/50 p-6 shadow-sm"
+			>
+				<dl class="space-y-4 text-sm">
+					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">Title</dt>
+						<dd id="paper-title-field" class="font-medium text-stone-900"></dd>
+					</div>
+					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">Number</dt>
+						<dd id="paper-number" class="text-stone-900"></dd>
+					</div>
+					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">Status</dt>
+						<dd id="paper-status" class="text-stone-900"></dd>
+					</div>
+					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">File</dt>
+						<dd>
+							<a id="paper-file-link" class="hidden text-sm font-medium text-emerald-800 hover:underline"></a>
+							<span id="paper-file-empty" class="hidden text-stone-900">No file</span>
+						</dd>
+					</div>
+					<div class="flex items-center justify-between gap-4">
+						<dt class="font-medium text-stone-500">UUID</dt>
+						<dd id="paper-uuid" class="font-mono text-xs text-stone-500"></dd>
+					</div>
+				</dl>
+			</div>
+			<a
+				href="/profile"
+				class="mt-8 inline-block rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+			>
+				Back to profile
+			</a>
+		</main>
+		@siteFooter(provider.SiteName)
+		<script>
+			(function() {
+				function initPaper() {
+					var params = new URLSearchParams(window.location.search);
+					var uuid = params.get('uuid');
+					var loading = document.getElementById('paper-loading');
+					var errorEl = document.getElementById('paper-error');
+					var card = document.getElementById('paper-card');
+
+					if (!uuid) {
+						loading.classList.add('hidden');
+						errorEl.textContent = 'No paper specified.';
+						errorEl.classList.remove('hidden');
+						return;
+					}
+
+					fetch('/api/v1/paper/' + encodeURIComponent(uuid))
+						.then(function(resp) {
+							if (!resp.ok) throw new Error('Failed to load paper');
+							return resp.json();
+						})
+						.then(function(data) {
+							var paper = data.paper;
+							document.getElementById('paper-title').textContent = paper.title;
+							document.title = paper.title;
+							document.getElementById('paper-title-field').textContent = paper.title;
+							document.getElementById('paper-number').textContent =
+								paper.number != null ? '#' + paper.number : 'Not assigned yet';
+							document.getElementById('paper-status').textContent =
+								paper.number != null ? 'Published' : 'Pending review';
+							if (paper.filename) {
+								var link = document.getElementById('paper-file-link');
+								link.href = '/' + paper.filename;
+								link.textContent = paper.filename;
+								link.classList.remove('hidden');
+							} else {
+								document.getElementById('paper-file-empty').classList.remove('hidden');
+							}
+							document.getElementById('paper-uuid').textContent = paper.uuid;
+							loading.classList.add('hidden');
+							errorEl.classList.add('hidden');
+							card.classList.remove('hidden');
+						})
+						.catch(function(err) {
+							loading.classList.add('hidden');
+							errorEl.textContent = 'Failed to load paper: ' + err.message;
+							errorEl.classList.remove('hidden');
+						});
+				}
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', initPaper);
+				} else {
+					initPaper();
+				}
+			})();
+		</script>
+	</div>
+}
+
+templ PaperPage(firebaseClientConfig string) {
+	@base(paperInfo, paperPage(), firebaseClientConfig)
+}

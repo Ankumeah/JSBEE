@@ -78,4 +78,20 @@ func papers(r *gin.RouterGroup, app *a.App) {
 
 		c.JSON(http.StatusCreated, gin.H{"uuid": paperUUID})
 	})
+
+	group.GET("", func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		userUUID, err := uuid.Parse(c.GetString(middlewares.UUIDField))
+		if !handleError(c, err) {
+			return
+		}
+
+		papers, err := app.DBController.GetUserPapers(ctx, userUUID)
+		if !handleError(c, err) {
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"papers": papers})
+	})
 }

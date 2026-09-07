@@ -62,6 +62,16 @@ func (u *ComponentUpdater) UpdateProfile(
 	)
 }
 
+func (u *ComponentUpdater) UpdatePaper(
+	ctx context.Context,
+) error {
+	return updateComponent(
+		ctx,
+		path.Join(u.savePath, paperFile),
+		components.PaperPage(u.firebaseClientConfig),
+	)
+}
+
 // This function updates all frontend files and
 // is to be called at application startup
 // to make sure the static files always exist
@@ -74,6 +84,7 @@ func (u *ComponentUpdater) UpdateAll(
 		func() error { return u.UpdateVolumes(ctx, volumes) },
 		func() error { return u.UpdateNotFound(ctx) },
 		func() error { return u.UpdateProfile(ctx) },
+		func() error { return u.UpdatePaper(ctx) },
 	} {
 		if err := f(); err != nil {
 			return err
