@@ -59,6 +59,22 @@ func (s *SqlxDBController) ApprovePaper(
 	return nil
 }
 
+func (s *SqlxDBController) GetUserPapers(
+	ctx context.Context,
+	userUUID uuid.UUID,
+) ([]database.Paper, error) {
+	query := s.db.Rebind(`
+    SELECT uuid, title, number, filename, owner_uuid
+    FROM papers
+    WHERE (owner_uuid = ?);
+  `)
+
+	var papers []database.Paper
+	err := s.db.SelectContext(ctx, &papers, query, userUUID)
+
+	return papers, err
+}
+
 func (s *SqlxDBController) GetPaper(
 	ctx context.Context,
 	uuid uuid.UUID,

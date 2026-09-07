@@ -13,7 +13,7 @@ templ profilePage() {
 	<div class="flex min-h-screen flex-col">
 		@navBar(provider.SiteName, "profile")
 		<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6">
-			<h1 class="text-center font-serif text-4xl font-semibold text-stone-900">My Profile</h1>
+			<h1 id="profile-title" class="text-center font-serif text-4xl font-semibold text-stone-900">My Profile</h1>
 			<div id="profile-loading" class="mt-8 text-center text-sm text-stone-500">Loading your profile...</div>
 			<div id="profile-error" class="mt-8 hidden text-center text-sm text-red-600"></div>
 			<div
@@ -45,8 +45,8 @@ templ profilePage() {
 						</dd>
 					</div>
 				</dl>
-				@myPapers()
 			</div>
+			@myPapers()
 			<button
 				id="profile-logout"
 				type="button"
@@ -133,6 +133,7 @@ logoutBtn.addEventListener('click', function() {
 
 					if (!uuid) {
 						loading.textContent = 'Please sign in to view your profile.';
+						document.getElementById('my-papers-box').classList.add('hidden');
 						return;
 					}
 					fetch('/api/v1/user?uuid=' + encodeURIComponent(uuid))
@@ -148,10 +149,66 @@ logoutBtn.addEventListener('click', function() {
 							document.getElementById('profile-email').textContent = user.email;
 							document.getElementById('profile-role').textContent = user.role ? user.role.role : 'Unknown';
 							renderSubscription(user.subscribed);
+							document.getElementById('profile-title').textContent = user.name;
 							loading.classList.add('hidden');
 							errorEl.classList.add('hidden');
 							card.classList.remove('hidden');
 							logoutBtn.classList.remove('hidden');
+
+							var jwt = getFirebaseJwt();
+							var papersBox = document.getElementById('my-papers-box');
+							if (jwt) {
+								papersBox.classList.remove('hidden');
+								fetch('/api/v1/user/papers?uuid=' + encodeURIComponent(uuid))
+									.then(function(resp) {
+										if (!resp.ok) throw new Error('Failed to load papers');
+										return resp.json();
+									}).then(function(data) {
+									var papers = data.papers || [];
+									var loadingEl = document.getElementById('my-papers-loading');
+									var emptyEl = document.getElementById('my-papers-empty');
+									var listEl = document.getElementById('my-papers-list');
+									loadingEl.classList.add('hidden');
+									if (papers.length === 0) {
+										emptyEl.classList.remove('hidden');
+										return;
+									}
+									papers.forEach(function(paper) {
+										var li = document.createElement('li');
+										var a = document.createElement('a');
+										a.href = '/paper?uuid=' + encodeURIComponent(paper.uuid);
+										a.className = 'flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 rounded hover:bg-stone-100/50';
+										var left = document.createElement('div');
+										if (paper.number != null) {
+											var num = document.createElement('span');
+											num.className = 'mr-2 font-mono text-xs text-amber-800';
+											num.textContent = '#' + paper.number;
+											left.appendChild(num);
+										}
+										var title = document.createElement('span');
+										title.className = 'font-medium text-stone-900';
+										title.textContent = paper.title;
+										left.appendChild(title);
+										a.appendChild(left);
+										if (paper.filename) {
+											var fname = document.createElement('span');
+											fname.className = 'shrink-0 text-sm text-stone-500';
+											fname.textContent = paper.filename;
+											a.appendChild(fname);
+										}
+										li.appendChild(a);
+										listEl.appendChild(li);
+									});
+									listEl.classList.remove('hidden');
+								}).catch(function(err) {
+									document.getElementById('my-papers-loading').classList.add('hidden');
+									var errEl = document.getElementById('my-papers-error');
+									errEl.textContent = err.message;
+									errEl.classList.remove('hidden');
+								});
+							} else {
+								papersBox.classList.add('hidden');
+							}
 						})
 						.catch(function(err) {
 							loading.classList.add('hidden');
