@@ -13,7 +13,7 @@ templ profilePage() {
 	<div class="flex min-h-screen flex-col">
 		@navBar(provider.SiteName, "profile")
 		<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6">
-			<h1 class="text-center font-serif text-4xl font-semibold text-stone-900">My Profile</h1>
+			<h1 id="profile-title" class="text-center font-serif text-4xl font-semibold text-stone-900">My Profile</h1>
 			<div id="profile-loading" class="mt-8 text-center text-sm text-stone-500">Loading your profile...</div>
 			<div id="profile-error" class="mt-8 hidden text-center text-sm text-red-600"></div>
 			<div
@@ -149,6 +149,7 @@ logoutBtn.addEventListener('click', function() {
 							document.getElementById('profile-email').textContent = user.email;
 							document.getElementById('profile-role').textContent = user.role ? user.role.role : 'Unknown';
 							renderSubscription(user.subscribed);
+							document.getElementById('profile-title').textContent = user.name;
 							loading.classList.add('hidden');
 							errorEl.classList.add('hidden');
 							card.classList.remove('hidden');
@@ -158,12 +159,11 @@ logoutBtn.addEventListener('click', function() {
 							var papersBox = document.getElementById('my-papers-box');
 							if (jwt) {
 								papersBox.classList.remove('hidden');
-								fetch('/api/v1/papers', {
-									headers: { 'Authorization': 'Bearer ' + jwt }
-								}).then(function(resp) {
-									if (!resp.ok) throw new Error('Failed to load papers');
-									return resp.json();
-								}).then(function(data) {
+								fetch('/api/v1/user/papers?uuid=' + encodeURIComponent(uuid))
+									.then(function(resp) {
+										if (!resp.ok) throw new Error('Failed to load papers');
+										return resp.json();
+									}).then(function(data) {
 									var papers = data.papers || [];
 									var loadingEl = document.getElementById('my-papers-loading');
 									var emptyEl = document.getElementById('my-papers-empty');

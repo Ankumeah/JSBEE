@@ -48,4 +48,43 @@ func user(r *gin.RouterGroup, app *a.App) {
 			return
 		}
 	})
+
+	// This route returns all papers of a user
+	group.GET("/papers", func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		unparsedUserUUID := c.Query("uuid")
+		userEmail := c.Query("email")
+
+		var userUUID uuid.UUID
+
+		if unparsedUserUUID != "" {
+			var err error
+			userUUID, err = uuid.Parse(unparsedUserUUID)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID"})
+				return
+			}
+		} else if userEmail != "" {
+			user, err := app.DBController.GetUserByEmail(ctx, userEmail)
+			if !handleError(c, err) {
+				return
+			}
+
+			userUUID = user.UUID
+		} else {
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{"error": "Must provider either user uuid or email"},
+			)
+			return
+		}
+
+		papers, err := app.DBController.GetUserPapers(ctx, userUUID)
+		if !handleError(c, err) {
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"papers": papers})
+	})
 }

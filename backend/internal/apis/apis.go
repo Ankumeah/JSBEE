@@ -10,6 +10,5 @@ func Apis(r *gin.RouterGroup, app *a.App) {
 	ping(r)
 	account(r, app)
 	user(r, app)
-	papers(r, app)
 	paper(r, app)
 }
