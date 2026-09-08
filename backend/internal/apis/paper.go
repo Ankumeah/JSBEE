@@ -18,8 +18,8 @@ import (
 func paper(r *gin.RouterGroup, app *a.App) {
 	group := r.Group("/paper")
 
-	group.POST("",
-		middlewares.FireBaseAuthMiddleware(app),
+	// This route adds a new paper
+	group.POST("", middlewares.FireBaseAuthMiddleware(app),
 		func(c *gin.Context) {
 			ctx := c.Request.Context()
 
@@ -83,6 +83,7 @@ func paper(r *gin.RouterGroup, app *a.App) {
 		},
 	)
 
+	// This route returns the details of a paper
 	group.GET("/:paperUUID", func(c *gin.Context) {
 		ctx := c.Request.Context()
 

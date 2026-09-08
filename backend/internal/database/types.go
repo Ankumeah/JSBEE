@@ -76,12 +76,22 @@ type DBController interface {
 	//   - Errors by the underlying DB
 	GetUserPapers(ctx context.Context, userUUID uuid.UUID) ([]Paper, error)
 
-	// Updates a paper to max + 1 number and max volume and issue
+	// Updates a paper to max + 1 number and max volume and issue.
+	// This is safe to run on an already approved paper
 	//
 	// May return the following errors:
 	//   - `database.ErrInvalidPaper`
 	//   - Errors by the underlying DB
 	ApprovePaper(ctx context.Context, uuid uuid.UUID) error
+
+	// Deletes a paper if it is unapproved.
+	// In case the paper trying to be deleted is approved,
+	// `database.ErrInvalidPaper` is returned
+	//
+	// May return the following errors:
+	//   - `database.ErrInvalidPaper`
+	//   - Errors by the underlying DB
+	RejectPaper(ctx context.Context, paperUUID uuid.UUID) error
 
 	// Get all volumes
 	//

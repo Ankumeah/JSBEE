@@ -1,0 +1,228 @@
+package components
+
+import (
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
+)
+
+var reviewInfo = pageInfo{
+	title:       "Review",
+	description: "Review dashboard for unapproved papers",
+}
+
+templ reviewPage() {
+	<div class="flex min-h-screen flex-col">
+		@navBar(provider.SiteName, "")
+		<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6">
+			<h1 class="text-center font-serif text-4xl font-semibold text-stone-900">Review dashboard</h1>
+			<div id="review-loading" class="mt-8 text-center text-sm text-stone-500">Loading unapproved papers...</div>
+			<div id="review-error" class="mt-8 hidden text-center text-sm text-red-600"></div>
+			<div
+				id="review-card"
+				class="mt-8 hidden rounded-xl border border-stone-200 bg-white/50 p-6 shadow-sm"
+			>
+				<div id="review-empty" class="hidden text-sm text-stone-500">
+					There are no unapproved papers right now.
+				</div>
+				<ul id="review-list" class="hidden divide-y divide-stone-100"></ul>
+			</div>
+			<a
+				id="review-back-link"
+				href="/profile"
+				class="mt-8 inline-block rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+			>
+				Back to profile
+			</a>
+		</main>
+		@siteFooter(provider.SiteName)
+		<span class="hidden flex min-w-0 flex-col gap-1 rounded hover:bg-stone-100/50 truncate font-medium text-stone-900 shrink-0 text-sm text-stone-500 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700 bg-red-600 hover:bg-red-700 flex items-center gap-2 flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6"></span>
+		<script>
+			(function() {
+				function initReview() {
+					var token = getFirebaseJwt();
+					var loading = document.getElementById('review-loading');
+					var errorEl = document.getElementById('review-error');
+					var card = document.getElementById('review-card');
+					var emptyEl = document.getElementById('review-empty');
+					var listEl = document.getElementById('review-list');
+
+					if (!token) {
+						loading.classList.add('hidden');
+						errorEl.textContent = 'You must be signed in to review papers.';
+						errorEl.classList.remove('hidden');
+						return;
+					}
+
+					fetch('/api/v1/review/papers', {
+						headers: { 'Authorization': 'Bearer ' + token }
+					}).then(function(resp) {
+						if (resp.status === 403) {
+							throw new Error('You are not allowed to review papers');
+						}
+						if (!resp.ok) {
+							throw new Error('Failed to load papers');
+						}
+						return resp.json();
+					}).then(function(data) {
+						var papers = data.papers || [];
+						loading.classList.add('hidden');
+						errorEl.classList.add('hidden');
+						if (papers.length === 0) {
+							card.classList.remove('hidden');
+							emptyEl.classList.remove('hidden');
+							return;
+						}
+						papers.forEach(function(paper) {
+							var li = document.createElement('li');
+							li.className = 'flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6';
+
+							var a = document.createElement('a');
+							a.href = '/paper?uuid=' + encodeURIComponent(paper.uuid) + '&from=review';
+							a.className = 'flex min-w-0 flex-col gap-1 rounded hover:bg-stone-100/50';
+							var title = document.createElement('span');
+							title.className = 'truncate font-medium text-stone-900';
+							title.textContent = paper.title;
+							a.appendChild(title);
+							if (paper.filename) {
+								var fname = document.createElement('span');
+								fname.className = 'shrink-0 text-sm text-stone-500';
+								fname.textContent = paper.filename;
+								a.appendChild(fname);
+							}
+							li.appendChild(a);
+
+							var actions = document.createElement('div');
+							actions.className = 'flex shrink-0 items-center gap-2';
+
+							var approveBtn = document.createElement('button');
+							approveBtn.type = 'button';
+							approveBtn.textContent = 'Approve';
+							approveBtn.className = 'shrink-0 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700';
+							approveBtn.addEventListener('click', function() {
+								confirmApprove(paper, li);
+							});
+							actions.appendChild(approveBtn);
+
+							var rejectBtn = document.createElement('button');
+							rejectBtn.type = 'button';
+							rejectBtn.textContent = 'Reject';
+							rejectBtn.className = 'shrink-0 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700';
+							rejectBtn.addEventListener('click', function() {
+								confirmReject(paper, li);
+							});
+							actions.appendChild(rejectBtn);
+
+							li.appendChild(actions);
+
+							listEl.appendChild(li);
+						});
+						card.classList.remove('hidden');
+						listEl.classList.remove('hidden');
+					}).catch(function(err) {
+						loading.classList.add('hidden');
+						errorEl.textContent = err.message;
+						errorEl.classList.remove('hidden');
+					});
+				}
+
+				function confirmApprove(paper, row) {
+					showToastWithActions('Approve "' + paper.title + '"?', [
+						{
+							label: 'Cancel',
+							pressed: function() {
+								hideToast();
+							}
+						},
+						{
+							label: 'Approve',
+							pressed: function() {
+								hideToast();
+								doApprove(paper, row);
+							}
+						}
+					]);
+				}
+
+				function doApprove(paper, row) {
+					var token = getFirebaseJwt();
+					if (!token) {
+						showToast('Not signed in');
+						return;
+					}
+					fetch('/api/v1/review/approve/' + encodeURIComponent(paper.uuid), {
+						method: 'PATCH',
+						headers: { 'Authorization': 'Bearer ' + token }
+					}).then(function(resp) {
+						if (!resp.ok) {
+							throw new Error('Failed to approve paper');
+						}
+						row.remove();
+						var listEl = document.getElementById('review-list');
+						var emptyEl = document.getElementById('review-empty');
+						if (listEl.children.length === 0) {
+							listEl.classList.add('hidden');
+							emptyEl.classList.remove('hidden');
+						}
+						showToast('Paper approved');
+					}).catch(function(err) {
+						showToast('Approve failed: ' + err.message);
+					});
+				}
+
+				function confirmReject(paper, row) {
+					showToastWithActions('Reject "' + paper.title + '"?', [
+						{
+							label: 'Cancel',
+							pressed: function() {
+								hideToast();
+							}
+						},
+						{
+							label: 'Reject',
+							danger: true,
+							pressed: function() {
+								hideToast();
+								doReject(paper, row);
+							}
+						}
+					]);
+				}
+
+				function doReject(paper, row) {
+					var token = getFirebaseJwt();
+					if (!token) {
+						showToast('Not signed in');
+						return;
+					}
+					fetch('/api/v1/review/reject/' + encodeURIComponent(paper.uuid), {
+						method: 'DELETE',
+						headers: { 'Authorization': 'Bearer ' + token }
+					}).then(function(resp) {
+						if (!resp.ok) {
+							throw new Error('Failed to reject paper');
+						}
+						row.remove();
+						var listEl = document.getElementById('review-list');
+						var emptyEl = document.getElementById('review-empty');
+						if (listEl.children.length === 0) {
+							listEl.classList.add('hidden');
+							emptyEl.classList.remove('hidden');
+						}
+						showToast('Paper rejected');
+					}).catch(function(err) {
+						showToast('Reject failed: ' + err.message);
+					});
+				}
+
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', initReview);
+				} else {
+					initReview();
+				}
+			})();
+		</script>
+	</div>
+}
+
+templ ReviewDashboardPage(firebaseClientConfig string) {
+	@base(reviewInfo, reviewPage(), firebaseClientConfig)
+}

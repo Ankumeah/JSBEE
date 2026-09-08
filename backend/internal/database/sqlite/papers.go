@@ -31,34 +31,6 @@ func (s *SqlxDBController) AddPaper(
 	return nil
 }
 
-func (s *SqlxDBController) ApprovePaper(
-	ctx context.Context,
-	uuid uuid.UUID,
-) error {
-	query := s.db.Rebind(`
-    UPDATE papers
-    SET
-      number = (SELECT COALESCE(MAX(number), 0) FROM papers) + 1,
-      volume = (SELECT volume FROM state),
-      issue = (SELECT issue FROM state)
-    WHERE (uuid = ?);
-  `)
-
-	res, err := s.db.ExecContext(ctx, query, uuid)
-	if err != nil {
-		return err
-	}
-
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	} else if affected < 1 {
-		return database.ErrInvalidPaper
-	}
-
-	return nil
-}
-
 func (s *SqlxDBController) GetUserPapers(
 	ctx context.Context,
 	userUUID uuid.UUID,
