@@ -116,32 +116,6 @@ templ indexPage() {
 					var uploadForm = document.getElementById('publish-upload');
 					var statusEl = document.getElementById('publish-status');
 
-					function ensureSignedIn() {
-						var jwt = getFirebaseJwt();
-						if (jwt) {
-							return Promise.resolve(jwt);
-						}
-						return firebaseSignIn().then(function(idToken) {
-							return fetch('/api/v1/account', {
-								method: 'POST',
-								headers: { 'Authorization': 'Bearer ' + idToken }
-							}).then(function(resp) {
-								if (resp.status === 201 || resp.status === 400) {
-									return resp.json().then(function(data) {
-										if (data && data.uuid) {
-											setFirebaseUuid(data.uuid);
-										}
-										return firebaseRefreshToken();
-									});
-								}
-								throw new Error('Backend registration failed');
-							}).then(function(refreshedToken) {
-								setFirebaseJwt(refreshedToken);
-								return refreshedToken;
-							});
-						});
-					}
-
 					startBtn.addEventListener('click', function() {
 						startBtn.disabled = true;
 						startBtn.textContent = 'Signing in...';
@@ -149,9 +123,10 @@ templ indexPage() {
 							startBtn.classList.add('hidden');
 							formEl.classList.remove('hidden');
 						}).catch(function(err) {
-							if (err.code !== 'auth/popup-closed-by-user') {
-								showToast('Sign in failed: ' + err.message);
+							if (err && err.code === 'auth/popup-closed-by-user') {
+								return;
 							}
+							showAuthFailedToast('Sign in failed: ' + err.message);
 						}).finally(function() {
 							startBtn.disabled = false;
 							startBtn.textContent = 'Start publishing';
@@ -160,11 +135,6 @@ templ indexPage() {
 
 					uploadForm.addEventListener('submit', function(event) {
 						event.preventDefault();
-						var jwt = getFirebaseJwt();
-						if (!jwt) {
-							showToast('Not signed in');
-							return;
-						}
 						var title = document.getElementById('publish-title').value.trim();
 						var fileInput = document.getElementById('publish-file');
 						if (!title) {
@@ -175,8 +145,12 @@ templ indexPage() {
 							showToast('Please choose a PDF file');
 							return;
 						}
-						if (fileInput.files[0].type !== 'application/pdf') {
+						if (fileInput.files[0].type !== 'application/pdf' && !/\.pdf$/i.test(fileInput.files[0].name)) {
 							showToast('Please choose a PDF file');
+							return;
+						}
+						if (fileInput.files[0].size > 100 * 1024 * 1024) {
+							showToast('File too large, max size is 100 MiB');
 							return;
 						}
 
@@ -185,9 +159,8 @@ templ indexPage() {
 						formData.append('file', fileInput.files[0]);
 
 						statusEl.textContent = 'Uploading...';
-						fetch('/api/v1/paper', {
+						authFetch('/api/v1/paper', {
 							method: 'POST',
-							headers: { 'Authorization': 'Bearer ' + jwt },
 							body: formData
 						}).then(function(resp) {
 							if (resp.status === 201) {
@@ -204,6 +177,11 @@ templ indexPage() {
 								throw new Error(message || 'Upload failed (HTTP ' + resp.status + ')');
 							});
 						}).catch(function(err) {
+							if (isSessionExpiredError(err)) {
+								statusEl.textContent = 'Session expired, please sign in again';
+								handleSessionExpired();
+								return;
+							}
 							statusEl.textContent = 'Upload failed: ' + err.message;
 						});
 					});

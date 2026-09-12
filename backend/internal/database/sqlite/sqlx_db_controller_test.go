@@ -8,6 +8,7 @@ import (
 
 	"context"
 	"errors"
+	"slices"
 	"testing"
 	"uuid"
 )
@@ -165,11 +166,39 @@ func TestPapers(t *testing.T) {
 		t.Fatalf("Error while approveing paper: %v\n", err.Error())
 	}
 
+	// Approving moves the paper to the waiting area but does NOT publish it
 	volumes, err = sqlxDB.GetVolumes(Ctx)
 	if err != nil {
 		t.Fatalf("Error while getting volumes: %v\n", err.Error())
 	}
-	t.Logf("After approval\nExpected volumes: %v\nGot volumes     : %v",
+	if len(volumes) != 0 {
+		t.Fatal("Reviewed paper was published before PublishPapers was called")
+	}
+
+	reviewed, err := sqlxDB.GetReviewedPapers(Ctx)
+	if err != nil {
+		t.Fatalf("Error while getting reviewed papers: %v\n", err.Error())
+	}
+	if len(reviewed) != 1 {
+		t.Fatalf("Expected 1 reviewed paper, got %v\n", len(reviewed))
+	}
+	if !reviewed[0].Reviewed {
+		t.Fatal("Reviewed paper has reviewed=false")
+	}
+
+	count, err := sqlxDB.PublishPapers(Ctx)
+	if err != nil {
+		t.Fatalf("Error while publishing papers: %v\n", err.Error())
+	}
+	if count != 1 {
+		t.Fatalf("Expected to publish 1 paper, got %v\n", count)
+	}
+
+	volumes, err = sqlxDB.GetVolumes(Ctx)
+	if err != nil {
+		t.Fatalf("Error while getting volumes: %v\n", err.Error())
+	}
+	t.Logf("After publishing\nExpected volumes: %v\nGot volumes     : %v",
 		expectedResult, volumes,
 	)
 
@@ -185,16 +214,112 @@ func TestPapers(t *testing.T) {
 	issue := volume.Issues[0]
 	gotPaper := issue.Papers[0]
 
-	if volume.Number != expectedResult.Number ||
-		issue.Number != expectedResult.Issues[0].Number ||
-		gotPaper.Number != expectedResult.Issues[0].Papers[0].Number {
-		t.Log("Incorrent numbering")
-	}
-
 	if gotPaper.UUID != paper.UUID ||
 		gotPaper.Title != paper.Title ||
 		gotPaper.Filename != paper.Filename ||
 		gotPaper.OwnerUUID != paper.OwnerUUID {
 		t.Log("Papers dont match")
+	}
+}
+
+func TestPublishPapersSingleQuery(t *testing.T) {
+	db, err := database.GetDBConnection(Ctx, "file::memory:", sqlite.DriverName)
+	if err != nil {
+		t.Fatalf("Error while getting DB connection: %v\n", err.Error())
+	}
+	defer db.Close()
+
+	if err := migrations.ApplyMigrations(Ctx, db); err != nil {
+		t.Fatalf("Error while applying migrations: %v\n", err.Error())
+	}
+
+	sqlxDB := sqlite.GetSqlxDBController(db)
+
+	user := database.User{
+		UUID:       uuid.New(),
+		Name:       "test",
+		Email:      "test@test.test",
+		Role:       roles.Reviewer,
+		Subscribed: true,
+	}
+	if err := sqlxDB.AddUser(Ctx, user); err != nil {
+		t.Fatalf("Error while adding user: %v\n", err.Error())
+	}
+
+	// Add 3 papers, approve all so they land in the waiting area
+	for i := 0; i < 3; i++ {
+		p := database.Paper{
+			UUID:      uuid.New(),
+			Title:     "Test" + string(rune('A'+i)),
+			Number:    nil,
+			Filename:  "test" + string(rune('0'+i)) + ".pdf",
+			OwnerUUID: &user.UUID,
+		}
+		if err := sqlxDB.AddPaper(Ctx, p); err != nil {
+			t.Fatalf("Error while adding paper: %v\n", err.Error())
+		}
+		if err := sqlxDB.ApprovePaper(Ctx, p.UUID); err != nil {
+			t.Fatalf("Error while approving paper: %v\n", err.Error())
+		}
+	}
+
+	// Publish the 3 waiting papers in ONE query, numbers should be 1,2,3
+	count, err := sqlxDB.PublishPapers(Ctx)
+	if err != nil {
+		t.Fatalf("Error while publishing papers: %v\n", err.Error())
+	}
+	if count != 3 {
+		t.Fatalf("Expected to publish 3 papers, got %v\n", count)
+	}
+
+	// Add a 4th paper, approve it, publish again — it should get number 4
+	extra := database.Paper{
+		UUID:      uuid.New(),
+		Title:     "Extra",
+		Number:    nil,
+		Filename:  "extra.pdf",
+		OwnerUUID: &user.UUID,
+	}
+	if err := sqlxDB.AddPaper(Ctx, extra); err != nil {
+		t.Fatalf("Error while adding extra paper: %v\n", err.Error())
+	}
+	if err := sqlxDB.ApprovePaper(Ctx, extra.UUID); err != nil {
+		t.Fatalf("Error while approving extra paper: %v\n", err.Error())
+	}
+	count, err = sqlxDB.PublishPapers(Ctx)
+	if err != nil {
+		t.Fatalf("Error while publishing extra paper: %v\n", err.Error())
+	}
+	if count != 1 {
+		t.Fatalf("Expected to publish 1 extra paper, got %v\n", count)
+	}
+
+	// Publishing again should publish 0 (waiting area is empty)
+	count, err = sqlxDB.PublishPapers(Ctx)
+	if err != nil {
+		t.Fatalf("Error while publishing papers again: %v\n", err.Error())
+	}
+	if count != 0 {
+		t.Fatalf("Expected 0 second publish, got %v\n", count)
+	}
+
+	papers, err := sqlxDB.GetUserPapers(Ctx, user.UUID)
+	if err != nil {
+		t.Fatalf("Error while getting user papers: %v\n", err.Error())
+	}
+	var numbers []uint64
+	for _, p := range papers {
+		if p.Number != nil {
+			numbers = append(numbers, *p.Number)
+		} else {
+			t.Fatal("Expected all papers to have numbers")
+		}
+	}
+
+	// Papers sorted? GetUserPapers has no ORDER BY so sort manually
+	slices.Sort(numbers)
+	expected := []uint64{1, 2, 3, 4}
+	if !slices.Equal(numbers, expected) {
+		t.Fatalf("Expected numbers %v, got %v\n", expected, numbers)
 	}
 }

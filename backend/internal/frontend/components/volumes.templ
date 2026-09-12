@@ -2,6 +2,7 @@ package components
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -28,7 +29,7 @@ templ paperItem(paper database.Paper) {
 		</div>
 		if paper.Filename != "" {
 			<a
-				href={ templ.SafeURL("/" + paper.Filename) }
+				href={ templ.SafeURL("/" + url.PathEscape(paper.Filename)) }
 				class="shrink-0 text-sm font-medium text-emerald-800 hover:underline"
 			>
 				{ paper.Filename }

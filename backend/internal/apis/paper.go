@@ -41,12 +41,11 @@ func paper(r *gin.RouterGroup, app *a.App) {
 			defer file.Close()
 
 			buf := bytes.NewBuffer(nil)
-			_, err = io.Copy(buf, file)
+			size, err := io.Copy(buf, io.LimitReader(file, maxPaperSize+1))
 			if !handleError(c, err) {
 				return
 			}
 
-			size := int64(buf.Len())
 			if size <= 0 {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Empty file"})
 				return

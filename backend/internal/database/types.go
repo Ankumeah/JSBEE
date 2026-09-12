@@ -102,11 +102,24 @@ type DBController interface {
 	//   - Errors by the underlying DB
 	GetVolumes(ctx context.Context) ([]Volume, error)
 
-	// Get all unapproved papers
+	// Get all unapproved papers (not yet reviewed)
 	//
 	// May return the following errors:
 	//   - Errors by the underlying DB
 	GetUnapprovedPapers(ctx context.Context) ([]Paper, error)
+
+	// Get all reviewed papers waiting to be published
+	//
+	// May return the following errors:
+	//   - Errors by the underlying DB
+	GetReviewedPapers(ctx context.Context) ([]Paper, error)
+
+	// Publish all reviewed papers by assigning numbers and
+	// current volume/issue from state. Returns the count of published papers.
+	//
+	// May return the following errors:
+	//   - Errors by the underlying DB
+	PublishPapers(ctx context.Context) (int64, error)
 
 	// Increment state.volume by 1
 	//
@@ -119,6 +132,13 @@ type DBController interface {
 	// May return the following errors:
 	//   - Errors by the underlying DB
 	IncrementIssue(ctx context.Context) error
+
+	// Changes the role of the given user
+	//
+	// May return the following errors:
+	//   - `database.ErrInvalidUser`
+	//   - Errors from the underlying DB
+	ChangeRole(ctx context.Context, userUUID uuid.UUID, newRole roles.Role) error
 }
 
 type User struct {
@@ -135,6 +155,7 @@ type Paper struct {
 	Number    *uint64    `json:"number" binding:"required" db:"number"`
 	Filename  string     `json:"filename" binding:"required" db:"filename"`
 	OwnerUUID *uuid.UUID `json:"owner_uuid" binding:"required" db:"owner_uuid"`
+	Reviewed  bool       `json:"reviewed" binding:"required" db:"reviewed"`
 }
 
 type Issue struct {

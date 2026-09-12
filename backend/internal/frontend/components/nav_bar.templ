@@ -52,35 +52,18 @@ templ navBar(siteName string, current string) {
 							type="button"
 							class={ "hover:text-emerald-900", templ.KV("text-emerald-900 underline decoration-amber-700 decoration-2 underline-offset-8", current == "profile") }
 							onclick="
-								var jwt = getFirebaseJwt();
-								if (jwt) {
-									window.location.href = '/profile';
-								} else {
-									firebaseSignIn().then(function(idToken) {
-										return fetch('/api/v1/account', {
-											method: 'POST',
-											headers: { 'Authorization': 'Bearer ' + idToken }
-										}).then(function(resp) {
-											if (resp.status === 201 || resp.status === 400) {
-												return resp.json().then(function(data) {
-													if (data && data.uuid) {
-														setFirebaseUuid(data.uuid);
-													}
-													return firebaseRefreshToken();
-												});
-											}
-											throw new Error('Backend registration failed');
-										});
-									}).then(function(refreshedToken) {
-										setFirebaseJwt(refreshedToken);
+								var fresh = !getFirebaseUuid();
+								ensureSignedIn().then(function() {
+									if (fresh) {
 										localStorage.setItem('jsbee_welcome', '1');
-										window.location.href = '/profile';
-									}).catch(function(err) {
-										if (err.code !== 'auth/popup-closed-by-user') {
-											showToast('Sign in failed: ' + err.message);
-										}
-									});
-								}
+									}
+									window.location.href = '/profile';
+								}).catch(function(err) {
+									if (err && err.code === 'auth/popup-closed-by-user') {
+										return;
+									}
+									showAuthFailedToast('Sign in failed: ' + err.message);
+								});
 							"
 						>
 							My Profile
@@ -116,35 +99,18 @@ templ navBar(siteName string, current string) {
 							type="button"
 							class={ "block w-full rounded px-2 py-2 text-left hover:bg-stone-100", templ.KV("text-emerald-900 font-semibold", current == "profile") }
 							onclick="
-								var jwt = getFirebaseJwt();
-								if (jwt) {
-									window.location.href = '/profile';
-								} else {
-									firebaseSignIn().then(function(idToken) {
-										return fetch('/api/v1/account', {
-											method: 'POST',
-											headers: { 'Authorization': 'Bearer ' + idToken }
-										}).then(function(resp) {
-											if (resp.status === 201 || resp.status === 400) {
-												return resp.json().then(function(data) {
-													if (data && data.uuid) {
-														setFirebaseUuid(data.uuid);
-													}
-													return firebaseRefreshToken();
-												});
-											}
-											throw new Error('Backend registration failed');
-										});
-									}).then(function(refreshedToken) {
-										setFirebaseJwt(refreshedToken);
+								var fresh = !getFirebaseUuid();
+								ensureSignedIn().then(function() {
+									if (fresh) {
 										localStorage.setItem('jsbee_welcome', '1');
-										window.location.href = '/profile';
-									}).catch(function(err) {
-										if (err.code !== 'auth/popup-closed-by-user') {
-											showToast('Sign in failed: ' + err.message);
-										}
-									});
-								}
+									}
+									window.location.href = '/profile';
+								}).catch(function(err) {
+									if (err && err.code === 'auth/popup-closed-by-user') {
+										return;
+									}
+									showAuthFailedToast('Sign in failed: ' + err.message);
+								});
 							"
 						>
 							My Profile

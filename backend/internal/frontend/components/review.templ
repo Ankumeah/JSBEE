@@ -38,29 +38,31 @@ templ reviewPage() {
 		<script>
 			(function() {
 				function initReview() {
-					var token = getFirebaseJwt();
 					var loading = document.getElementById('review-loading');
 					var errorEl = document.getElementById('review-error');
 					var card = document.getElementById('review-card');
 					var emptyEl = document.getElementById('review-empty');
 					var listEl = document.getElementById('review-list');
 
+					waitForAuthUser().then(function(user) {
+					if (!user) {
+						loading.classList.add('hidden');
+						errorEl.textContent = 'You must be signed in to review papers.';
+						errorEl.classList.remove('hidden');
+						return;
+					}
+					getValidToken().then(function(token) {
 					if (!token) {
 						loading.classList.add('hidden');
 						errorEl.textContent = 'You must be signed in to review papers.';
 						errorEl.classList.remove('hidden');
 						return;
 					}
-
-					fetch('/api/v1/review/papers', {
+					return fetch('/api/v1/review/papers', {
 						headers: { 'Authorization': 'Bearer ' + token }
 					}).then(function(resp) {
-						if (resp.status === 403) {
-							throw new Error('You are not allowed to review papers');
-						}
-						if (!resp.ok) {
-							throw new Error('Failed to load papers');
-						}
+						return checkApiResponse(resp, 'Failed to load papers');
+					}).then(function(resp) {
 						return resp.json();
 					}).then(function(data) {
 						var papers = data.papers || [];
@@ -119,8 +121,25 @@ templ reviewPage() {
 						listEl.classList.remove('hidden');
 					}).catch(function(err) {
 						loading.classList.add('hidden');
+						if (isSessionExpiredError(err)) {
+							errorEl.textContent = 'Session expired, please sign in again.';
+							errorEl.classList.remove('hidden');
+							handleSessionExpired();
+							return;
+						}
+						if (err && err.status === 403) {
+							errorEl.textContent = 'You are not allowed to review papers.';
+							errorEl.classList.remove('hidden');
+							return;
+						}
 						errorEl.textContent = err.message;
 						errorEl.classList.remove('hidden');
+					});
+					}).catch(function(err) {
+						loading.classList.add('hidden');
+						errorEl.textContent = err.message;
+						errorEl.classList.remove('hidden');
+					});
 					});
 				}
 
@@ -143,18 +162,11 @@ templ reviewPage() {
 				}
 
 				function doApprove(paper, row) {
-					var token = getFirebaseJwt();
-					if (!token) {
-						showToast('Not signed in');
-						return;
-					}
-					fetch('/api/v1/review/approve/' + encodeURIComponent(paper.uuid), {
-						method: 'PATCH',
-						headers: { 'Authorization': 'Bearer ' + token }
+					authFetch('/api/v1/review/approve/' + encodeURIComponent(paper.uuid), {
+						method: 'PATCH'
 					}).then(function(resp) {
-						if (!resp.ok) {
-							throw new Error('Failed to approve paper');
-						}
+						return checkApiResponse(resp, 'Failed to approve paper');
+					}).then(function() {
 						row.remove();
 						var listEl = document.getElementById('review-list');
 						var emptyEl = document.getElementById('review-empty');
@@ -162,8 +174,12 @@ templ reviewPage() {
 							listEl.classList.add('hidden');
 							emptyEl.classList.remove('hidden');
 						}
-						showToast('Paper approved');
+						showToast('Paper reviewed');
 					}).catch(function(err) {
+						if (isSessionExpiredError(err)) {
+							handleSessionExpired();
+							return;
+						}
 						showToast('Approve failed: ' + err.message);
 					});
 				}
@@ -188,18 +204,11 @@ templ reviewPage() {
 				}
 
 				function doReject(paper, row) {
-					var token = getFirebaseJwt();
-					if (!token) {
-						showToast('Not signed in');
-						return;
-					}
-					fetch('/api/v1/review/reject/' + encodeURIComponent(paper.uuid), {
-						method: 'DELETE',
-						headers: { 'Authorization': 'Bearer ' + token }
+					authFetch('/api/v1/review/reject/' + encodeURIComponent(paper.uuid), {
+						method: 'DELETE'
 					}).then(function(resp) {
-						if (!resp.ok) {
-							throw new Error('Failed to reject paper');
-						}
+						return checkApiResponse(resp, 'Failed to reject paper');
+					}).then(function() {
 						row.remove();
 						var listEl = document.getElementById('review-list');
 						var emptyEl = document.getElementById('review-empty');
@@ -209,6 +218,10 @@ templ reviewPage() {
 						}
 						showToast('Paper rejected');
 					}).catch(function(err) {
+						if (isSessionExpiredError(err)) {
+							handleSessionExpired();
+							return;
+						}
 						showToast('Reject failed: ' + err.message);
 					});
 				}

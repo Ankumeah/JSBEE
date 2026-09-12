@@ -36,7 +36,7 @@ func (s *SqlxDBController) GetUserPapers(
 	userUUID uuid.UUID,
 ) ([]database.Paper, error) {
 	query := s.db.Rebind(`
-    SELECT uuid, title, number, filename, owner_uuid
+    SELECT uuid, title, number, filename, owner_uuid, reviewed
     FROM papers
     WHERE (owner_uuid = ?);
   `)
@@ -52,7 +52,7 @@ func (s *SqlxDBController) GetPaper(
 	uuid uuid.UUID,
 ) (database.Paper, error) {
 	query := s.db.Rebind(`
-    SELECT uuid, title, number, filename, owner_uuid
+    SELECT uuid, title, number, filename, owner_uuid, reviewed
     FROM papers
     WHERE (uuid = ?);
   `)
@@ -70,7 +70,7 @@ func (s *SqlxDBController) GetVolumes(
 	ctx context.Context,
 ) ([]database.Volume, error) {
 	query := `
-    SELECT title, number, filename, volume, issue, uuid, owner_uuid
+    SELECT title, number, filename, volume, issue, uuid, owner_uuid, reviewed
     FROM papers
     WHERE (number IS NOT NULL)
     ORDER BY volume, issue, number;
@@ -90,7 +90,7 @@ func (s *SqlxDBController) GetVolumes(
 
 		if err := rows.Scan(
 			&paper.Title, &paper.Number, &paper.Filename,
-			&volume, &issue, &paper.UUID, &paper.OwnerUUID,
+			&volume, &issue, &paper.UUID, &paper.OwnerUUID, &paper.Reviewed,
 		); err != nil {
 			return nil, err
 		}
