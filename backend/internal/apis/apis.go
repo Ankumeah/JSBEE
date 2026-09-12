@@ -14,4 +14,5 @@ func Apis(r *gin.RouterGroup, app *a.App) {
 	review(r, app)
 	admin(r, app)
 	blog(r, app)
+	about(r, app)
 }

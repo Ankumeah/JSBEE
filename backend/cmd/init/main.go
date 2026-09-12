@@ -27,6 +27,7 @@ func main() {
 	wg.Go(func() {
 		connectObjectStore(Ctx, app)
 		initObjectStore(Ctx, app)
+		seedAboutPage(Ctx, app)
 	})
 	wg.Wait()
 

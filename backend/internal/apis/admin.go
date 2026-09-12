@@ -4,6 +4,7 @@ import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
 	"github.com/Ankumeah/JSBEE/backend/internal/database"
 	"github.com/Ankumeah/JSBEE/backend/internal/middlewares"
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
 	"github.com/Ankumeah/JSBEE/backend/internal/roles"
 
 	"github.com/gin-gonic/gin"
@@ -360,5 +361,50 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		}
 
 		c.Status(http.StatusNoContent)
+	})
+
+	group.PUT("/about", func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		var body struct {
+			Content string `json:"content"`
+		}
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{"error": "Must provide content"},
+			)
+			return
+		}
+		if len(body.Content) == 0 {
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{"error": "Content is required"},
+			)
+			return
+		}
+		if int64(len(body.Content)) > maxBlogSize {
+			c.JSON(
+				http.StatusRequestEntityTooLarge,
+				gin.H{"error": fmt.Sprintf(
+					"Content too large, max size is %d bytes", maxBlogSize,
+				)},
+			)
+			return
+		}
+
+		buf := bytes.NewBufferString(body.Content)
+		if err := app.ObjectStore.AddFile(
+			ctx, provider.AboutFilename, buf, int64(buf.Len()),
+		); !handleError(c, err) {
+			return
+		}
+		if err := app.ObjectStore.PublicFile(
+			ctx, provider.AboutFilename,
+		); !handleError(c, err) {
+			return
+		}
+
+		c.Status(http.StatusOK)
 	})
 }

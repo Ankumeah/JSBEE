@@ -1,0 +1,58 @@
+package components
+
+import (
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
+)
+
+var aboutInfo = pageInfo{
+	title:       "About us",
+	description: "About us",
+}
+
+templ aboutPage() {
+	<div class="flex min-h-screen flex-col">
+		@navBar(provider.SiteName, "")
+		<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6">
+			<h1 class="text-center font-serif text-4xl font-semibold text-stone-900">About us</h1>
+			<div id="about-loading" class="mt-8 text-center text-sm text-stone-500">Loading...</div>
+			<div id="about-error" class="mt-8 hidden text-center text-sm text-red-600"></div>
+			<article id="about-content" class="blog-content mt-8 hidden"></article>
+		</main>
+		@siteFooter(provider.SiteName)
+		<script>
+			(function() {
+				function initAbout() {
+					var loading = document.getElementById('about-loading');
+					var errorEl = document.getElementById('about-error');
+					var contentEl = document.getElementById('about-content');
+					fetch('/api/v1/about/content')
+						.then(function(resp) {
+							return checkApiResponse(resp, 'Failed to load about page');
+						}).then(function(resp) {
+							return resp.text();
+						}).then(function(md) {
+							if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
+								throw new Error('Markdown renderer failed to load');
+							}
+							contentEl.innerHTML = DOMPurify.sanitize(marked.parse(md || ''));
+							loading.classList.add('hidden');
+							contentEl.classList.remove('hidden');
+						}).catch(function(err) {
+							loading.classList.add('hidden');
+							errorEl.textContent = err.message;
+							errorEl.classList.remove('hidden');
+						});
+				}
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', initAbout);
+				} else {
+					initAbout();
+				}
+			})();
+		</script>
+	</div>
+}
+
+templ AboutPage(firebaseClientConfig string) {
+	@base(aboutInfo, aboutPage(), firebaseClientConfig)
+}

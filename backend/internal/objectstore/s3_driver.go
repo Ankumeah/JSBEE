@@ -122,10 +122,18 @@ func (s s3StaticClient) GetFile(
 	ctx context.Context,
 	filename string,
 ) (io.ReadCloser, error) {
-	return s.client.GetObject(
+	object, err := s.client.GetObject(
 		ctx, publicBucket, filename,
 		minio.GetObjectOptions{},
 	)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := object.Stat(); err != nil {
+		return nil, err
+	}
+
+	return object, nil
 }
 
 func (s s3StaticClient) DeleteFile(

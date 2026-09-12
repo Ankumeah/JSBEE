@@ -6,7 +6,9 @@ import (
 	"github.com/Ankumeah/JSBEE/backend/internal/frontend"
 	"github.com/Ankumeah/JSBEE/backend/internal/frontend/assets"
 	"github.com/Ankumeah/JSBEE/backend/internal/objectstore"
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
 
+	"bytes"
 	"context"
 	"log"
 )
@@ -102,4 +104,29 @@ func initObjectStore(ctx context.Context, app *a.App) {
 	}
 
 	log.Println("Object store initalized")
+}
+
+// Creates the about us page in the object store
+// if it dosent exist yet, exits on any error
+func seedAboutPage(ctx context.Context, app *a.App) {
+	log.Println("Seeding about page")
+
+	content, err := app.ObjectStore.GetFile(ctx, provider.AboutFilename)
+	if err == nil {
+		content.Close()
+		log.Println("About page already exists")
+		return
+	}
+
+	buf := bytes.NewBufferString(provider.AboutSeedContent)
+	if err := app.ObjectStore.AddFile(
+		ctx, provider.AboutFilename, buf, int64(buf.Len()),
+	); err != nil {
+		log.Fatalf("Error while seeding about page: %v\n", err.Error())
+	}
+	if err := app.ObjectStore.PublicFile(ctx, provider.AboutFilename); err != nil {
+		log.Fatalf("Error while publishing about page: %v\n", err.Error())
+	}
+
+	log.Println("About page seeded")
 }
