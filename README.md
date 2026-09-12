@@ -1,9 +1,5 @@
 # JSBEE
 JSBEE (Journal of Sustainable Businesses in Emerging Economies) is a website to share and read research papers at
-> [!WARNING]
-> This repo is still a work in progress and missign many core features
-currently its not good for more then just a learning exmaple
-(if you think the code is good enough to learn from that it)
 
 ## Stack
 
@@ -13,15 +9,11 @@ currently its not good for more then just a learning exmaple
 | Web server       | [Gin](https://gin-gonic.com/)             |
 | Database         | [SQLite](https://sqlite.org/)             |
 | Reverse Proxy    | [Nginx](https://nginx.org/)               |
-| Cache            | [Redis](https://redis.io/)                |
 | Auth             | [Firebase](https://firebase.google.com/)  |
 
 ## How to run
-> [!NOTE]
-> This repo requires cache (redis) and auth (firebase) credentials.
-These are expected to be provided by the user in .env
-
 - Clone the repo
+- Read `DEPLOY.md`
 - Copy env.exmaple to .env and fill/replace the values to your liking
 - `docker compose up`!
 
