@@ -118,6 +118,33 @@ func (s s3StaticClient) PublicFile(
 	)
 }
 
+func (s s3StaticClient) GetFile(
+	ctx context.Context,
+	filename string,
+) (io.ReadCloser, error) {
+	return s.client.GetObject(
+		ctx, publicBucket, filename,
+		minio.GetObjectOptions{},
+	)
+}
+
+func (s s3StaticClient) DeleteFile(
+	ctx context.Context,
+	filename string,
+) error {
+	if err := s.client.RemoveObject(
+		ctx, publicBucket, filename,
+		minio.RemoveObjectOptions{},
+	); err != nil {
+		return err
+	}
+
+	return s.client.RemoveObject(
+		ctx, privateBucket, filename,
+		minio.RemoveObjectOptions{},
+	)
+}
+
 func (s s3StaticClient) StoreDBBackup(
 	ctx context.Context,
 	baseFilename string,

@@ -92,6 +92,16 @@ func (u *ComponentUpdater) UpdateAdmin(
 	)
 }
 
+func (u *ComponentUpdater) UpdateBlog(
+	ctx context.Context,
+) error {
+	return updateComponent(
+		ctx,
+		path.Join(u.savePath, blogFile),
+		components.BlogPage(u.firebaseClientConfig),
+	)
+}
+
 // This function updates all frontend files and
 // is to be called at application startup
 // to make sure the static files always exist
@@ -107,6 +117,7 @@ func (u *ComponentUpdater) UpdateAll(
 		func() error { return u.UpdatePaper(ctx) },
 		func() error { return u.UpdateReview(ctx) },
 		func() error { return u.UpdateAdmin(ctx) },
+		func() error { return u.UpdateBlog(ctx) },
 	} {
 		if err := f(); err != nil {
 			return err

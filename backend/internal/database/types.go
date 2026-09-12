@@ -139,6 +139,40 @@ type DBController interface {
 	//   - `database.ErrInvalidUser`
 	//   - Errors from the underlying DB
 	ChangeRole(ctx context.Context, userUUID uuid.UUID, newRole roles.Role) error
+
+	// Adds a new blog entry
+	//
+	// May return the following errors:
+	//   - `database.ErrExistBlog`
+	//   - Errors by the underlying DB
+	AddBlog(ctx context.Context, blog Blog) error
+
+	// Gets the details of a blog entry
+	//
+	// May return the following errors:
+	//   - `database.ErrInvalidBlog`
+	//   - Errors by the underlying DB
+	GetBlog(ctx context.Context, uuid uuid.UUID) (Blog, error)
+
+	// Get all blog entries, newest first
+	//
+	// May return the following errors:
+	//   - Errors by the underlying DB
+	GetBlogs(ctx context.Context) ([]Blog, error)
+
+	// Updates the title and/or file of a blog entry
+	//
+	// May return the following errors:
+	//   - `database.ErrInvalidBlog`
+	//   - Errors by the underlying DB
+	UpdateBlog(ctx context.Context, blog Blog) error
+
+	// Deletes a blog entry
+	//
+	// May return the following errors:
+	//   - `database.ErrInvalidBlog`
+	//   - Errors by the underlying DB
+	DeleteBlog(ctx context.Context, uuid uuid.UUID) error
 }
 
 type User struct {
@@ -166,4 +200,12 @@ type Issue struct {
 type Volume struct {
 	Number uint64  `json:"number" binding:"required"`
 	Issues []Issue `json:"issues" binding:"required"`
+}
+
+type Blog struct {
+	UUID      uuid.UUID `json:"uuid" binding:"required" db:"uuid"`
+	Title     string    `json:"title" binding:"required" db:"title"`
+	Filename  string    `json:"filename" binding:"required" db:"filename"`
+	CreatedAt int64     `json:"created_at" binding:"required" db:"created_at"`
+	UpdatedAt int64     `json:"updated_at" binding:"required" db:"updated_at"`
 }

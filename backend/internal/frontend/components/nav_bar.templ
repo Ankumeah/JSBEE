@@ -39,6 +39,14 @@ templ navBar(siteName string, current string) {
 					</a>
 				</li>
 				<li>
+					<a
+						href="/blog"
+						class={ "hover:text-emerald-900", templ.KV("text-emerald-900 underline decoration-amber-700 decoration-2 underline-offset-8", current == "blog") }
+					>
+						Blog
+					</a>
+				</li>
+				<li>
 	if current == "profile" {
 						<button
 							type="button"
@@ -84,6 +92,9 @@ templ navBar(siteName string, current string) {
 			</li>
 			<li>
 				<a href="/volumes" class="block rounded px-2 py-2 hover:bg-stone-100">Volumes</a>
+			</li>
+			<li>
+				<a href="/blog" class="block rounded px-2 py-2 hover:bg-stone-100">Blog</a>
 			</li>
 			<li>
 				if current == "profile" {
