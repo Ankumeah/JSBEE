@@ -33,7 +33,7 @@ func (r *Role) Scan(value any) error {
 			return fmt.Errorf("%v is not a role", value)
 		}
 	default:
-		return fmt.Errorf("Caannot convert %v into a role", v)
+		return fmt.Errorf("Cannot convert %v into a role", v)
 	}
 
 	return nil

@@ -35,10 +35,11 @@ func (u *ComponentUpdater) UpdateIndex(
 func (u *ComponentUpdater) UpdateVolumes(
 	ctx context.Context,
 	volumes []database.Volume,
+	filesBaseURL string,
 ) error {
 	return updateComponent(
 		ctx, path.Join(u.savePath, volumeFile),
-		components.VolumesPage(volumes, u.firebaseClientConfig),
+		components.VolumesPage(volumes, u.firebaseClientConfig, filesBaseURL),
 	)
 }
 
@@ -118,10 +119,11 @@ func (u *ComponentUpdater) UpdateAbout(
 func (u *ComponentUpdater) UpdateAll(
 	ctx context.Context,
 	volumes []database.Volume,
+	filesBaseURL string,
 ) error {
 	for _, f := range []func() error{
 		func() error { return u.UpdateIndex(ctx) },
-		func() error { return u.UpdateVolumes(ctx, volumes) },
+		func() error { return u.UpdateVolumes(ctx, volumes, filesBaseURL) },
 		func() error { return u.UpdateNotFound(ctx) },
 		func() error { return u.UpdateProfile(ctx) },
 		func() error { return u.UpdatePaper(ctx) },

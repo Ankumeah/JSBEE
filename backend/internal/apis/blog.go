@@ -37,7 +37,8 @@ func blog(r *gin.RouterGroup, app *a.App) {
 		ctx := c.Request.Context()
 
 		blogUUID, err := uuid.Parse(c.Param("blogUUID"))
-		if !handleError(c, err) {
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid uuid"})
 			return
 		}
 
@@ -54,7 +55,8 @@ func blog(r *gin.RouterGroup, app *a.App) {
 		ctx := c.Request.Context()
 
 		blogUUID, err := uuid.Parse(c.Param("blogUUID"))
-		if !handleError(c, err) {
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid uuid"})
 			return
 		}
 
@@ -66,8 +68,8 @@ func blog(r *gin.RouterGroup, app *a.App) {
 		content, err := app.ObjectStore.GetFile(ctx, blog.Filename)
 		if err != nil {
 			c.JSON(
-				http.StatusInternalServerError,
-				gin.H{"error": "Internal server error"},
+				http.StatusNotFound,
+				gin.H{"error": "Blog content not found"},
 			)
 			return
 		}

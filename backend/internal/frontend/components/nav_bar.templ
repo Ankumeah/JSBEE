@@ -61,12 +61,15 @@ templ navBar(siteName string, current string) {
 							class={ "hover:text-emerald-900", templ.KV("text-emerald-900 underline decoration-amber-700 decoration-2 underline-offset-8", current == "profile") }
 							onclick="
 								var fresh = !getFirebaseUuid();
+								showToast('Waiting for login...');
 								ensureSignedIn().then(function() {
+									hideToast();
 									if (fresh) {
 										localStorage.setItem('jsbee_welcome', '1');
 									}
 									window.location.href = '/profile';
 								}).catch(function(err) {
+									hideToast();
 									if (err && err.code === 'auth/popup-closed-by-user') {
 										return;
 									}
@@ -111,12 +114,15 @@ templ navBar(siteName string, current string) {
 							class={ "block w-full rounded px-2 py-2 text-left hover:bg-stone-100", templ.KV("text-emerald-900 font-semibold", current == "profile") }
 							onclick="
 								var fresh = !getFirebaseUuid();
+								showToast('Waiting for login...');
 								ensureSignedIn().then(function() {
+									hideToast();
 									if (fresh) {
 										localStorage.setItem('jsbee_welcome', '1');
 									}
 									window.location.href = '/profile';
 								}).catch(function(err) {
+									hideToast();
 									if (err && err.code === 'auth/popup-closed-by-user') {
 										return;
 									}

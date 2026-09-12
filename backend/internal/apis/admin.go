@@ -125,7 +125,9 @@ func admin(r *gin.RouterGroup, app *a.App) {
 				log.Printf("Error while getting volumes: %v\n", err.Error())
 				return
 			}
-			if err := app.ComponentUpdater.UpdateVolumes(ctx, volumes); err != nil {
+			if err := app.ComponentUpdater.UpdateVolumes(
+				ctx, volumes, app.ObjectStore.PublicBaseURL(),
+			); err != nil {
 				c.JSON(
 					http.StatusInternalServerError,
 					gin.H{"error": "Internal server error"},
@@ -225,7 +227,8 @@ func admin(r *gin.RouterGroup, app *a.App) {
 
 		blogUUID := uuid.New()
 		now := time.Now().Unix()
-		filename := fmt.Sprintf("blog-%d.md", now)
+		// Include the uuid so two posts in the same second never collide
+		filename := fmt.Sprintf("blog-%d-%s.md", now, blogUUID.String())
 
 		buf := bytes.NewBufferString(body.Content)
 		if err := app.ObjectStore.AddFile(
@@ -258,7 +261,8 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		ctx := c.Request.Context()
 
 		blogUUID, err := uuid.Parse(c.Param("blogUUID"))
-		if !handleError(c, err) {
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid uuid"})
 			return
 		}
 
@@ -340,7 +344,8 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		ctx := c.Request.Context()
 
 		blogUUID, err := uuid.Parse(c.Param("blogUUID"))
-		if !handleError(c, err) {
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid uuid"})
 			return
 		}
 
@@ -349,15 +354,17 @@ func admin(r *gin.RouterGroup, app *a.App) {
 			return
 		}
 
-		if err := app.ObjectStore.DeleteFile(
-			ctx, blog.Filename,
-		); !handleError(c, err) {
-			return
-		}
+		// Delete the DB row first so a DB failure never leaves
+		// a row pointing at a missing file
 		if err := app.DBController.DeleteBlog(
 			ctx, blogUUID,
 		); !handleError(c, err) {
 			return
+		}
+		if err := app.ObjectStore.DeleteFile(
+			ctx, blog.Filename,
+		); err != nil {
+			log.Printf("Error while deleting blog file: %v\n", err.Error())
 		}
 
 		c.Status(http.StatusNoContent)

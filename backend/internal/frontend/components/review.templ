@@ -49,18 +49,10 @@ templ reviewPage() {
 						loading.classList.add('hidden');
 						errorEl.textContent = 'You must be signed in to review papers.';
 						errorEl.classList.remove('hidden');
+						showAuthFailedToast('You must be signed in to review papers.');
 						return;
 					}
-					getValidToken().then(function(token) {
-					if (!token) {
-						loading.classList.add('hidden');
-						errorEl.textContent = 'You must be signed in to review papers.';
-						errorEl.classList.remove('hidden');
-						return;
-					}
-					return fetch('/api/v1/review/papers', {
-						headers: { 'Authorization': 'Bearer ' + token }
-					}).then(function(resp) {
+					return authFetch('/api/v1/review/papers').then(function(resp) {
 						return checkApiResponse(resp, 'Failed to load papers');
 					}).then(function(resp) {
 						return resp.json();
@@ -132,11 +124,6 @@ templ reviewPage() {
 							errorEl.classList.remove('hidden');
 							return;
 						}
-						errorEl.textContent = err.message;
-						errorEl.classList.remove('hidden');
-					});
-					}).catch(function(err) {
-						loading.classList.add('hidden');
 						errorEl.textContent = err.message;
 						errorEl.classList.remove('hidden');
 					});

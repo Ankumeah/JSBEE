@@ -30,7 +30,7 @@ func GetUserMiddleware(app *a.App) gin.HandlerFunc {
 		c.Set(RoleField, user.Role)
 		c.Set(EmailField, user.Email)
 		c.Set(NameField, user.Name)
-		c.Set(UUIDField, user.UUID)
+		c.Set(UUIDField, user.UUID.String())
 		c.Set(SubscribedField, user.Subscribed)
 		c.Next()
 	}

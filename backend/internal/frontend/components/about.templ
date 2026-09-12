@@ -34,6 +34,9 @@ templ aboutPage() {
 							if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
 								throw new Error('Markdown renderer failed to load');
 							}
+							if (!md || !md.trim()) {
+								throw new Error('About us information is not available yet');
+							}
 							contentEl.innerHTML = DOMPurify.sanitize(marked.parse(md || ''));
 							loading.classList.add('hidden');
 							contentEl.classList.remove('hidden');

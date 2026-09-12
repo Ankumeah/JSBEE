@@ -69,7 +69,9 @@ func generateInitalComponents(ctx context.Context, app *a.App) {
 		log.Fatalf("Error while getting volumes: %v\n", err.Error())
 	}
 
-	if err := app.ComponentUpdater.UpdateAll(ctx, volumes); err != nil {
+	if err := app.ComponentUpdater.UpdateAll(
+		ctx, volumes, app.ObjectStore.PublicBaseURL(),
+	); err != nil {
 		log.Fatalf("Error while generating inital components: %v\n", err.Error())
 	}
 

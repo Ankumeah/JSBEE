@@ -62,7 +62,7 @@ templ paperPage() {
 					var uuid = params.get('uuid');
 					if (params.get('from') === 'review') {
 						var backLink = document.getElementById('paper-back-link');
-						backLink.href = '/review.html';
+						backLink.href = '/review';
 						backLink.textContent = 'Back to review dashboard';
 					}
 					var loading = document.getElementById('paper-loading');
@@ -84,6 +84,9 @@ templ paperPage() {
 							return resp.json();
 						})
 						.then(function(data) {
+							if (!data || !data.paper) {
+								throw new Error('Paper not found');
+							}
 							var paper = data.paper;
 							document.getElementById('paper-title').textContent = paper.title;
 							document.title = paper.title;
@@ -97,9 +100,9 @@ templ paperPage() {
 							} else {
 								document.getElementById('paper-status').textContent = 'Pending review';
 							}
-							if (paper.filename) {
+							if (paper.filename && data.file_url) {
 								var link = document.getElementById('paper-file-link');
-								link.href = '/' + encodeURIComponent(paper.filename);
+								link.href = data.file_url;
 								link.textContent = paper.filename;
 								link.classList.remove('hidden');
 							} else {

@@ -76,8 +76,10 @@ type DBController interface {
 	//   - Errors by the underlying DB
 	GetUserPapers(ctx context.Context, userUUID uuid.UUID) ([]Paper, error)
 
-	// Updates a paper to max + 1 number and max volume and issue.
-	// This is safe to run on an already approved paper
+	// Marks an unpublished paper as reviewed, moving it to the
+	// waiting area for publishing. Safe to run on an already
+	// reviewed (but unpublished) paper. Published papers are
+	// rejected with `database.ErrInvalidPaper`
 	//
 	// May return the following errors:
 	//   - `database.ErrInvalidPaper`

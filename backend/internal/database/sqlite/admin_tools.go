@@ -10,7 +10,7 @@ import (
 func (s *SqlxDBController) IncrementVolume(ctx context.Context) error {
 	query := `
     UPDATE state
-    SET volume = volume + 1
+    SET volume = volume + 1, issue = 1
     WHERE (id = 1);
   `
 
@@ -38,7 +38,7 @@ func (s *SqlxDBController) GetUnapprovedPapers(
     WHERE (number IS NULL AND reviewed = 0)
   `
 
-	var papers []database.Paper
+	var papers []database.Paper = []database.Paper{}
 	err := s.db.SelectContext(ctx, &papers, query)
 
 	return papers, err
@@ -53,7 +53,7 @@ func (s *SqlxDBController) GetReviewedPapers(
     WHERE (number IS NULL AND reviewed = 1)
   `
 
-	var papers []database.Paper
+	var papers []database.Paper = []database.Paper{}
 	err := s.db.SelectContext(ctx, &papers, query)
 
 	return papers, err
@@ -66,7 +66,7 @@ func (s *SqlxDBController) ApprovePaper(
 	query := s.db.Rebind(`
     UPDATE papers
     SET reviewed = 1
-    WHERE (uuid = ?);
+    WHERE (uuid = ? AND number IS NULL);
   `)
 
 	res, err := s.db.ExecContext(ctx, query, paperUUID)

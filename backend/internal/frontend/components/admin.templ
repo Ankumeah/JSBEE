@@ -12,20 +12,20 @@ var adminInfo = pageInfo{
 templ adminPage() {
 	<div class="flex min-h-screen flex-col">
 		@navBar(provider.SiteName, "")
-		<main class="flex flex-1">
-			<aside class="sticky top-0 h-screen w-56 shrink-0 border-r border-stone-200 bg-stone-50 py-12 pl-4 pr-2">
-				<nav class="space-y-1">
+		<main class="flex flex-1 flex-col md:flex-row">
+			<aside class="top-0 z-10 w-full shrink-0 border-b border-stone-200 bg-stone-50 px-4 py-4 md:sticky md:h-screen md:w-56 md:border-b-0 md:border-r md:py-12 md:pl-4 md:pr-2">
+				<nav class="flex gap-1 overflow-x-auto md:flex-col md:space-y-1 md:overflow-visible">
 					<button
 						type="button"
 						id="sidebar-welcome"
-						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100 bg-stone-200"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100 bg-stone-200"
 					>
 						Welcome
 					</button>
 					<button
 						type="button"
 						id="sidebar-publish"
-						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
 					>
 						Publish
 						<span id="publish-badge" class="ml-2 hidden rounded-full bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white"></span>
@@ -33,28 +33,28 @@ templ adminPage() {
 					<button
 						type="button"
 						id="sidebar-volume-issue"
-						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
 					>
 						New volume or issue
 					</button>
 					<button
 						type="button"
 						id="sidebar-roles"
-						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
 					>
 						Roles
 					</button>
 					<button
 						type="button"
 						id="sidebar-blog"
-						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
 					>
 						Blog
 					</button>
 					<button
 						type="button"
 						id="sidebar-about"
-						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
 					>
 						About
 					</button>
@@ -143,6 +143,7 @@ templ adminPage() {
 										id="role-select"
 										class="flex-1 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-indigo-700 focus:outline-none disabled:opacity-50"
 									>
+										<option value="owner">owner</option>
 										<option value="viewer">viewer</option>
 										<option value="reviewer">reviewer</option>
 										<option value="admin">admin</option>
@@ -257,6 +258,7 @@ templ adminPage() {
 					if (!user) {
 						document.getElementById('admin-error').textContent = 'You must be signed in as an admin.';
 						document.getElementById('admin-error').classList.remove('hidden');
+						showAuthFailedToast('You must be signed in as an admin.');
 						return;
 					}
 
@@ -312,8 +314,6 @@ templ adminPage() {
 					});
 
 					function loadReviewedPapers() {
-						getValidToken().then(function(t) {
-						if (!t) { showToast('Not signed in'); return; }
 						var loading = document.getElementById('publish-loading');
 						var emptyEl = document.getElementById('publish-empty');
 						var content = document.getElementById('publish-content');
@@ -327,9 +327,7 @@ templ adminPage() {
 						countEl.textContent = '';
 						badge.classList.add('hidden');
 						badge.textContent = '';
-						return fetch('/api/v1/admin/reviewed', {
-							headers: { 'Authorization': 'Bearer ' + t }
-						}).then(function(resp) {
+						return authFetch('/api/v1/admin/reviewed').then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load reviewed papers');
 						}).then(function(resp) {
 							return resp.json();
@@ -368,8 +366,7 @@ templ adminPage() {
 							});
 							content.classList.remove('hidden');
 							publishLoaded = true;
-						});
-					}).catch(function(err) {
+						}).catch(function(err) {
 						document.getElementById('publish-loading').classList.add('hidden');
 							if (isSessionExpiredError(err)) {
 								handleSessionExpired();
@@ -695,6 +692,9 @@ templ adminPage() {
 							}).then(function(resp) {
 								return resp.json();
 							}).then(function(data) {
+								if (!data || !data.blog || !data.blog.uuid) {
+									throw new Error('Post not found');
+								}
 								var blog = data.blog;
 								return fetch('/api/v1/blogs/' + encodeURIComponent(blog.uuid) + '/content')
 									.then(function(resp) {

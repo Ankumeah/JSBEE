@@ -41,7 +41,7 @@ func (s *SqlxDBController) GetUserPapers(
     WHERE (owner_uuid = ?);
   `)
 
-	var papers []database.Paper
+	var papers []database.Paper = []database.Paper{}
 	err := s.db.SelectContext(ctx, &papers, query, userUUID)
 
 	return papers, err

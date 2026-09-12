@@ -103,13 +103,18 @@ templ blogPage() {
 				function showPost(uuid) {
 					var loading = document.getElementById('blog-loading');
 					var errorEl = document.getElementById('blog-error');
-					document.getElementById('blog-post').classList.remove('hidden');
+					var postEl = document.getElementById('blog-post');
+					var listEl = document.getElementById('blog-list');
+					var emptyEl = document.getElementById('blog-empty');
 					fetch('/api/v1/blogs/' + encodeURIComponent(uuid))
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load post');
 						}).then(function(resp) {
 							return resp.json();
 						}).then(function(data) {
+							if (!data || !data.blog) {
+								throw new Error('Post not found');
+							}
 							var blog = data.blog;
 							document.getElementById('blog-post-title').textContent = blog.title;
 							document.title = blog.title;
@@ -122,8 +127,12 @@ templ blogPage() {
 						}).then(function(md) {
 							document.getElementById('blog-post-content').innerHTML = renderMarkdown(md);
 							loading.classList.add('hidden');
+							listEl.classList.add('hidden');
+							emptyEl.classList.add('hidden');
+							postEl.classList.remove('hidden');
 						}).catch(function(err) {
 							loading.classList.add('hidden');
+							postEl.classList.add('hidden');
 							errorEl.textContent = err.message;
 							errorEl.classList.remove('hidden');
 						});
