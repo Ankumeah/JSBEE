@@ -18,8 +18,8 @@ import (
 func paper(r *gin.RouterGroup, app *a.App) {
 	group := r.Group("/paper")
 
-	group.POST("",
-		middlewares.FireBaseAuthMiddleware(app),
+	// This route adds a new paper
+	group.POST("", middlewares.FireBaseAuthMiddleware(app),
 		func(c *gin.Context) {
 			ctx := c.Request.Context()
 
@@ -41,12 +41,11 @@ func paper(r *gin.RouterGroup, app *a.App) {
 			defer file.Close()
 
 			buf := bytes.NewBuffer(nil)
-			_, err = io.Copy(buf, file)
+			size, err := io.Copy(buf, io.LimitReader(file, maxPaperSize+1))
 			if !handleError(c, err) {
 				return
 			}
 
-			size := int64(buf.Len())
 			if size <= 0 {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Empty file"})
 				return
@@ -83,6 +82,7 @@ func paper(r *gin.RouterGroup, app *a.App) {
 		},
 	)
 
+	// This route returns the details of a paper
 	group.GET("/:paperUUID", func(c *gin.Context) {
 		ctx := c.Request.Context()
 

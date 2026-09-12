@@ -65,7 +65,7 @@ func (s s3StaticClient) Init(
 			minio.MakeBucketOptions{Region: s.region},
 		); err != nil {
 			if exists, existsErr := s.client.BucketExists(
-				ctx, backupBucket,
+				ctx, bucket,
 			); existsErr != nil {
 				return err
 			} else if !exists {
@@ -123,7 +123,7 @@ func (s s3StaticClient) StoreDBBackup(
 	baseFilename string,
 	backupPath string,
 ) error {
-	if s.maxDBSnapshots < 0 {
+	if s.maxDBSnapshots < 1 {
 		return nil
 	}
 

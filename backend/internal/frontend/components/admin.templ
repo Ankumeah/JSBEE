@@ -1,0 +1,491 @@
+package components
+
+import (
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
+)
+
+var adminInfo = pageInfo{
+	title:       "Admin",
+	description: "Admin dashboard",
+}
+
+templ adminPage() {
+	<div class="flex min-h-screen flex-col">
+		@navBar(provider.SiteName, "")
+		<main class="flex flex-1">
+			<aside class="sticky top-0 h-screen w-56 shrink-0 border-r border-stone-200 bg-stone-50 py-12 pl-4 pr-2">
+				<nav class="space-y-1">
+					<button
+						type="button"
+						id="sidebar-welcome"
+						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100 bg-stone-200"
+					>
+						Welcome
+					</button>
+					<button
+						type="button"
+						id="sidebar-publish"
+						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+					>
+						Publish
+						<span id="publish-badge" class="ml-2 hidden rounded-full bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white"></span>
+					</button>
+					<button
+						type="button"
+						id="sidebar-volume-issue"
+						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+					>
+						New volume or issue
+					</button>
+					<button
+						type="button"
+						id="sidebar-roles"
+						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+					>
+						Roles
+					</button>
+				</nav>
+			</aside>
+			<div class="flex-1 px-4 py-12 sm:px-6">
+				<div class="mx-auto max-w-3xl">
+					<h1 class="text-center font-serif text-4xl font-semibold text-stone-900">Admin dashboard</h1>
+					<div id="admin-error" class="mt-8 hidden text-center text-sm text-red-600"></div>
+					<div id="panel-welcome" class="mt-8 text-center text-lg text-stone-700">
+						Welcome, You are trusted
+					</div>
+					<div id="panel-publish" class="hidden mt-8">
+						<div id="publish-loading" class="text-center text-sm text-stone-500">Loading reviewed papers...</div>
+						<div id="publish-empty" class="hidden text-center text-sm text-stone-500">
+							No papers waiting to be published.
+						</div>
+						<div id="publish-content" class="hidden">
+							<div class="mb-4 flex items-center justify-between">
+								<span id="publish-count" class="text-sm text-stone-600"></span>
+								<button
+									type="button"
+									id="btn-publish"
+									class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+								>
+									Publish all
+								</button>
+							</div>
+							<ul id="publish-list" class="divide-y divide-stone-100 rounded-xl border border-stone-200 bg-white/50 p-4 shadow-sm"></ul>
+						</div>
+					</div>
+					<div id="panel-volume-issue" class="hidden mt-8 flex flex-col items-center gap-4">
+						<button
+							type="button"
+							id="btn-new-volume"
+							class="w-full max-w-xs rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+						>
+							New Volume
+						</button>
+						<button
+							type="button"
+							id="btn-new-issue"
+							class="w-full max-w-xs rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+						>
+							New Issue
+						</button>
+					</div>
+					<div id="panel-roles" class="hidden mt-8">
+						<div class="mx-auto max-w-xl space-y-4">
+							<div class="flex flex-col gap-2 sm:flex-row">
+								<input
+									id="role-email"
+									type="email"
+									placeholder="user@example.com"
+									class="flex-1 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-indigo-700 focus:outline-none"
+								/>
+								<button
+									type="button"
+									id="btn-find-user"
+									class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+								>
+									Find user
+								</button>
+							</div>
+							<div id="role-error" class="hidden text-center text-sm text-red-600"></div>
+							<div
+								id="role-result"
+								class="hidden rounded-xl border border-stone-200 bg-white/50 p-6 shadow-sm"
+							>
+								<dl class="space-y-4 text-sm">
+									<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+										<dt class="font-medium text-stone-500">Name</dt>
+										<dd id="role-name" class="text-stone-900"></dd>
+									</div>
+									<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+										<dt class="font-medium text-stone-500">Email</dt>
+										<dd id="role-current-email" class="text-stone-900"></dd>
+									</div>
+									<div class="flex items-center justify-between gap-4">
+										<dt class="font-medium text-stone-500">Current role</dt>
+										<dd id="role-current" class="text-stone-900"></dd>
+									</div>
+								</dl>
+								<div class="mt-4 flex flex-col gap-2 sm:flex-row">
+									<select
+										id="role-select"
+										class="flex-1 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-indigo-700 focus:outline-none disabled:opacity-50"
+									>
+										<option value="viewer">viewer</option>
+										<option value="reviewer">reviewer</option>
+										<option value="admin">admin</option>
+									</select>
+									<button
+										type="button"
+										id="btn-change-role"
+										class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:opacity-50"
+									>
+										Change role
+									</button>
+								</div>
+								<p id="role-owner-note" class="mt-3 hidden text-sm text-amber-700">The owner's role cannot be changed.</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</main>
+		@siteFooter(provider.SiteName)
+		<!-- Tailwind safelist for JS-created classes -->
+		<span class="hidden bg-stone-200 bg-amber-500 rounded-full px-2 py-0.5 text-xs font-semibold text-white flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 font-medium text-stone-900 shrink-0 text-sm text-stone-500 text-amber-700 disabled:opacity-50"></span>
+		<script>
+			(function() {
+				function initAdmin() {
+					waitForAuthUser().then(function(user) {
+					if (!user) {
+						document.getElementById('admin-error').textContent = 'You must be signed in as an admin.';
+						document.getElementById('admin-error').classList.remove('hidden');
+						return;
+					}
+
+					var panels = {
+						welcome: document.getElementById('panel-welcome'),
+						publish: document.getElementById('panel-publish'),
+						volumeIssue: document.getElementById('panel-volume-issue'),
+						roles: document.getElementById('panel-roles')
+					};
+					var publishLoaded = false;
+
+					function selectSidebar(activeId) {
+						document.querySelectorAll('.sidebar-item').forEach(function(btn) {
+							btn.classList.remove('bg-stone-200');
+						});
+						document.getElementById(activeId).classList.add('bg-stone-200');
+						Object.values(panels).forEach(function(p) { p.classList.add('hidden'); });
+					}
+
+					document.getElementById('sidebar-welcome').addEventListener('click', function() {
+						selectSidebar('sidebar-welcome');
+						panels.welcome.classList.remove('hidden');
+					});
+
+					document.getElementById('sidebar-publish').addEventListener('click', function() {
+						selectSidebar('sidebar-publish');
+						panels.publish.classList.remove('hidden');
+						if (!publishLoaded) loadReviewedPapers();
+					});
+
+					document.getElementById('sidebar-volume-issue').addEventListener('click', function() {
+						selectSidebar('sidebar-volume-issue');
+						panels.volumeIssue.classList.remove('hidden');
+					});
+
+					document.getElementById('sidebar-roles').addEventListener('click', function() {
+						selectSidebar('sidebar-roles');
+						panels.roles.classList.remove('hidden');
+					});
+
+					function loadReviewedPapers() {
+						getValidToken().then(function(t) {
+						if (!t) { showToast('Not signed in'); return; }
+						var loading = document.getElementById('publish-loading');
+						var emptyEl = document.getElementById('publish-empty');
+						var content = document.getElementById('publish-content');
+						var listEl = document.getElementById('publish-list');
+						var countEl = document.getElementById('publish-count');
+						var badge = document.getElementById('publish-badge');
+						loading.classList.remove('hidden');
+						emptyEl.classList.add('hidden');
+						content.classList.add('hidden');
+						listEl.innerHTML = '';
+						countEl.textContent = '';
+						badge.classList.add('hidden');
+						badge.textContent = '';
+						return fetch('/api/v1/admin/reviewed', {
+							headers: { 'Authorization': 'Bearer ' + t }
+						}).then(function(resp) {
+							return checkApiResponse(resp, 'Failed to load reviewed papers');
+						}).then(function(resp) {
+							return resp.json();
+						}).then(function(data) {
+							var papers = data.papers || [];
+
+							loading.classList.add('hidden');
+
+							if (papers.length === 0) {
+								emptyEl.classList.remove('hidden');
+								content.classList.add('hidden');
+								badge.classList.add('hidden');
+								publishLoaded = true;
+								return;
+							}
+
+							emptyEl.classList.add('hidden');
+							badge.textContent = papers.length;
+							badge.classList.remove('hidden');
+							countEl.textContent = papers.length + ' paper' + (papers.length === 1 ? '' : 's') + ' waiting to be published';
+							listEl.innerHTML = '';
+							papers.forEach(function(paper) {
+								var li = document.createElement('li');
+								li.className = 'flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6';
+								var title = document.createElement('span');
+								title.className = 'font-medium text-stone-900';
+								title.textContent = paper.title;
+								li.appendChild(title);
+								if (paper.filename) {
+									var fname = document.createElement('span');
+									fname.className = 'shrink-0 text-sm text-stone-500';
+									fname.textContent = paper.filename;
+									li.appendChild(fname);
+								}
+								listEl.appendChild(li);
+							});
+							content.classList.remove('hidden');
+							publishLoaded = true;
+						});
+					}).catch(function(err) {
+						document.getElementById('publish-loading').classList.add('hidden');
+							if (isSessionExpiredError(err)) {
+								handleSessionExpired();
+								return;
+							}
+							if (err && err.status === 403) {
+								showToast('You are not allowed to manage papers');
+								return;
+							}
+							showToast(err.message);
+						});
+					}
+
+					document.getElementById('btn-publish').addEventListener('click', function() {
+						showToastWithActions('Publish all reviewed papers?', [
+							{ label: 'Cancel', pressed: function() { hideToast(); } },
+							{
+								label: 'Publish',
+								pressed: function() {
+									hideToast();
+									doPublish();
+								}
+							}
+						]);
+					});
+
+					function doPublish() {
+						var publishBtn = document.getElementById('btn-publish');
+						publishBtn.disabled = true;
+						authFetch('/api/v1/admin/publish', {
+							method: 'POST'
+						}).then(function(resp) {
+							return checkApiResponse(resp, 'Failed to publish papers');
+						}).then(function(resp) {
+							return resp.json();
+						}).then(function(data) {
+							var count = data.count || 0;
+							if (count === 0) {
+								showToast('No papers to publish');
+							} else {
+								showToast(count + ' paper' + (count === 1 ? '' : 's') + ' published');
+							}
+							publishLoaded = false;
+							loadReviewedPapers();
+						}).catch(function(err) {
+							if (isSessionExpiredError(err)) {
+								handleSessionExpired();
+								return;
+							}
+							if (err && err.status === 403) {
+								showToast('You are not allowed to publish papers');
+								return;
+							}
+							showToast(err.message);
+						}).finally(function() {
+							publishBtn.disabled = false;
+						});
+					}
+
+					document.getElementById('btn-new-volume').addEventListener('click', function() {
+						showToastWithActions('Create a new volume?', [
+							{ label: 'Cancel', pressed: function() { hideToast(); } },
+							{
+								label: 'Create',
+								pressed: function() {
+									hideToast();
+									incrementField('volume', document.getElementById('btn-new-volume'));
+								}
+							}
+						]);
+					});
+
+					document.getElementById('btn-new-issue').addEventListener('click', function() {
+						showToastWithActions('Create a new issue?', [
+							{ label: 'Cancel', pressed: function() { hideToast(); } },
+							{
+								label: 'Create',
+								pressed: function() {
+									hideToast();
+									incrementField('issue', document.getElementById('btn-new-issue'));
+								}
+							}
+						]);
+					});
+
+					function incrementField(field, btn) {
+						if (btn) {
+							btn.disabled = true;
+						}
+						authFetch('/api/v1/admin/increment?field=' + field, {
+							method: 'POST'
+						}).then(function(resp) {
+							return checkApiResponse(resp, 'Failed to create ' + field);
+						}).then(function() {
+							showToast('New ' + field + ' created');
+						}).catch(function(err) {
+							if (isSessionExpiredError(err)) {
+								handleSessionExpired();
+								return;
+							}
+							if (err && err.status === 403) {
+								showToast('You are not allowed to create a ' + field);
+								return;
+							}
+							showToast(err.message);
+						}).finally(function() {
+							if (btn) {
+								btn.disabled = false;
+							}
+						});
+					}
+
+					var foundUser = null;
+
+					document.getElementById('btn-find-user').addEventListener('click', function() {
+						var email = document.getElementById('role-email').value.trim();
+						var findBtn = document.getElementById('btn-find-user');
+						var errEl = document.getElementById('role-error');
+						var resultEl = document.getElementById('role-result');
+						errEl.classList.add('hidden');
+						resultEl.classList.add('hidden');
+						foundUser = null;
+						if (!email) {
+							showToast('Please enter an email address');
+							return;
+						}
+						findBtn.disabled = true;
+						fetch('/api/v1/user?email=' + encodeURIComponent(email))
+							.then(function(resp) {
+								return checkApiResponse(resp, 'Failed to find user');
+							}).then(function(resp) {
+								return resp.json();
+							}).then(function(data) {
+								if (!data || !data.user) {
+									throw new Error('User not found');
+								}
+								foundUser = data.user;
+								document.getElementById('role-name').textContent = foundUser.name || '';
+								document.getElementById('role-current-email').textContent = foundUser.email || '';
+								var current = foundUser.role && foundUser.role.role ? foundUser.role.role : 'Unknown';
+								document.getElementById('role-current').textContent = current;
+								var roleSelect = document.getElementById('role-select');
+								var changeBtn = document.getElementById('btn-change-role');
+								var ownerNote = document.getElementById('role-owner-note');
+								roleSelect.value = current;
+								if (current === 'owner') {
+									roleSelect.disabled = true;
+									changeBtn.disabled = true;
+									ownerNote.classList.remove('hidden');
+								} else {
+									roleSelect.disabled = false;
+									changeBtn.disabled = false;
+									ownerNote.classList.add('hidden');
+								}
+								resultEl.classList.remove('hidden');
+							}).catch(function(err) {
+								errEl.textContent = err.message;
+								errEl.classList.remove('hidden');
+							}).finally(function() {
+								findBtn.disabled = false;
+							});
+					});
+
+					document.getElementById('btn-change-role').addEventListener('click', function() {
+						if (!foundUser || !foundUser.uuid) {
+							showToast('Find a user first');
+							return;
+						}
+						var newRole = document.getElementById('role-select').value;
+						var current = foundUser.role && foundUser.role.role;
+						if (current === 'owner' || newRole === 'owner') {
+							showToast('The owner role cannot be changed');
+							return;
+						}
+						if (newRole === current) {
+							showToast('User already has that role');
+							return;
+						}
+						showToastWithActions('Change ' + foundUser.email + ' role from ' + current + ' to ' + newRole + '?', [
+							{ label: 'Cancel', pressed: function() { hideToast(); } },
+							{
+								label: 'Change',
+								pressed: function() {
+									hideToast();
+									doChangeRole(foundUser.uuid, newRole);
+								}
+							}
+						]);
+					});
+
+					function doChangeRole(userUuid, newRole) {
+						var btn = document.getElementById('btn-change-role');
+						btn.disabled = true;
+						authFetch('/api/v1/admin/role/' + encodeURIComponent(userUuid) + '?role=' + encodeURIComponent(newRole), {
+							method: 'PATCH'
+						}).then(function(resp) {
+							return checkApiResponse(resp, 'Failed to change role');
+						}).then(function() {
+							document.getElementById('role-current').textContent = newRole;
+							if (foundUser) {
+								foundUser.role = { role: newRole };
+							}
+							showToast('Role changed to ' + newRole);
+						}).catch(function(err) {
+							if (isSessionExpiredError(err)) {
+								handleSessionExpired();
+								return;
+							}
+							if (err && err.status === 403) {
+								showToast('You are not allowed to change roles');
+								return;
+							}
+							showToast(err.message);
+						}).finally(function() {
+							btn.disabled = false;
+						});
+					}
+					});
+				}
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', initAdmin);
+				} else {
+					initAdmin();
+				}
+			})();
+		</script>
+	</div>
+}
+
+templ AdminDashboardPage(firebaseClientConfig string) {
+	@base(adminInfo, adminPage(), firebaseClientConfig)
+}

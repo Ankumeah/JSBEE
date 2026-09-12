@@ -47,6 +47,7 @@ templ paperPage() {
 				</dl>
 			</div>
 			<a
+				id="paper-back-link"
 				href="/profile"
 				class="mt-8 inline-block rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
 			>
@@ -59,6 +60,11 @@ templ paperPage() {
 				function initPaper() {
 					var params = new URLSearchParams(window.location.search);
 					var uuid = params.get('uuid');
+					if (params.get('from') === 'review') {
+						var backLink = document.getElementById('paper-back-link');
+						backLink.href = '/review.html';
+						backLink.textContent = 'Back to review dashboard';
+					}
 					var loading = document.getElementById('paper-loading');
 					var errorEl = document.getElementById('paper-error');
 					var card = document.getElementById('paper-card');
@@ -72,7 +78,9 @@ templ paperPage() {
 
 					fetch('/api/v1/paper/' + encodeURIComponent(uuid))
 						.then(function(resp) {
-							if (!resp.ok) throw new Error('Failed to load paper');
+							return checkApiResponse(resp, 'Failed to load paper');
+						})
+						.then(function(resp) {
 							return resp.json();
 						})
 						.then(function(data) {
@@ -82,11 +90,16 @@ templ paperPage() {
 							document.getElementById('paper-title-field').textContent = paper.title;
 							document.getElementById('paper-number').textContent =
 								paper.number != null ? '#' + paper.number : 'Not assigned yet';
-							document.getElementById('paper-status').textContent =
-								paper.number != null ? 'Published' : 'Pending review';
+							if (paper.number != null) {
+								document.getElementById('paper-status').textContent = 'Published';
+							} else if (paper.reviewed) {
+								document.getElementById('paper-status').textContent = 'Reviewed';
+							} else {
+								document.getElementById('paper-status').textContent = 'Pending review';
+							}
 							if (paper.filename) {
 								var link = document.getElementById('paper-file-link');
-								link.href = '/' + paper.filename;
+								link.href = '/' + encodeURIComponent(paper.filename);
 								link.textContent = paper.filename;
 								link.classList.remove('hidden');
 							} else {

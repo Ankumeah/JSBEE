@@ -14,6 +14,22 @@ templ profilePage() {
 		@navBar(provider.SiteName, "profile")
 		<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6">
 			<h1 id="profile-title" class="text-center font-serif text-4xl font-semibold text-stone-900">My Profile</h1>
+			<button
+				id="profile-review"
+				type="button"
+				class="mt-4 hidden w-full rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+				onclick="window.location.href = '/review.html';"
+			>
+				Review dashboard
+			</button>
+			<button
+				id="profile-admin"
+				type="button"
+				class="mt-4 hidden w-full rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+				onclick="window.location.href = '/admin.html';"
+			>
+				Admin dashboard
+			</button>
 			<div id="profile-loading" class="mt-8 text-center text-sm text-stone-500">Loading your profile...</div>
 			<div id="profile-error" class="mt-8 hidden text-center text-sm text-red-600"></div>
 			<div
@@ -58,7 +74,7 @@ templ profilePage() {
 		@siteFooter(provider.SiteName)
 		<script>
 			(function() {
-				function initProfile() {
+				function initProfile(recovered) {
 					var uuid = getFirebaseUuid();
 					var loading = document.getElementById('profile-loading');
 					var errorEl = document.getElementById('profile-error');
@@ -66,6 +82,8 @@ templ profilePage() {
 					var logoutBtn = document.getElementById('profile-logout');
 					var subBtn = document.getElementById('profile-sub-toggle');
 					var subValue = document.getElementById('profile-subscribed');
+					var reviewBtn = document.getElementById('profile-review');
+				var adminBtn = document.getElementById('profile-admin');
 
 					if (localStorage.getItem('jsbee_welcome')) {
 						localStorage.removeItem('jsbee_welcome');
@@ -85,23 +103,20 @@ templ profilePage() {
 					}
 
 					subBtn.addEventListener('click', function() {
-						var token = getFirebaseJwt();
-						if (!token) {
-							showToast('Not signed in');
-							return;
-						}
 						var subscribed = subValue.textContent === 'Yes';
 						subBtn.disabled = true;
-						fetch('/api/v1/account?sub=' + !subscribed, {
-							method: 'PATCH',
-							headers: { 'Authorization': 'Bearer ' + token }
+						authFetch('/api/v1/account?sub=' + !subscribed, {
+							method: 'PATCH'
 						}).then(function(resp) {
-							if (!resp.ok) {
-								throw new Error('Failed to update subscription');
-							}
-							renderSubscription(!subscribed);
+								return checkApiResponse(resp, 'Failed to update subscription');
+							}).then(function() {
+								renderSubscription(!subscribed);
 							showToast(!subscribed ? 'You are now subscribed' : 'You are now unsubscribed');
 						}).catch(function(err) {
+							if (isSessionExpiredError(err)) {
+								handleSessionExpired();
+								return;
+							}
 							showToast('Subscription update failed: ' + err.message);
 						}).finally(function() {
 							subBtn.disabled = false;
@@ -131,37 +146,67 @@ logoutBtn.addEventListener('click', function() {
 					]);
 				});
 
-					if (!uuid) {
-						loading.textContent = 'Please sign in to view your profile.';
-						document.getElementById('my-papers-box').classList.add('hidden');
-						return;
-					}
-					fetch('/api/v1/user?uuid=' + encodeURIComponent(uuid))
-						.then(function(resp) {
-							if (!resp.ok) {
-								throw new Error('Failed to load profile');
+					waitForAuthUser().then(function(user) {
+						if (!user) {
+							loading.textContent = 'Please sign in to view your profile.';
+							document.getElementById('my-papers-box').classList.add('hidden');
+							card.classList.add('hidden');
+							logoutBtn.classList.add('hidden');
+							showAuthFailedToast('Please sign in to view your profile.');
+							return;
+						}
+						if (!uuid) {
+							if (recovered) {
+								loading.textContent = 'Could not restore your session. Please sign in again.';
+								document.getElementById('my-papers-box').classList.add('hidden');
+								card.classList.add('hidden');
+								showAuthFailedToast('Could not restore your session. Log out to clear this device, then sign in again.');
+								return;
 							}
-							return resp.json();
-						})
-						.then(function(data) {
+							loading.textContent = 'Restoring your session...';
+							ensureSignedIn().then(function() {
+								initProfile(true);
+							}).catch(function() {
+								loading.textContent = 'Please sign in to view your profile.';
+							});
+							return;
+						}
+						fetch('/api/v1/user?uuid=' + encodeURIComponent(uuid))
+							.then(function(resp) {
+								return checkApiResponse(resp, 'Failed to load profile');
+							})
+							.then(function(resp) {
+								return resp.json();
+							})
+							.then(function(data) {
 							var user = data.user;
 							document.getElementById('profile-name').textContent = user.name;
 							document.getElementById('profile-email').textContent = user.email;
 							document.getElementById('profile-role').textContent = user.role ? user.role.role : 'Unknown';
 							renderSubscription(user.subscribed);
 							document.getElementById('profile-title').textContent = user.name;
+if (user.role && user.role.can_review) {
+								reviewBtn.classList.remove('hidden');
+							}
+							if (user.role && user.role.can_edit_db) {
+								adminBtn.classList.remove('hidden');
+							}
 							loading.classList.add('hidden');
 							errorEl.classList.add('hidden');
 							card.classList.remove('hidden');
 							logoutBtn.classList.remove('hidden');
 
-							var jwt = getFirebaseJwt();
 							var papersBox = document.getElementById('my-papers-box');
-							if (jwt) {
+							getValidToken().then(function(jwt) {
+								if (!jwt) {
+									papersBox.classList.add('hidden');
+									return;
+								}
 								papersBox.classList.remove('hidden');
 								fetch('/api/v1/user/papers?uuid=' + encodeURIComponent(uuid))
 									.then(function(resp) {
-										if (!resp.ok) throw new Error('Failed to load papers');
+										return checkApiResponse(resp, 'Failed to load papers');
+									}).then(function(resp) {
 										return resp.json();
 									}).then(function(data) {
 									var papers = data.papers || [];
@@ -206,15 +251,20 @@ logoutBtn.addEventListener('click', function() {
 									errEl.textContent = err.message;
 									errEl.classList.remove('hidden');
 								});
-							} else {
-								papersBox.classList.add('hidden');
-							}
+							});
 						})
 						.catch(function(err) {
 							loading.classList.add('hidden');
+							if (isSessionExpiredError(err)) {
+								errorEl.textContent = 'Session expired, please sign in again.';
+								errorEl.classList.remove('hidden');
+								handleSessionExpired();
+								return;
+							}
 							errorEl.textContent = 'Failed to load profile: ' + err.message;
 							errorEl.classList.remove('hidden');
 						});
+					});
 				}
 				if (document.readyState === 'loading') {
 					document.addEventListener('DOMContentLoaded', initProfile);

@@ -72,6 +72,26 @@ func (u *ComponentUpdater) UpdatePaper(
 	)
 }
 
+func (u *ComponentUpdater) UpdateReview(
+	ctx context.Context,
+) error {
+	return updateComponent(
+		ctx,
+		path.Join(u.savePath, reviewFile),
+		components.ReviewDashboardPage(u.firebaseClientConfig),
+	)
+}
+
+func (u *ComponentUpdater) UpdateAdmin(
+	ctx context.Context,
+) error {
+	return updateComponent(
+		ctx,
+		path.Join(u.savePath, adminFile),
+		components.AdminDashboardPage(u.firebaseClientConfig),
+	)
+}
+
 // This function updates all frontend files and
 // is to be called at application startup
 // to make sure the static files always exist
@@ -85,6 +105,8 @@ func (u *ComponentUpdater) UpdateAll(
 		func() error { return u.UpdateNotFound(ctx) },
 		func() error { return u.UpdateProfile(ctx) },
 		func() error { return u.UpdatePaper(ctx) },
+		func() error { return u.UpdateReview(ctx) },
+		func() error { return u.UpdateAdmin(ctx) },
 	} {
 		if err := f(); err != nil {
 			return err

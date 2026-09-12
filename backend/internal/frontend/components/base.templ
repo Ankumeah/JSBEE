@@ -36,6 +36,7 @@ templ base(info pageInfo, content templ.Component, firebaseClientConfig string) 
 				function firebaseSignOut() {
 					localStorage.removeItem('firebase_jwt');
 					localStorage.removeItem('jsbee_uuid');
+					_authReadyPromise = null;
 					return firebaseAuth.signOut();
 				}
 
@@ -62,6 +63,191 @@ templ base(info pageInfo, content templ.Component, firebaseClientConfig string) 
 					localStorage.setItem('jsbee_uuid', uuid);
 				}
 
+				function clearFirebaseSession() {
+					localStorage.removeItem('firebase_jwt');
+					localStorage.removeItem('jsbee_uuid');
+				}
+
+				function checkApiResponse(resp, fallback) {
+					if (resp.ok) {
+						return Promise.resolve(resp);
+					}
+					return resp.text().then(function(text) {
+						var message = fallback || 'Request failed';
+						try {
+							var parsed = JSON.parse(text);
+							if (parsed && parsed.error) {
+								message = parsed.error;
+							} else if (text) {
+								message = text;
+							}
+						} catch (e) {
+							if (text) {
+								message = text;
+							}
+						}
+						console.warn('API request failed:', resp.url, resp.status, text);
+						var err = new Error(message);
+						err.status = resp.status;
+						throw err;
+					});
+				}
+
+				function isSessionExpiredError(err) {
+					return err && err.status === 401;
+				}
+
+				function handleSessionExpired() {
+					clearFirebaseSession();
+					showAuthFailedToast('Session expired, please sign in again');
+				}
+
+				function showAuthFailedToast(message) {
+					showToastWithActions(message, [
+						{
+							label: 'Cancel',
+							pressed: function() {
+								hideToast();
+							}
+						},
+						{
+							label: 'Log out',
+							danger: true,
+							pressed: function() {
+								hideToast();
+								firebaseSignOut().then(function() {
+									window.location.href = '/';
+								}).catch(function() {
+									window.location.href = '/';
+								});
+							}
+						}
+					]);
+				}
+
+				var _authReadyPromise = null;
+
+				function waitForAuthUser() {
+					if (firebaseAuth.currentUser) {
+						return Promise.resolve(firebaseAuth.currentUser);
+					}
+					if (!_authReadyPromise) {
+						_authReadyPromise = new Promise(function(resolve) {
+							var unsub = firebaseAuth.onAuthStateChanged(function(user) {
+								try {
+									unsub();
+								} catch (e) {}
+								resolve(user || null);
+							});
+						});
+					}
+					return _authReadyPromise;
+				}
+
+				function reauthenticate() {
+					_authReadyPromise = null;
+					return firebaseAuth.signOut().catch(function() {}).then(function() {
+						clearFirebaseSession();
+						return firebaseSignIn();
+					}).then(function(idToken) {
+						setFirebaseJwt(idToken);
+						return idToken;
+					}, function(err) {
+						if (err && (err.code === 'auth/popup-blocked' || err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request')) {
+							throw new Error('Please sign in again to continue');
+						}
+						throw err;
+					});
+				}
+
+				function getValidToken() {
+					return waitForAuthUser().then(function(user) {
+						if (!user) {
+							return null;
+						}
+						return user.getIdToken(false).then(function(token) {
+							setFirebaseJwt(token);
+							return token;
+						}, function() {
+							_authReadyPromise = null;
+							return firebaseAuth.signOut().catch(function() {}).then(function() {
+								clearFirebaseSession();
+								return null;
+							});
+						});
+					});
+				}
+
+				function authFetch(path, options) {
+					options = options || {};
+					function send(token) {
+						var headers = {};
+						if (options.headers) {
+							for (var key in options.headers) {
+								headers[key] = options.headers[key];
+							}
+						}
+						headers['Authorization'] = 'Bearer ' + token;
+						return fetch(path, {
+							method: options.method || 'GET',
+							headers: headers,
+							body: options.body
+						});
+					}
+					return getValidToken().then(function(token) {
+						if (!token) {
+							var err = new Error('Not signed in');
+							err.status = 401;
+							throw err;
+						}
+						return send(token).then(function(resp) {
+							if (resp.status !== 401) {
+								return resp;
+							}
+							return reauthenticate().then(send);
+						});
+					});
+				}
+
+				function ensureSignedIn() {
+					return waitForAuthUser().then(function(user) {
+						if (!user) {
+							return firebaseSignIn();
+						}
+						return user.getIdToken().then(function(idToken) {
+							return idToken;
+						}, function() {
+							return reauthenticate();
+						});
+					}).then(function(idToken) {
+						return fetch('/api/v1/account', {
+							method: 'POST',
+							headers: { 'Authorization': 'Bearer ' + idToken }
+						}).then(function(resp) {
+							return checkApiResponse(resp, 'Backend registration failed');
+						}).then(function(resp) {
+							return resp.json();
+						}).then(function(data) {
+							if (!data || !data.uuid) {
+								throw new Error('Backend registration failed: missing user id');
+							}
+							setFirebaseUuid(data.uuid);
+							return firebaseRefreshToken();
+						});
+					}).then(function(refreshedToken) {
+						setFirebaseJwt(refreshedToken);
+						return refreshedToken;
+					});
+				}
+
+				firebaseAuth.onIdTokenChanged(function(user) {
+					if (user) {
+						user.getIdToken().then(function(token) {
+							setFirebaseJwt(token);
+						}).catch(function() {});
+					}
+				});
+
 				function hideToast() {
 					var body = document.getElementById('toast-body');
 					if (!body) {
@@ -77,6 +263,7 @@ templ base(info pageInfo, content templ.Component, firebaseClientConfig string) 
 						return;
 					}
 					document.getElementById('toast-msg').textContent = message;
+					document.getElementById('toast-actions').innerHTML = '';
 					body.classList.remove('opacity-0', '-translate-y-2', 'pointer-events-none');
 					body.classList.add('opacity-100', 'translate-y-0', 'pointer-events-auto');
 				}
