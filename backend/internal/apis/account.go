@@ -18,7 +18,7 @@ import (
 
 // This route deals with account logic
 func account(r *gin.RouterGroup, app *a.App) {
-	// This route handles creates a user
+	// This route creates a user
 	r.POST("/account", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		authHeader := c.GetHeader("Authorization")
@@ -37,7 +37,7 @@ func account(r *gin.RouterGroup, app *a.App) {
 		// Reject on unexpected prefix
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			c.JSON(
-				http.StatusBadRequest,
+				http.StatusUnauthorized,
 				gin.H{"error": "No auth token provided"},
 			)
 			return
@@ -82,6 +82,7 @@ func account(r *gin.RouterGroup, app *a.App) {
 
 		// Get UUID is user exists or else create it
 		var userUUID uuid.UUID
+		isNewUser := true
 		uuidInToken, ok := token.Claims[provider.SiteName+"-uuid"]
 		if !ok {
 			userUUID = uuid.New()
@@ -101,6 +102,7 @@ func account(r *gin.RouterGroup, app *a.App) {
 					return
 				}
 				userUUID = existing.UUID
+				isNewUser = false
 			} else if err != nil {
 				c.JSON(
 					http.StatusInternalServerError,
@@ -108,14 +110,20 @@ func account(r *gin.RouterGroup, app *a.App) {
 				)
 				log.Printf("Error while creating user uuid: %v\n", err.Error())
 				return
-			} else if err := app.FireBaseClient.SetCustomUserClaims(
+			}
+
+			// Both new and returning users need the uuid claim in their
+			// token, otherwise authed routes keep rejecting them
+			if err := app.FireBaseClient.SetCustomUserClaims(
 				ctx,
 				token.UID,
 				map[string]interface{}{
 					provider.SiteName + "-uuid": userUUID.String(),
 				},
 			); err != nil {
-				app.DBController.DeleteUser(ctx, userUUID)
+				if isNewUser {
+					app.DBController.DeleteUser(ctx, userUUID)
+				}
 				c.JSON(
 					http.StatusInternalServerError,
 					gin.H{"error": "Internal server error"},
@@ -141,9 +149,14 @@ func account(r *gin.RouterGroup, app *a.App) {
 				)
 				return
 			}
+			isNewUser = false
 		}
 
-		c.JSON(http.StatusCreated, gin.H{"uuid": userUUID})
+		if isNewUser {
+			c.JSON(http.StatusCreated, gin.H{"uuid": userUUID})
+		} else {
+			c.JSON(http.StatusOK, gin.H{"uuid": userUUID})
+		}
 	})
 
 	group := r.Group("/account", middlewares.FireBaseAuthMiddleware(app))
@@ -153,7 +166,11 @@ func account(r *gin.RouterGroup, app *a.App) {
 		ctx := c.Request.Context()
 
 		userUUID, err := uuid.Parse(c.GetString(middlewares.UUIDField))
-		if !handleError(c, err) {
+		if err != nil {
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{"error": "Invalid user uuid in auth token"},
+			)
 			return
 		}
 
@@ -173,8 +190,8 @@ func account(r *gin.RouterGroup, app *a.App) {
 		)
 		if err != nil {
 			c.JSON(
-				http.StatusInternalServerError,
-				gin.H{"error": "Internal server error"},
+				http.StatusBadRequest,
+				gin.H{"error": "Invalid user uuid in auth token"},
 			)
 			return
 		}

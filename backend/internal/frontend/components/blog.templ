@@ -1,0 +1,153 @@
+package components
+
+import (
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
+)
+
+var blogInfo = pageInfo{
+	title:       "Blog",
+	description: "Blog posts",
+}
+
+templ blogPage() {
+	<div class="flex min-h-screen flex-col">
+		@navBar(provider.SiteName, "blog")
+		<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-12 sm:px-6">
+			<h1 class="text-center font-serif text-4xl font-semibold text-stone-900">Blog</h1>
+			<div id="blog-loading" class="mt-8 text-center text-sm text-stone-500">Loading posts...</div>
+			<div id="blog-error" class="mt-8 hidden text-center text-sm text-red-600"></div>
+			<div id="blog-empty" class="mt-8 hidden text-center text-sm text-stone-500">No posts yet.</div>
+			<ul id="blog-list" class="mt-8 hidden divide-y divide-stone-100 rounded-xl border border-stone-200 bg-white/50 p-6 shadow-sm"></ul>
+			<div id="blog-post" class="hidden">
+				<a
+					href="/blog"
+					class="mt-8 inline-block rounded-lg border border-stone-300 px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+				>
+					Back to all posts
+				</a>
+				<h2 id="blog-post-title" class="mt-6 font-serif text-3xl font-semibold text-stone-900"></h2>
+				<p id="blog-post-date" class="mt-2 text-sm text-stone-500"></p>
+				<article id="blog-post-content" class="blog-content mt-6"></article>
+			</div>
+		</main>
+		@siteFooter(provider.SiteName)
+		<script>
+			(function() {
+				function formatBlogDate(unix) {
+					return new Date(unix * 1000).toLocaleDateString(undefined, {
+						year: 'numeric',
+						month: 'long',
+						day: 'numeric'
+					});
+				}
+
+				function renderMarkdown(md) {
+					if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
+						throw new Error('Markdown renderer failed to load');
+					}
+					return DOMPurify.sanitize(marked.parse(md || ''));
+				}
+
+				function initBlog() {
+					var params = new URLSearchParams(window.location.search);
+					var uuid = params.get('uuid');
+					if (uuid) {
+						showPost(uuid);
+					} else {
+						showList();
+					}
+				}
+
+				function showList() {
+					var loading = document.getElementById('blog-loading');
+					var errorEl = document.getElementById('blog-error');
+					var emptyEl = document.getElementById('blog-empty');
+					var listEl = document.getElementById('blog-list');
+					fetch('/api/v1/blogs')
+						.then(function(resp) {
+							return checkApiResponse(resp, 'Failed to load posts');
+						}).then(function(resp) {
+							return resp.json();
+						}).then(function(data) {
+							var blogs = data.blogs || [];
+							loading.classList.add('hidden');
+							if (blogs.length === 0) {
+								emptyEl.classList.remove('hidden');
+								return;
+							}
+							blogs.forEach(function(blog) {
+								var li = document.createElement('li');
+								li.className = 'py-4 first:pt-0 last:pb-0';
+								var a = document.createElement('a');
+								a.href = '/blog?uuid=' + encodeURIComponent(blog.uuid);
+								a.className = 'block rounded hover:bg-stone-100/50';
+								var title = document.createElement('div');
+								title.className = 'font-serif text-xl font-semibold text-stone-900';
+								title.textContent = blog.title;
+								a.appendChild(title);
+								var date = document.createElement('div');
+								date.className = 'mt-1 text-sm text-stone-500';
+								date.textContent = formatBlogDate(blog.created_at);
+								a.appendChild(date);
+								li.appendChild(a);
+								listEl.appendChild(li);
+							});
+							listEl.classList.remove('hidden');
+						}).catch(function(err) {
+							loading.classList.add('hidden');
+							errorEl.textContent = err.message;
+							errorEl.classList.remove('hidden');
+						});
+				}
+
+				function showPost(uuid) {
+					var loading = document.getElementById('blog-loading');
+					var errorEl = document.getElementById('blog-error');
+					var postEl = document.getElementById('blog-post');
+					var listEl = document.getElementById('blog-list');
+					var emptyEl = document.getElementById('blog-empty');
+					fetch('/api/v1/blogs/' + encodeURIComponent(uuid))
+						.then(function(resp) {
+							return checkApiResponse(resp, 'Failed to load post');
+						}).then(function(resp) {
+							return resp.json();
+						}).then(function(data) {
+							if (!data || !data.blog) {
+								throw new Error('Post not found');
+							}
+							var blog = data.blog;
+							document.getElementById('blog-post-title').textContent = blog.title;
+							document.title = blog.title;
+							document.getElementById('blog-post-date').textContent = formatBlogDate(blog.created_at);
+							return fetch('/api/v1/blogs/' + encodeURIComponent(blog.uuid) + '/content');
+						}).then(function(resp) {
+							return checkApiResponse(resp, 'Failed to load post content');
+						}).then(function(resp) {
+							return resp.text();
+						}).then(function(md) {
+							document.getElementById('blog-post-content').innerHTML = renderMarkdown(md);
+							loading.classList.add('hidden');
+							listEl.classList.add('hidden');
+							emptyEl.classList.add('hidden');
+							postEl.classList.remove('hidden');
+						}).catch(function(err) {
+							loading.classList.add('hidden');
+							postEl.classList.add('hidden');
+							errorEl.textContent = err.message;
+							errorEl.classList.remove('hidden');
+						});
+				}
+
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', initBlog);
+				} else {
+					initBlog();
+				}
+			})();
+		</script>
+	</div>
+}
+
+templ BlogPage(firebaseClientConfig string) {
+	@base(blogInfo, blogPage(), firebaseClientConfig)
+}

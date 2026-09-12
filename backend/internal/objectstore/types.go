@@ -19,6 +19,18 @@ type ObjectStore interface {
 	// public bucket if the driver supports it
 	PublicFile(ctx context.Context, filename string) error
 
+	// Gets a file from the public bucket
+	GetFile(ctx context.Context, filename string) (io.ReadCloser, error)
+
+	// Returns the public base URL under which files in the
+	// public bucket can be fetched directly, without going
+	// through the backend (e.g. `https://store.example/public`)
+	PublicBaseURL() string
+
+	// Deletes a file from the public and private buckets
+	// if the driver supports it
+	DeleteFile(ctx context.Context, filename string) error
+
 	// Store a db snapshot and remove older snapshots
 	StoreDBBackup(ctx context.Context, baseFilename string, backupPath string) error
 }

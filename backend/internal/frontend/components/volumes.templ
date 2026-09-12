@@ -15,7 +15,7 @@ var volumesInfo = pageInfo{
 	description: "View all volumes",
 }
 
-templ paperItem(paper database.Paper) {
+templ paperItem(paper database.Paper, filesBaseURL string) {
 	<li
 		class="flex flex-col gap-1 border-b border-stone-100 py-3 last:border-0 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6"
 		data-title={ strings.ToLower(paper.Title) }
@@ -29,7 +29,7 @@ templ paperItem(paper database.Paper) {
 		</div>
 		if paper.Filename != "" {
 			<a
-				href={ templ.SafeURL("/" + url.PathEscape(paper.Filename)) }
+				href={ templ.SafeURL(filesBaseURL + "/" + url.PathEscape(paper.Filename)) }
 				class="shrink-0 text-sm font-medium text-emerald-800 hover:underline"
 			>
 				{ paper.Filename }
@@ -38,7 +38,7 @@ templ paperItem(paper database.Paper) {
 	</li>
 }
 
-templ issueBlock(issue database.Issue) {
+templ issueBlock(issue database.Issue, filesBaseURL string) {
 	<div class="mt-4 rounded-lg border border-stone-200 bg-white/70 p-4">
 		<h3 class="text-sm font-semibold uppercase tracking-wide text-stone-500">
 			Issue { fmt.Sprintf("%d", issue.Number) }
@@ -48,14 +48,14 @@ templ issueBlock(issue database.Issue) {
 		} else {
 			<ul class="mt-1">
 				for _, paper := range issue.Papers {
-					@paperItem(paper)
+					@paperItem(paper, filesBaseURL)
 				}
 			</ul>
 		}
 	</div>
 }
 
-templ volumeBlock(volume database.Volume) {
+templ volumeBlock(volume database.Volume, filesBaseURL string) {
 	<section
 		class="rounded-xl border border-stone-200 bg-white/50 p-5 shadow-sm"
 		x-data="{ open: true }"
@@ -76,14 +76,14 @@ templ volumeBlock(volume database.Volume) {
 				<p class="mt-4 text-sm text-stone-500">No issues in this volume.</p>
 			} else {
 				for _, issue := range volume.Issues {
-					@issueBlock(issue)
+					@issueBlock(issue, filesBaseURL)
 				}
 			}
 		</div>
 	</section>
 }
 
-templ volumesPage(volumes []database.Volume) {
+templ volumesPage(volumes []database.Volume, filesBaseURL string) {
 	<div class="flex min-h-screen flex-col" x-data="{ q: '' }">
 		@navBar(provider.SiteName, "volumes")
 		<main class="mx-auto w-full max-w-5xl flex-1 px-4 py-12 sm:px-6">
@@ -107,7 +107,7 @@ templ volumesPage(volumes []database.Volume) {
 			} else {
 				<div class="mt-8 space-y-6">
 					for _, volume := range volumes {
-						@volumeBlock(volume)
+						@volumeBlock(volume, filesBaseURL)
 					}
 				</div>
 			}
@@ -116,6 +116,6 @@ templ volumesPage(volumes []database.Volume) {
 	</div>
 }
 
-templ VolumesPage(volumes []database.Volume, firebaseClientConfig string) {
-	@base(volumesInfo, volumesPage(volumes), firebaseClientConfig)
+templ VolumesPage(volumes []database.Volume, firebaseClientConfig string, filesBaseURL string) {
+	@base(volumesInfo, volumesPage(volumes, filesBaseURL), firebaseClientConfig)
 }

@@ -35,7 +35,8 @@ func paper(r *gin.RouterGroup, app *a.App) {
 			}
 
 			file, _, err := c.Request.FormFile("file")
-			if !handleError(c, err) {
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "File is required"})
 				return
 			}
 			defer file.Close()
@@ -69,12 +70,23 @@ func paper(r *gin.RouterGroup, app *a.App) {
 				return
 			}
 
+			// Published papers are served from the public bucket by
+			// `GET /files/:filename`, so make the file public right away.
+			// The filename is an unguessable uuid, paper metadata is public.
+			if err := app.ObjectStore.PublicFile(
+				ctx, filename,
+			); !handleError(c, err) {
+				app.ObjectStore.DeleteFile(ctx, filename)
+				return
+			}
+
 			if err := app.DBController.AddPaper(ctx, database.Paper{
 				UUID:      paperUUID,
 				Title:     title,
 				Filename:  filename,
 				OwnerUUID: &userUUID,
 			}); !handleError(c, err) {
+				app.ObjectStore.DeleteFile(ctx, filename)
 				return
 			}
 
@@ -87,7 +99,8 @@ func paper(r *gin.RouterGroup, app *a.App) {
 		ctx := c.Request.Context()
 
 		paperUUID, err := uuid.Parse(c.Param("paperUUID"))
-		if !handleError(c, err) {
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid uuid"})
 			return
 		}
 
@@ -96,6 +109,10 @@ func paper(r *gin.RouterGroup, app *a.App) {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"paper": paper})
+		// Direct public-bucket URL so browsers fetch the PDF
+		// straight from object storage, not through the backend
+		fileURL := app.ObjectStore.PublicBaseURL() + "/" + paper.Filename
+
+		c.JSON(http.StatusOK, gin.H{"paper": paper, "file_url": fileURL})
 	})
 }

@@ -33,6 +33,7 @@ type s3StaticClient struct {
 	client         *minio.Client
 	region         string
 	maxDBSnapshots uint
+	publicBaseURL  string
 }
 
 func GetStaticS3Client(
@@ -54,6 +55,7 @@ func GetStaticS3Client(
 		client:         client,
 		region:         config.Region,
 		maxDBSnapshots: config.MaxDBSnapshots,
+		publicBaseURL:  publicBaseURLFromConfig(config),
 	}, err
 }
 
@@ -86,7 +88,7 @@ func (s s3StaticClient) AddFile(
 	_, err := s.client.PutObject(
 		ctx, privateBucket, filename, content, size,
 		minio.PutObjectOptions{
-			ContentType: "application/pdf",
+			ContentType: contentTypeFor(filename),
 		},
 	)
 
@@ -118,6 +120,45 @@ func (s s3StaticClient) PublicFile(
 	)
 }
 
+func (s s3StaticClient) PublicBaseURL() string {
+	return s.publicBaseURL
+}
+
+func (s s3StaticClient) GetFile(
+	ctx context.Context,
+	filename string,
+) (io.ReadCloser, error) {
+	object, err := s.client.GetObject(
+		ctx, publicBucket, filename,
+		minio.GetObjectOptions{},
+	)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := object.Stat(); err != nil {
+		return nil, err
+	}
+
+	return object, nil
+}
+
+func (s s3StaticClient) DeleteFile(
+	ctx context.Context,
+	filename string,
+) error {
+	if err := s.client.RemoveObject(
+		ctx, publicBucket, filename,
+		minio.RemoveObjectOptions{},
+	); err != nil {
+		return err
+	}
+
+	return s.client.RemoveObject(
+		ctx, privateBucket, filename,
+		minio.RemoveObjectOptions{},
+	)
+}
+
 func (s s3StaticClient) StoreDBBackup(
 	ctx context.Context,
 	baseFilename string,
@@ -130,14 +171,19 @@ func (s s3StaticClient) StoreDBBackup(
 	var minTime int64
 	var minFile string
 	var totalBackups uint
+	first := true
 	for backup := range s.client.ListObjects(
 		ctx, backupBucket, minio.ListObjectsOptions{
 			Prefix: backupBaseName,
 		},
 	) {
-		if backup.LastModified.Unix() <= minTime {
+		if backup.Err != nil {
+			continue
+		}
+		if first || backup.LastModified.Unix() < minTime {
 			minTime = backup.LastModified.Unix()
 			minFile = backup.Key
+			first = false
 		}
 		totalBackups += 1
 	}

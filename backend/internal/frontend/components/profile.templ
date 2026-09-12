@@ -18,7 +18,7 @@ templ profilePage() {
 				id="profile-review"
 				type="button"
 				class="mt-4 hidden w-full rounded-md bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
-				onclick="window.location.href = '/review.html';"
+				onclick="window.location.href = '/review';"
 			>
 				Review dashboard
 			</button>
@@ -26,7 +26,7 @@ templ profilePage() {
 				id="profile-admin"
 				type="button"
 				class="mt-4 hidden w-full rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
-				onclick="window.location.href = '/admin.html';"
+				onclick="window.location.href = '/admin';"
 			>
 				Admin dashboard
 			</button>
@@ -87,7 +87,9 @@ templ profilePage() {
 
 					if (localStorage.getItem('jsbee_welcome')) {
 						localStorage.removeItem('jsbee_welcome');
-						showToast("Great you are logged in. By default we dont send you any emails, to get emails about your papers and our latest news, go to your profile and click on subscribe");
+						// Emails not implemented yet: `true ||` skips this notice.
+						// Flip to `false ||` once email support lands to show it again.
+						true || showToast("Great you are logged in. By default we dont send you any emails, to get emails about your papers and our latest news, go to your profile and click on subscribe");
 					}
 
 					function renderSubscription(subscribed) {
@@ -166,8 +168,9 @@ logoutBtn.addEventListener('click', function() {
 							loading.textContent = 'Restoring your session...';
 							ensureSignedIn().then(function() {
 								initProfile(true);
-							}).catch(function() {
+							}).catch(function(err) {
 								loading.textContent = 'Please sign in to view your profile.';
+								showAuthFailedToast('Could not restore your session. Log out to clear this device, then sign in again.');
 							});
 							return;
 						}
@@ -179,6 +182,9 @@ logoutBtn.addEventListener('click', function() {
 								return resp.json();
 							})
 							.then(function(data) {
+							if (!data || !data.user) {
+								throw new Error('Profile not found');
+							}
 							var user = data.user;
 							document.getElementById('profile-name').textContent = user.name;
 							document.getElementById('profile-email').textContent = user.email;
@@ -197,13 +203,8 @@ if (user.role && user.role.can_review) {
 							logoutBtn.classList.remove('hidden');
 
 							var papersBox = document.getElementById('my-papers-box');
-							getValidToken().then(function(jwt) {
-								if (!jwt) {
-									papersBox.classList.add('hidden');
-									return;
-								}
-								papersBox.classList.remove('hidden');
-								fetch('/api/v1/user/papers?uuid=' + encodeURIComponent(uuid))
+							papersBox.classList.remove('hidden');
+							fetch('/api/v1/user/papers?uuid=' + encodeURIComponent(uuid))
 									.then(function(resp) {
 										return checkApiResponse(resp, 'Failed to load papers');
 									}).then(function(resp) {
@@ -251,7 +252,6 @@ if (user.role && user.role.can_review) {
 									errEl.textContent = err.message;
 									errEl.classList.remove('hidden');
 								});
-							});
 						})
 						.catch(function(err) {
 							loading.classList.add('hidden');

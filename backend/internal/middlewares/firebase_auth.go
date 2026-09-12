@@ -62,7 +62,7 @@ func FireBaseAuthMiddleware(app *a.App) gin.HandlerFunc {
 
 		if !strings.HasPrefix(authHeader, "Bearer ") {
 			c.AbortWithStatusJSON(
-				http.StatusBadRequest,
+				http.StatusUnauthorized,
 				gin.H{"error": "No auth token provided"},
 			)
 			return
@@ -112,7 +112,7 @@ func FireBaseAuthMiddleware(app *a.App) gin.HandlerFunc {
 		if !ok {
 			c.AbortWithStatusJSON(
 				http.StatusBadRequest,
-				gin.H{"error": "Inavlid user, sign up first"},
+				gin.H{"error": "Invalid user, sign up first"},
 			)
 			return
 		} else {

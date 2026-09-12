@@ -35,10 +35,11 @@ func (u *ComponentUpdater) UpdateIndex(
 func (u *ComponentUpdater) UpdateVolumes(
 	ctx context.Context,
 	volumes []database.Volume,
+	filesBaseURL string,
 ) error {
 	return updateComponent(
 		ctx, path.Join(u.savePath, volumeFile),
-		components.VolumesPage(volumes, u.firebaseClientConfig),
+		components.VolumesPage(volumes, u.firebaseClientConfig, filesBaseURL),
 	)
 }
 
@@ -92,21 +93,44 @@ func (u *ComponentUpdater) UpdateAdmin(
 	)
 }
 
+func (u *ComponentUpdater) UpdateBlog(
+	ctx context.Context,
+) error {
+	return updateComponent(
+		ctx,
+		path.Join(u.savePath, blogFile),
+		components.BlogPage(u.firebaseClientConfig),
+	)
+}
+
+func (u *ComponentUpdater) UpdateAbout(
+	ctx context.Context,
+) error {
+	return updateComponent(
+		ctx,
+		path.Join(u.savePath, aboutFile),
+		components.AboutPage(u.firebaseClientConfig),
+	)
+}
+
 // This function updates all frontend files and
 // is to be called at application startup
 // to make sure the static files always exist
 func (u *ComponentUpdater) UpdateAll(
 	ctx context.Context,
 	volumes []database.Volume,
+	filesBaseURL string,
 ) error {
 	for _, f := range []func() error{
 		func() error { return u.UpdateIndex(ctx) },
-		func() error { return u.UpdateVolumes(ctx, volumes) },
+		func() error { return u.UpdateVolumes(ctx, volumes, filesBaseURL) },
 		func() error { return u.UpdateNotFound(ctx) },
 		func() error { return u.UpdateProfile(ctx) },
 		func() error { return u.UpdatePaper(ctx) },
 		func() error { return u.UpdateReview(ctx) },
 		func() error { return u.UpdateAdmin(ctx) },
+		func() error { return u.UpdateBlog(ctx) },
+		func() error { return u.UpdateAbout(ctx) },
 	} {
 		if err := f(); err != nil {
 			return err

@@ -119,10 +119,13 @@ templ indexPage() {
 					startBtn.addEventListener('click', function() {
 						startBtn.disabled = true;
 						startBtn.textContent = 'Signing in...';
+						showToast('Waiting for login...');
 						ensureSignedIn().then(function() {
+							hideToast();
 							startBtn.classList.add('hidden');
 							formEl.classList.remove('hidden');
 						}).catch(function(err) {
+							hideToast();
 							if (err && err.code === 'auth/popup-closed-by-user') {
 								return;
 							}
@@ -165,6 +168,9 @@ templ indexPage() {
 						}).then(function(resp) {
 							if (resp.status === 201) {
 								return resp.json().then(function(data) {
+									if (!data || !data.uuid) {
+										throw new Error('Upload failed: missing paper reference');
+									}
 									statusEl.textContent = 'Your paper was submitted for review. Reference: ' + data.uuid;
 									uploadForm.reset();
 								});
@@ -174,7 +180,9 @@ templ indexPage() {
 								try {
 									message = JSON.parse(text).error || text;
 								} catch (e) {}
-								throw new Error(message || 'Upload failed (HTTP ' + resp.status + ')');
+								var uploadErr = new Error(message || 'Upload failed (HTTP ' + resp.status + ')');
+								uploadErr.status = resp.status;
+								throw uploadErr;
 							});
 						}).catch(function(err) {
 							if (isSessionExpiredError(err)) {

@@ -323,3 +323,71 @@ func TestPublishPapersSingleQuery(t *testing.T) {
 		t.Fatalf("Expected numbers %v, got %v\n", expected, numbers)
 	}
 }
+
+func TestBlog(t *testing.T) {
+	db, err := database.GetDBConnection(Ctx, "file::memory:", sqlite.DriverName)
+	if err != nil {
+		t.Fatalf("Error while getting DB connection: %v\n", err.Error())
+	}
+	defer db.Close()
+
+	if err := migrations.ApplyMigrations(Ctx, db); err != nil {
+		t.Fatalf("Error while applying migrations: %v\n", err.Error())
+	}
+
+	sqlxDB := sqlite.GetSqlxDBController(db)
+
+	blog := database.Blog{
+		UUID:      uuid.New(),
+		Title:     "First post",
+		Filename:  "blog-123.md",
+		CreatedAt: 123,
+		UpdatedAt: 123,
+	}
+
+	if err := sqlxDB.AddBlog(Ctx, blog); err != nil {
+		t.Fatalf("Error while adding blog: %v\n", err.Error())
+	}
+
+	if err := sqlxDB.AddBlog(Ctx, blog); !errors.Is(err, database.ErrExistBlog) {
+		t.Fatalf("Expected ErrExistBlog on duplicate, got %v\n", err)
+	}
+
+	gotBlog, err := sqlxDB.GetBlog(Ctx, blog.UUID)
+	if err != nil {
+		t.Fatalf("Error while getting blog: %v\n", err.Error())
+	}
+	if gotBlog != blog {
+		t.Fatalf("Expected blog %v, got %v\n", blog, gotBlog)
+	}
+
+	blogs, err := sqlxDB.GetBlogs(Ctx)
+	if err != nil {
+		t.Fatalf("Error while getting blogs: %v\n", err.Error())
+	}
+	if len(blogs) != 1 || blogs[0] != blog {
+		t.Fatalf("Expected 1 blog %v, got %v\n", blog, blogs)
+	}
+
+	blog.Title = "Edited post"
+	blog.UpdatedAt = 456
+	if err := sqlxDB.UpdateBlog(Ctx, blog); err != nil {
+		t.Fatalf("Error while updating blog: %v\n", err.Error())
+	}
+	gotBlog, err = sqlxDB.GetBlog(Ctx, blog.UUID)
+	if err != nil {
+		t.Fatalf("Error while getting updated blog: %v\n", err.Error())
+	}
+	if gotBlog != blog {
+		t.Fatalf("Expected updated blog %v, got %v\n", blog, gotBlog)
+	}
+
+	if err := sqlxDB.DeleteBlog(Ctx, blog.UUID); err != nil {
+		t.Fatalf("Error while deleting blog: %v\n", err.Error())
+	}
+	if _, err := sqlxDB.GetBlog(
+		Ctx, blog.UUID,
+	); !errors.Is(err, database.ErrInvalidBlog) {
+		t.Fatalf("Expected ErrInvalidBlog after delete, got %v\n", err)
+	}
+}

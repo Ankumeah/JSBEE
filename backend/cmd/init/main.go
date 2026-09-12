@@ -21,12 +21,13 @@ func main() {
 	wg.Go(func() {
 		getDBConnection(Ctx, app)
 		runDBMigrations(Ctx, app)
-		generateInitalComponents(Ctx, app)
-		saveAssets(Ctx, app)
-	})
-	wg.Go(func() {
+		// Object store must be connected before generating components,
+		// `generateInitalComponents` embeds its public base URL
 		connectObjectStore(Ctx, app)
 		initObjectStore(Ctx, app)
+		seedAboutPage(Ctx, app)
+		generateInitalComponents(Ctx, app)
+		saveAssets(Ctx, app)
 	})
 	wg.Wait()
 

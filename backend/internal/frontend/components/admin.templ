@@ -12,20 +12,20 @@ var adminInfo = pageInfo{
 templ adminPage() {
 	<div class="flex min-h-screen flex-col">
 		@navBar(provider.SiteName, "")
-		<main class="flex flex-1">
-			<aside class="sticky top-0 h-screen w-56 shrink-0 border-r border-stone-200 bg-stone-50 py-12 pl-4 pr-2">
-				<nav class="space-y-1">
+		<main class="flex flex-1 flex-col md:flex-row">
+			<aside class="top-0 z-10 w-full shrink-0 border-b border-stone-200 bg-stone-50 px-4 py-4 md:sticky md:h-screen md:w-56 md:border-b-0 md:border-r md:py-12 md:pl-4 md:pr-2">
+				<nav class="flex gap-1 overflow-x-auto md:flex-col md:space-y-1 md:overflow-visible">
 					<button
 						type="button"
 						id="sidebar-welcome"
-						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100 bg-stone-200"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100 bg-stone-200"
 					>
 						Welcome
 					</button>
 					<button
 						type="button"
 						id="sidebar-publish"
-						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
 					>
 						Publish
 						<span id="publish-badge" class="ml-2 hidden rounded-full bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white"></span>
@@ -33,16 +33,30 @@ templ adminPage() {
 					<button
 						type="button"
 						id="sidebar-volume-issue"
-						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
 					>
 						New volume or issue
 					</button>
 					<button
 						type="button"
 						id="sidebar-roles"
-						class="sidebar-item w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
 					>
 						Roles
+					</button>
+					<button
+						type="button"
+						id="sidebar-blog"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+					>
+						Blog
+					</button>
+					<button
+						type="button"
+						id="sidebar-about"
+						class="sidebar-item shrink-0 md:w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+					>
+						About
 					</button>
 				</nav>
 			</aside>
@@ -129,6 +143,7 @@ templ adminPage() {
 										id="role-select"
 										class="flex-1 rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-indigo-700 focus:outline-none disabled:opacity-50"
 									>
+										<option value="owner">owner</option>
 										<option value="viewer">viewer</option>
 										<option value="reviewer">reviewer</option>
 										<option value="admin">admin</option>
@@ -145,12 +160,97 @@ templ adminPage() {
 							</div>
 						</div>
 					</div>
+					<div id="panel-blog" class="hidden mt-8">
+						<div class="mx-auto max-w-3xl space-y-6">
+							<div>
+								<h2 class="font-serif text-xl font-semibold text-stone-900">Posts</h2>
+								<div id="blog-admin-loading" class="mt-2 text-sm text-stone-500">Loading posts...</div>
+								<div id="blog-admin-empty" class="mt-2 hidden text-sm text-stone-500">No posts yet.</div>
+								<ul id="blog-admin-list" class="mt-2 hidden divide-y divide-stone-100 rounded-xl border border-stone-200 bg-white/50 p-4 shadow-sm"></ul>
+							</div>
+							<div class="rounded-xl border border-stone-200 bg-white/50 p-6 shadow-sm">
+								<h2 id="blog-editor-heading" class="font-serif text-xl font-semibold text-stone-900">New post</h2>
+								<label class="mt-4 block">
+									<span class="text-sm font-medium text-stone-700">Title</span>
+									<input
+										id="blog-title"
+										type="text"
+										placeholder="Post title"
+										class="mt-1 w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 focus:border-indigo-700 focus:outline-none"
+									/>
+								</label>
+								<div class="mt-4 grid gap-4 md:grid-cols-2">
+									<div>
+										<span class="text-sm font-medium text-stone-700">Markdown</span>
+										<textarea
+											id="blog-editor"
+											rows="12"
+											placeholder="# Hello&#10;&#10;Write your post in markdown..."
+											class="mt-1 w-full rounded-md border border-stone-300 bg-white px-3 py-2 font-mono text-sm text-stone-900 focus:border-indigo-700 focus:outline-none"
+										></textarea>
+									</div>
+									<div>
+										<span class="text-sm font-medium text-stone-700">Preview</span>
+										<div id="blog-preview" class="blog-content mt-1 min-h-[12rem] rounded-md border border-stone-200 bg-white px-3 py-2 text-sm"></div>
+									</div>
+								</div>
+								<div class="mt-4 flex gap-2">
+									<button
+										type="button"
+										id="btn-blog-save"
+										class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+									>
+										Publish post
+									</button>
+									<button
+										type="button"
+										id="btn-blog-cancel"
+										class="hidden rounded-md border border-stone-300 px-4 py-2 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-100"
+									>
+										Cancel editing
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div id="panel-about" class="hidden mt-8">
+						<div class="mx-auto max-w-3xl space-y-4">
+							<div class="rounded-xl border border-stone-200 bg-white/50 p-6 shadow-sm">
+								<h2 class="font-serif text-xl font-semibold text-stone-900">About us page</h2>
+								<p class="mt-1 text-sm text-stone-500">Shown in the footer of every page.</p>
+								<div id="about-admin-loading" class="mt-4 text-sm text-stone-500">Loading current content...</div>
+								<div class="mt-4 grid gap-4 md:grid-cols-2">
+									<div>
+										<span class="text-sm font-medium text-stone-700">Markdown</span>
+										<textarea
+											id="about-editor"
+											rows="12"
+											class="mt-1 w-full rounded-md border border-stone-300 bg-white px-3 py-2 font-mono text-sm text-stone-900 focus:border-indigo-700 focus:outline-none"
+										></textarea>
+									</div>
+									<div>
+										<span class="text-sm font-medium text-stone-700">Preview</span>
+										<div id="about-preview" class="blog-content mt-1 min-h-[12rem] rounded-md border border-stone-200 bg-white px-3 py-2 text-sm"></div>
+									</div>
+								</div>
+								<div class="mt-4">
+									<button
+										type="button"
+										id="btn-about-save"
+										class="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+									>
+										Save about page
+									</button>
+								</div>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</main>
 		@siteFooter(provider.SiteName)
 		<!-- Tailwind safelist for JS-created classes -->
-		<span class="hidden bg-stone-200 bg-amber-500 rounded-full px-2 py-0.5 text-xs font-semibold text-white flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 font-medium text-stone-900 shrink-0 text-sm text-stone-500 text-amber-700 disabled:opacity-50"></span>
+		<span class="hidden bg-stone-200 bg-amber-500 rounded-full px-2 py-0.5 text-xs font-semibold text-white flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 font-medium text-stone-900 shrink-0 text-sm text-stone-500 text-amber-700 disabled:opacity-50 flex items-center gap-2 rounded-md bg-emerald-600 px-3 py-1.5 transition-colors hover:bg-emerald-700 bg-red-600 hover:bg-red-700 truncate min-w-0"></span>
 		<script>
 			(function() {
 				function initAdmin() {
@@ -158,6 +258,7 @@ templ adminPage() {
 					if (!user) {
 						document.getElementById('admin-error').textContent = 'You must be signed in as an admin.';
 						document.getElementById('admin-error').classList.remove('hidden');
+						showAuthFailedToast('You must be signed in as an admin.');
 						return;
 					}
 
@@ -165,7 +266,9 @@ templ adminPage() {
 						welcome: document.getElementById('panel-welcome'),
 						publish: document.getElementById('panel-publish'),
 						volumeIssue: document.getElementById('panel-volume-issue'),
-						roles: document.getElementById('panel-roles')
+						roles: document.getElementById('panel-roles'),
+						blog: document.getElementById('panel-blog'),
+						about: document.getElementById('panel-about')
 					};
 					var publishLoaded = false;
 
@@ -198,9 +301,19 @@ templ adminPage() {
 						panels.roles.classList.remove('hidden');
 					});
 
+					document.getElementById('sidebar-blog').addEventListener('click', function() {
+						selectSidebar('sidebar-blog');
+						panels.blog.classList.remove('hidden');
+						if (!blogLoaded) loadAdminBlogs();
+					});
+
+					document.getElementById('sidebar-about').addEventListener('click', function() {
+						selectSidebar('sidebar-about');
+						panels.about.classList.remove('hidden');
+						if (!aboutLoaded) loadAboutContent();
+					});
+
 					function loadReviewedPapers() {
-						getValidToken().then(function(t) {
-						if (!t) { showToast('Not signed in'); return; }
 						var loading = document.getElementById('publish-loading');
 						var emptyEl = document.getElementById('publish-empty');
 						var content = document.getElementById('publish-content');
@@ -214,9 +327,7 @@ templ adminPage() {
 						countEl.textContent = '';
 						badge.classList.add('hidden');
 						badge.textContent = '';
-						return fetch('/api/v1/admin/reviewed', {
-							headers: { 'Authorization': 'Bearer ' + t }
-						}).then(function(resp) {
+						return authFetch('/api/v1/admin/reviewed').then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load reviewed papers');
 						}).then(function(resp) {
 							return resp.json();
@@ -255,8 +366,7 @@ templ adminPage() {
 							});
 							content.classList.remove('hidden');
 							publishLoaded = true;
-						});
-					}).catch(function(err) {
+						}).catch(function(err) {
 						document.getElementById('publish-loading').classList.add('hidden');
 							if (isSessionExpiredError(err)) {
 								handleSessionExpired();
@@ -474,6 +584,312 @@ templ adminPage() {
 							btn.disabled = false;
 						});
 					}
+
+					var blogLoaded = false;
+					var editingBlogUuid = null;
+
+					function formatAdminBlogDate(unix) {
+						return new Date(unix * 1000).toLocaleDateString(undefined, {
+							year: 'numeric',
+							month: 'long',
+							day: 'numeric'
+						});
+					}
+
+					function renderAdminMarkdown(md) {
+						if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
+							throw new Error('Markdown renderer failed to load');
+						}
+						return DOMPurify.sanitize(marked.parse(md || ''));
+					}
+
+					function resetBlogEditor() {
+						editingBlogUuid = null;
+						document.getElementById('blog-title').value = '';
+						document.getElementById('blog-editor').value = '';
+						document.getElementById('blog-preview').innerHTML = '';
+						document.getElementById('blog-editor-heading').textContent = 'New post';
+						document.getElementById('btn-blog-save').textContent = 'Publish post';
+						document.getElementById('btn-blog-cancel').classList.add('hidden');
+					}
+
+					document.getElementById('blog-editor').addEventListener('input', function() {
+						try {
+							document.getElementById('blog-preview').innerHTML = renderAdminMarkdown(this.value);
+						} catch (e) {
+							document.getElementById('blog-preview').textContent = 'Preview unavailable: ' + e.message;
+						}
+					});
+
+					function loadAdminBlogs() {
+						var loading = document.getElementById('blog-admin-loading');
+						var emptyEl = document.getElementById('blog-admin-empty');
+						var listEl = document.getElementById('blog-admin-list');
+						loading.classList.remove('hidden');
+						emptyEl.classList.add('hidden');
+						listEl.classList.add('hidden');
+						listEl.innerHTML = '';
+						fetch('/api/v1/blogs')
+							.then(function(resp) {
+								return checkApiResponse(resp, 'Failed to load posts');
+							}).then(function(resp) {
+								return resp.json();
+							}).then(function(data) {
+								var blogs = data.blogs || [];
+								loading.classList.add('hidden');
+								if (blogs.length === 0) {
+									emptyEl.classList.remove('hidden');
+									blogLoaded = true;
+									return;
+								}
+								blogs.forEach(function(blog) {
+									var li = document.createElement('li');
+									li.className = 'flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6';
+									var left = document.createElement('div');
+									left.className = 'min-w-0';
+									var title = document.createElement('div');
+									title.className = 'truncate font-medium text-stone-900';
+									title.textContent = blog.title;
+									left.appendChild(title);
+									var date = document.createElement('div');
+									date.className = 'text-sm text-stone-500';
+									date.textContent = formatAdminBlogDate(blog.created_at);
+									left.appendChild(date);
+									li.appendChild(left);
+									var actions = document.createElement('div');
+									actions.className = 'flex shrink-0 items-center gap-2';
+									var editBtn = document.createElement('button');
+									editBtn.type = 'button';
+									editBtn.textContent = 'Edit';
+									editBtn.className = 'shrink-0 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700';
+									editBtn.addEventListener('click', function() {
+										editBlog(blog.uuid);
+									});
+									actions.appendChild(editBtn);
+									var deleteBtn = document.createElement('button');
+									deleteBtn.type = 'button';
+									deleteBtn.textContent = 'Delete';
+									deleteBtn.className = 'shrink-0 rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700';
+									deleteBtn.addEventListener('click', function() {
+										confirmDeleteBlog(blog.uuid, blog.title, li);
+									});
+									actions.appendChild(deleteBtn);
+									li.appendChild(actions);
+									listEl.appendChild(li);
+								});
+								listEl.classList.remove('hidden');
+								blogLoaded = true;
+							}).catch(function(err) {
+								loading.classList.add('hidden');
+								showToast(err.message);
+							});
+					}
+
+					function editBlog(blogUuid) {
+						fetch('/api/v1/blogs/' + encodeURIComponent(blogUuid))
+							.then(function(resp) {
+								return checkApiResponse(resp, 'Failed to load post');
+							}).then(function(resp) {
+								return resp.json();
+							}).then(function(data) {
+								if (!data || !data.blog || !data.blog.uuid) {
+									throw new Error('Post not found');
+								}
+								var blog = data.blog;
+								return fetch('/api/v1/blogs/' + encodeURIComponent(blog.uuid) + '/content')
+									.then(function(resp) {
+										return checkApiResponse(resp, 'Failed to load post content');
+									}).then(function(resp) {
+										return resp.text();
+									}).then(function(md) {
+										editingBlogUuid = blog.uuid;
+										document.getElementById('blog-title').value = blog.title;
+										document.getElementById('blog-editor').value = md;
+										try {
+											document.getElementById('blog-preview').innerHTML = renderAdminMarkdown(md);
+										} catch (e) {
+											document.getElementById('blog-preview').textContent = 'Preview unavailable: ' + e.message;
+										}
+										document.getElementById('blog-editor-heading').textContent = 'Edit post';
+										document.getElementById('btn-blog-save').textContent = 'Save changes';
+										document.getElementById('btn-blog-cancel').classList.remove('hidden');
+										document.getElementById('blog-title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+									});
+							}).catch(function(err) {
+								showToast(err.message);
+							});
+					}
+
+					document.getElementById('btn-blog-cancel').addEventListener('click', function() {
+						resetBlogEditor();
+					});
+
+					document.getElementById('btn-blog-save').addEventListener('click', function() {
+						var title = document.getElementById('blog-title').value.trim();
+						var content = document.getElementById('blog-editor').value;
+						var saveBtn = document.getElementById('btn-blog-save');
+						if (!title) {
+							showToast('Please enter a title');
+							return;
+						}
+						if (!content.trim()) {
+							showToast('Please write some content');
+							return;
+						}
+						saveBtn.disabled = true;
+						var payload = JSON.stringify({ title: title, content: content });
+						var request;
+						if (editingBlogUuid) {
+							request = authFetch('/api/v1/admin/blog/' + encodeURIComponent(editingBlogUuid), {
+								method: 'PATCH',
+								headers: { 'Content-Type': 'application/json' },
+								body: payload
+							}).then(function(resp) {
+								return checkApiResponse(resp, 'Failed to update post');
+							}).then(function() {
+								showToast('Post updated');
+							});
+						} else {
+							request = authFetch('/api/v1/admin/blog', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: payload
+							}).then(function(resp) {
+								return checkApiResponse(resp, 'Failed to publish post');
+							}).then(function(resp) {
+								return resp.json();
+							}).then(function() {
+								showToast('Post published');
+							});
+						}
+						request.then(function() {
+							resetBlogEditor();
+							blogLoaded = false;
+							loadAdminBlogs();
+						}).catch(function(err) {
+							if (isSessionExpiredError(err)) {
+								handleSessionExpired();
+								return;
+							}
+							if (err && err.status === 403) {
+								showToast('You are not allowed to manage posts');
+								return;
+							}
+							showToast(err.message);
+						}).finally(function() {
+							saveBtn.disabled = false;
+						});
+					});
+
+					function confirmDeleteBlog(blogUuid, title, row) {
+						showToastWithActions('Delete "' + title + '"?', [
+							{
+								label: 'Cancel',
+								pressed: function() {
+									hideToast();
+								}
+							},
+							{
+								label: 'Delete',
+								danger: true,
+								pressed: function() {
+									hideToast();
+									doDeleteBlog(blogUuid, row);
+								}
+							}
+						]);
+					}
+
+					function doDeleteBlog(blogUuid, row) {
+						authFetch('/api/v1/admin/blog/' + encodeURIComponent(blogUuid), {
+							method: 'DELETE'
+						}).then(function(resp) {
+							return checkApiResponse(resp, 'Failed to delete post');
+						}).then(function() {
+							row.remove();
+							var listEl = document.getElementById('blog-admin-list');
+							var emptyEl = document.getElementById('blog-admin-empty');
+							if (listEl.children.length === 0) {
+								listEl.classList.add('hidden');
+								emptyEl.classList.remove('hidden');
+							}
+							showToast('Post deleted');
+						}).catch(function(err) {
+							if (isSessionExpiredError(err)) {
+								handleSessionExpired();
+								return;
+							}
+							if (err && err.status === 403) {
+								showToast('You are not allowed to delete posts');
+								return;
+							}
+							showToast(err.message);
+						});
+					}
+
+					var aboutLoaded = false;
+
+					document.getElementById('about-editor').addEventListener('input', function() {
+						try {
+							document.getElementById('about-preview').innerHTML = renderAdminMarkdown(this.value);
+						} catch (e) {
+							document.getElementById('about-preview').textContent = 'Preview unavailable: ' + e.message;
+						}
+					});
+
+					function loadAboutContent() {
+						var loading = document.getElementById('about-admin-loading');
+						loading.classList.remove('hidden');
+						fetch('/api/v1/about/content')
+							.then(function(resp) {
+								return checkApiResponse(resp, 'Failed to load about page');
+							}).then(function(resp) {
+								return resp.text();
+							}).then(function(md) {
+								document.getElementById('about-editor').value = md;
+								try {
+									document.getElementById('about-preview').innerHTML = renderAdminMarkdown(md);
+								} catch (e) {
+									document.getElementById('about-preview').textContent = 'Preview unavailable: ' + e.message;
+								}
+								loading.classList.add('hidden');
+								aboutLoaded = true;
+							}).catch(function(err) {
+								loading.classList.add('hidden');
+								showToast(err.message);
+							});
+					}
+
+					document.getElementById('btn-about-save').addEventListener('click', function() {
+						var content = document.getElementById('about-editor').value;
+						var saveBtn = document.getElementById('btn-about-save');
+						if (!content.trim()) {
+							showToast('Please write some content');
+							return;
+						}
+						saveBtn.disabled = true;
+						authFetch('/api/v1/admin/about', {
+							method: 'PUT',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ content: content })
+						}).then(function(resp) {
+							return checkApiResponse(resp, 'Failed to save about page');
+						}).then(function() {
+							showToast('About page saved');
+						}).catch(function(err) {
+							if (isSessionExpiredError(err)) {
+								handleSessionExpired();
+								return;
+							}
+							if (err && err.status === 403) {
+								showToast('You are not allowed to edit the about page');
+								return;
+							}
+							showToast(err.message);
+						}).finally(function() {
+							saveBtn.disabled = false;
+						});
+					});
 					});
 				}
 				if (document.readyState === 'loading') {

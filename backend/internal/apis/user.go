@@ -43,7 +43,7 @@ func user(r *gin.RouterGroup, app *a.App) {
 		} else {
 			c.JSON(
 				http.StatusBadRequest,
-				gin.H{"error": "Must provider either user uuid or email"},
+				gin.H{"error": "Must provide either user uuid or email"},
 			)
 			return
 		}
@@ -75,7 +75,7 @@ func user(r *gin.RouterGroup, app *a.App) {
 		} else {
 			c.JSON(
 				http.StatusBadRequest,
-				gin.H{"error": "Must provider either user uuid or email"},
+				gin.H{"error": "Must provide either user uuid or email"},
 			)
 			return
 		}
