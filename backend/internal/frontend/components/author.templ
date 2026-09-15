@@ -1,0 +1,135 @@
+package components
+
+import (
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
+)
+
+var authorInfo = pageInfo{
+	title:       "Author",
+	description: "Author details and papers",
+}
+
+templ authorPage() {
+	<div class="flex min-h-screen flex-col">
+		@navBar(provider.SiteName, "")
+		<header class="jsbee-band bg-[#16211B]">
+			<div class="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-14">
+				<p class="font-serif text-lg italic text-[#C9A44A]">Author</p>
+				<h1 id="author-name" class="mt-3 font-serif text-4xl font-semibold text-[#F2F3EA] sm:text-5xl">Author</h1>
+			</div>
+		</header>
+		<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
+			<div id="author-loading" class="mt-8 text-center text-sm text-stone-500">Loading author...</div>
+			<div id="author-error" class="mt-8 hidden text-center text-sm text-red-600"></div>
+			<div id="author-card" class="mt-8 hidden">
+				<dl class="border-y border-[#B9C2B2] py-6 text-sm">
+					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">Name</dt>
+						<dd id="author-name-field" class="font-medium text-stone-900"></dd>
+					</div>
+					<div class="flex items-center justify-between gap-4">
+						<dt class="font-medium text-stone-500">Papers</dt>
+						<dd id="author-count" class="text-stone-900"></dd>
+					</div>
+				</dl>
+				<h2 class="mt-8 font-serif text-2xl font-semibold text-stone-900">Published papers</h2>
+				<div id="author-papers-empty" class="mt-4 hidden text-sm text-stone-500">This author has no papers yet.</div>
+				<ul id="author-papers-list" class="mt-2 hidden"></ul>
+			</div>
+			<a
+				href="/volumes"
+				class="mt-8 inline-block rounded-[3px] border border-[#B9C2B2] px-4 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-[#F5F6EF]"
+			>
+				View all volumes
+			</a>
+		</main>
+		@siteFooter(provider.SiteName)
+		<span class="hidden flex flex-col gap-1 rounded-[3px] px-3 py-3 sm:flex-row sm:items-baseline sm:gap-3 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#F5F6EF] hover:shadow-[0_4px_14px_-8px_rgba(22,33,27,0.4)] mr-2 font-mono text-xs text-[#9A7B2D] font-medium text-stone-900"></span>
+		<script>
+			(function() {
+				function initAuthor() {
+					var params = new URLSearchParams(window.location.search);
+					var uuid = params.get('uuid');
+					var loading = document.getElementById('author-loading');
+					var errorEl = document.getElementById('author-error');
+					var card = document.getElementById('author-card');
+
+					if (!uuid) {
+						loading.classList.add('hidden');
+						errorEl.textContent = 'No author specified.';
+						errorEl.classList.remove('hidden');
+						return;
+					}
+
+					var userReq = fetch('/api/v1/user?uuid=' + encodeURIComponent(uuid))
+						.then(function(resp) {
+							return checkApiResponse(resp, 'Failed to load author');
+						}).then(function(resp) {
+							return resp.json();
+						});
+					var papersReq = fetch('/api/v1/user/papers?uuid=' + encodeURIComponent(uuid))
+						.then(function(resp) {
+							return checkApiResponse(resp, 'Failed to load papers');
+						}).then(function(resp) {
+							return resp.json();
+						});
+
+					Promise.all([userReq, papersReq]).then(function(results) {
+						var userData = results[0];
+						var papersData = results[1];
+						if (!userData || !userData.user) {
+							throw new Error('Author not found');
+						}
+						var user = userData.user;
+						var papers = (papersData && papersData.papers) || [];
+						document.getElementById('author-name').textContent = user.name;
+						document.title = user.name;
+						document.getElementById('author-name-field').textContent = user.name;
+						document.getElementById('author-count').textContent = papers.length === 1 ? '1 paper' : papers.length + ' papers';
+						var listEl = document.getElementById('author-papers-list');
+						if (papers.length === 0) {
+							document.getElementById('author-papers-empty').classList.remove('hidden');
+						} else {
+							papers.forEach(function(paper) {
+								var li = document.createElement('li');
+								li.className = 'border-b border-stone-100 last:border-0';
+								var a = document.createElement('a');
+								a.href = '/paper?uuid=' + encodeURIComponent(paper.uuid);
+								a.className = 'flex flex-col gap-1 rounded-[3px] px-3 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#F5F6EF] hover:shadow-[0_4px_14px_-8px_rgba(22,33,27,0.4)] sm:flex-row sm:items-baseline sm:gap-3';
+								if (paper.number != null) {
+									var num = document.createElement('span');
+									num.className = 'mr-2 font-mono text-xs text-[#9A7B2D]';
+									num.textContent = '#' + paper.number;
+									a.appendChild(num);
+								}
+								var title = document.createElement('span');
+								title.className = 'font-medium text-stone-900';
+								title.textContent = paper.title;
+								a.appendChild(title);
+								li.appendChild(a);
+								listEl.appendChild(li);
+							});
+							listEl.classList.remove('hidden');
+						}
+						loading.classList.add('hidden');
+						errorEl.classList.add('hidden');
+						card.classList.remove('hidden');
+					}).catch(function(err) {
+						loading.classList.add('hidden');
+						errorEl.textContent = 'Failed to load author: ' + err.message;
+						errorEl.classList.remove('hidden');
+					});
+				}
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', initAuthor);
+				} else {
+					initAuthor();
+				}
+			})();
+		</script>
+	</div>
+}
+
+templ AuthorPage(firebaseClientConfig string) {
+	@base(authorInfo, authorPage(), firebaseClientConfig)
+}

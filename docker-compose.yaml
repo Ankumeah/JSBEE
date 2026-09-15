@@ -1,3 +1,8 @@
+# For my own dev convenience, change it to
+# ./.env while deploying
+x-env: &env
+  env_file: [ "../../.env" ]
+
 services:
   init:
     build:
@@ -5,8 +10,7 @@ services:
       dockerfile: Dockerfile.init
       args:
         - "db_type=sqlite"
-    env_file:
-      - ./.env
+    <<: *env
     restart: on-failure
     volumes:
       - ./data/:/data/
@@ -16,8 +20,7 @@ services:
       context: ./backend/
       args:
         - "db_type=sqlite"
-    env_file:
-      - ./.env
+    <<: *env
     restart: unless-stopped
     volumes:
       - ./data/:/data/
@@ -27,8 +30,7 @@ services:
 
   reverse_proxy:
     build: ./reverse_proxy/
-    env_file:
-      - ./.env
+    <<: *env
     restart: unless-stopped
     volumes:
       - ./data/public/:/data/
