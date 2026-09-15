@@ -3,8 +3,8 @@ package apis
 import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
 	"github.com/Ankumeah/JSBEE/backend/internal/database"
+	"github.com/Ankumeah/JSBEE/backend/internal/frontend"
 	"github.com/Ankumeah/JSBEE/backend/internal/middlewares"
-	"github.com/Ankumeah/JSBEE/backend/internal/provider"
 	"github.com/Ankumeah/JSBEE/backend/internal/roles"
 
 	"github.com/gin-gonic/gin"
@@ -185,6 +185,60 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		}
 
 		c.Status(http.StatusOK)
+	})
+
+	// This route sets a user's city lead.
+	// After every edit the static team page is rebuilt
+	group.PATCH("/city/:userUUID", func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		userUUID, err := uuid.Parse(c.Param("userUUID"))
+		if err != nil {
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{"error": "Invalid user UUID"},
+			)
+			return
+		}
+
+		var cityLead *string
+
+		city := c.Query("city")
+		cityLead = &city
+		if *cityLead == "" {
+			cityLead = nil
+		}
+
+		if err := app.DBController.EditCityLead(
+			ctx, userUUID, cityLead,
+		); !handleError(c, err) {
+			return
+		}
+
+		leaders, err := app.DBController.GetCityLeaders(ctx)
+		if err != nil {
+			c.JSON(
+				http.StatusInternalServerError,
+				gin.H{"error": "Internal server error"},
+			)
+			log.Printf("Error while getting city leaders: %v\n", err.Error())
+			return
+		}
+		if err := app.ComponentUpdater.UpdateTeam(ctx, leaders); err != nil {
+			c.JSON(
+				http.StatusInternalServerError,
+				gin.H{"error": "Internal server error"},
+			)
+			log.Printf("Error while updating team page: %v\n", err.Error())
+			return
+		}
+
+		user, err := app.DBController.GetUser(ctx, userUUID)
+		if !handleError(c, err) {
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"user": user})
 	})
 
 	group.POST("/blog", func(c *gin.Context) {
@@ -402,12 +456,12 @@ func admin(r *gin.RouterGroup, app *a.App) {
 
 		buf := bytes.NewBufferString(body.Content)
 		if err := app.ObjectStore.AddFile(
-			ctx, provider.AboutFilename, buf, int64(buf.Len()),
+			ctx, frontend.AboutFilename, buf, int64(buf.Len()),
 		); !handleError(c, err) {
 			return
 		}
 		if err := app.ObjectStore.PublicFile(
-			ctx, provider.AboutFilename,
+			ctx, frontend.AboutFilename,
 		); !handleError(c, err) {
 			return
 		}

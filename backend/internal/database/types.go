@@ -142,6 +142,20 @@ type DBController interface {
 	//   - Errors from the underlying DB
 	ChangeRole(ctx context.Context, userUUID uuid.UUID, newRole roles.Role) error
 
+	// Sets a user's city lead to the given value.
+	// A nil newCityLead clears it back to NULL.
+	//
+	// May return the following errors:
+	//   - `database.ErrInvalidUser`
+	//   - Errors by the underlying DB
+	EditCityLead(ctx context.Context, userUUID uuid.UUID, newCityLead *string) error
+
+	// Get all users whose city lead is not NULL
+	//
+	// May return the following errors:
+	//   - Errors by the underlying DB
+	GetCityLeaders(ctx context.Context) ([]User, error)
+
 	// Adds a new blog entry
 	//
 	// May return the following errors:
@@ -183,6 +197,7 @@ type User struct {
 	Email      string     `json:"email" binding:"required" db:"email"`
 	Role       roles.Role `json:"role" binding:"required" db:"role"`
 	Subscribed bool       `json:"subscribed" binding:"required" db:"subscribed"`
+	CityLead   *string    `json:"city_lead" db:"city_lead"`
 }
 
 type Paper struct {

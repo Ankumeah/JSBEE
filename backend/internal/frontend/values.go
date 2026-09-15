@@ -1,5 +1,7 @@
 package frontend
 
+const AboutFilename = "about-us.md"
+
 const indexFile = "index.html"
 const volumeFile = "volumes.html"
 const notFoundFile = "not_found.html"
@@ -10,3 +12,5 @@ const adminFile = "admin.html"
 const blogFile = "blog.html"
 const aboutFile = "about.html"
 const authorFile = "author.html"
+const teamFile = "team.html"
+const contactFile = "contact.html"

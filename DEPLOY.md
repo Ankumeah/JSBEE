@@ -49,7 +49,12 @@ Fill in `.env`
 
 > Look at `env.example` for more info
 
-## 2. Deploy
+## 2. `backend/internal/provider/values.go`
+This file conatins some provider specific values that
+aren't exactly secrets. Make sure to set them to your own
+values
+
+## 3. Deploy
 
 ```sh
 docker compose up --build
@@ -57,7 +62,7 @@ docker compose up --build
 
 Open `http://<host>:8000`.
 
-## 3. First run setup
+## 4. First run setup
 
 - New sign ups default to the `viewer` role. Promote yourself directly in SQLite:
   ```sh

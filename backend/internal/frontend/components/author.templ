@@ -22,10 +22,14 @@ templ authorPage() {
 			<div id="author-loading" class="mt-8 text-center text-sm text-stone-500">Loading author...</div>
 			<div id="author-error" class="mt-8 hidden text-center text-sm text-red-600"></div>
 			<div id="author-card" class="mt-8 hidden">
-				<dl class="border-y border-[#B9C2B2] py-6 text-sm">
+				<dl class="space-y-4 border-y border-[#B9C2B2] py-6 text-sm">
 					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
 						<dt class="font-medium text-stone-500">Name</dt>
 						<dd id="author-name-field" class="font-medium text-stone-900"></dd>
+					</div>
+					<div id="author-city-row" class="hidden items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">City lead</dt>
+						<dd id="author-city-field" class="font-medium text-[#33523B]"></dd>
 					</div>
 					<div class="flex items-center justify-between gap-4">
 						<dt class="font-medium text-stone-500">Papers</dt>
@@ -85,6 +89,12 @@ templ authorPage() {
 						document.getElementById('author-name').textContent = user.name;
 						document.title = user.name;
 						document.getElementById('author-name-field').textContent = user.name;
+						if (user.city_lead) {
+							document.getElementById('author-city-field').textContent = user.city_lead;
+							var cityRow = document.getElementById('author-city-row');
+							cityRow.classList.remove('hidden');
+							cityRow.classList.add('flex');
+						}
 						document.getElementById('author-count').textContent = papers.length === 1 ? '1 paper' : papers.length + ' papers';
 						var listEl = document.getElementById('author-papers-list');
 						if (papers.length === 0) {

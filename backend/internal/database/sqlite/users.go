@@ -87,7 +87,7 @@ func (s *SqlxDBController) GetUser(
 	uuid uuid.UUID,
 ) (database.User, error) {
 	query := s.db.Rebind(`
-    SELECT uuid, name, email, role, subscribed
+    SELECT uuid, name, email, role, subscribed, city_lead
     FROM users
     WHERE (uuid = ?);
   `)
@@ -106,7 +106,7 @@ func (s *SqlxDBController) GetUserByEmail(
 	email string,
 ) (database.User, error) {
 	query := s.db.Rebind(`
-    SELECT uuid, name, email, role, subscribed
+    SELECT uuid, name, email, role, subscribed, city_lead
     FROM users
     WHERE (email = ?);
   `)
@@ -118,4 +118,53 @@ func (s *SqlxDBController) GetUserByEmail(
 	}
 
 	return user, err
+}
+
+func (s *SqlxDBController) EditCityLead(
+	ctx context.Context,
+	userUUID uuid.UUID,
+	newCityLead *string,
+) error {
+	query := s.db.Rebind(`
+    UPDATE users
+    SET city_lead = ?
+    WHERE (uuid = ?);
+  `)
+
+	var value any
+	if newCityLead != nil {
+		value = *newCityLead
+	} else {
+		value = nil
+	}
+
+	res, err := s.db.ExecContext(ctx, query, value, userUUID)
+	if err != nil {
+		return err
+	}
+	// return `database.ErrInvalidUser` if no user was updated
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	} else if affected < 1 {
+		return database.ErrInvalidUser
+	}
+
+	return nil
+}
+
+func (s *SqlxDBController) GetCityLeaders(
+	ctx context.Context,
+) ([]database.User, error) {
+	query := `
+    SELECT uuid, name, email, role, subscribed, city_lead
+    FROM users
+    WHERE (city_lead IS NOT NULL)
+    ORDER BY name;
+  `
+
+	var users []database.User = []database.User{}
+	err := s.db.SelectContext(ctx, &users, query)
+
+	return users, err
 }
