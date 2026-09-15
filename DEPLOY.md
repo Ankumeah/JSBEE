@@ -1,5 +1,9 @@
 # How to Deploy
 
+> [!NOTE]
+> Make sure to read docker-compose.yaml
+> to make sure you understand what is going on
+
 ## What you need
 
 - A Firebase project with **Google sign in enabled
