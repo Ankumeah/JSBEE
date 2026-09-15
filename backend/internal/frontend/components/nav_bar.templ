@@ -2,11 +2,12 @@ package components
 
 templ navBar(siteName string, current string) {
 	<header
-		class="sticky top-0 z-40 border-b border-stone-200/80 bg-stone-50/90 backdrop-blur"
+		class="sticky top-0 z-40 border-b border-[#B9C2B2] bg-[#F5F6EF]/90 backdrop-blur-xl"
 		x-data="{ open: false }"
 	>
-		<nav class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-			<a href="/" class="font-serif text-xl font-semibold tracking-tight text-emerald-900 sm:text-2xl">
+		<nav class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
+			<a href="/" class="flex items-center gap-2.5 font-serif text-xl font-semibold tracking-tight text-[#16211B] sm:text-2xl">
+				<img src="/favicon.png" alt="JSBEE logo" class="h-8 w-8 rounded-[3px] object-cover"/>
 				{ siteName }
 			</a>
 			<button
@@ -46,41 +47,41 @@ templ navBar(siteName string, current string) {
 						Blog
 					</a>
 				</li>
-				<li>
-	if current == "profile" {
-						<button
-							type="button"
-							class={ "hover:text-emerald-900", templ.KV("text-emerald-900 underline decoration-amber-700 decoration-2 underline-offset-8", current == "profile") }
-							onclick="showToast('Already at Your Profile!');"
-						>
-							My Profile
-						</button>
-					} else {
-						<button
-							type="button"
-							class={ "hover:text-emerald-900", templ.KV("text-emerald-900 underline decoration-amber-700 decoration-2 underline-offset-8", current == "profile") }
-							onclick="
-								var fresh = !getFirebaseUuid();
-								showToast('Waiting for login...');
-								ensureSignedIn().then(function() {
-									hideToast();
-									if (fresh) {
-										localStorage.setItem('jsbee_welcome', '1');
-									}
-									window.location.href = '/profile';
-								}).catch(function(err) {
-									hideToast();
-									if (err && err.code === 'auth/popup-closed-by-user') {
-										return;
-									}
-									showAuthFailedToast('Sign in failed: ' + err.message);
-								});
-							"
-						>
-							My Profile
-						</button>
-					}
-				</li>
+			<li>
+				if current == "profile" {
+					<button
+						type="button"
+						class="inline-flex items-center rounded-[3px] bg-[#33523B] px-4 py-1.5 text-sm font-semibold text-[#F5F6EF] hover:bg-[#26402D]"
+						onclick="showToast('Already at Your Profile!');"
+					>
+						My Profile
+					</button>
+				} else {
+					<button
+						type="button"
+						class="inline-flex items-center rounded-[3px] bg-[#33523B] px-4 py-1.5 text-sm font-semibold text-[#F5F6EF] hover:bg-[#26402D]"
+						onclick="
+							var fresh = !getFirebaseUuid();
+							showToast('Waiting for login...');
+							ensureSignedIn().then(function() {
+								hideToast();
+								if (fresh) {
+									localStorage.setItem('jsbee_welcome', '1');
+								}
+								window.location.href = '/profile';
+							}).catch(function(err) {
+								hideToast();
+								if (err && err.code === 'auth/popup-closed-by-user') {
+									return;
+								}
+								showAuthFailedToast('Sign in failed: ' + err.message);
+							});
+						"
+					>
+						My Profile
+					</button>
+				}
+			</li>
 			</ul>
 		</nav>
 		<ul
@@ -101,38 +102,38 @@ templ navBar(siteName string, current string) {
 			</li>
 			<li>
 				if current == "profile" {
-						<button
-							type="button"
-							class={ "block w-full rounded px-2 py-2 text-left hover:bg-stone-100", templ.KV("text-emerald-900 font-semibold", current == "profile") }
-							onclick="showToast('Already at Your Profile!');"
-						>
-							My Profile
-						</button>
-					} else {
-						<button
-							type="button"
-							class={ "block w-full rounded px-2 py-2 text-left hover:bg-stone-100", templ.KV("text-emerald-900 font-semibold", current == "profile") }
-							onclick="
-								var fresh = !getFirebaseUuid();
-								showToast('Waiting for login...');
-								ensureSignedIn().then(function() {
-									hideToast();
-									if (fresh) {
-										localStorage.setItem('jsbee_welcome', '1');
-									}
-									window.location.href = '/profile';
-								}).catch(function(err) {
-									hideToast();
-									if (err && err.code === 'auth/popup-closed-by-user') {
-										return;
-									}
-									showAuthFailedToast('Sign in failed: ' + err.message);
-								});
-							"
-						>
-							My Profile
-						</button>
-					}
+					<button
+						type="button"
+						class="mt-1 block w-full rounded-[3px] bg-[#33523B] px-3 py-2.5 text-left text-sm font-semibold text-[#F5F6EF]"
+						onclick="showToast('Already at Your Profile!');"
+					>
+						My Profile
+					</button>
+				} else {
+					<button
+						type="button"
+						class="mt-1 block w-full rounded-[3px] bg-[#33523B] px-3 py-2.5 text-left text-sm font-semibold text-[#F5F6EF]"
+						onclick="
+							var fresh = !getFirebaseUuid();
+							showToast('Waiting for login...');
+							ensureSignedIn().then(function() {
+								hideToast();
+								if (fresh) {
+									localStorage.setItem('jsbee_welcome', '1');
+								}
+								window.location.href = '/profile';
+							}).catch(function(err) {
+								hideToast();
+								if (err && err.code === 'auth/popup-closed-by-user') {
+									return;
+								}
+								showAuthFailedToast('Sign in failed: ' + err.message);
+							});
+						"
+					>
+						My Profile
+					</button>
+				}
 			</li>
 		</ul>
 	</header>

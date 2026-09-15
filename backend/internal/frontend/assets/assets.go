@@ -14,5 +14,5 @@ func init() {
 //go:embed not_found.png
 var notFoundImageBytes []byte
 
-//go:embed favicon.jpg
+//go:embed favicon.png
 var faviconImageBytes []byte
