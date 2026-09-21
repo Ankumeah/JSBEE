@@ -1,5 +1,5 @@
 # JSBEE
-JSBEE (Journal of Sustainable Businesses in Emerging Economies) is a website to share and read research papers at
+JSBEE (Journal of Sustainable Business in Emerging Economies) is a website to share and read research papers at
 
 ## Stack
 
