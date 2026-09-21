@@ -60,12 +60,12 @@ http {
     }
 
     location = / {
-      root /data;
+      root /data/public/;
       index index.html;
     }
 
     location / {
-      root /data;
+      root /data/public/;
       try_files $uri $uri.html =404;
       error_page 404 /not_found.html;
     }

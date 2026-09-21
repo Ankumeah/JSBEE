@@ -33,7 +33,7 @@ services:
     <<: *env
     restart: unless-stopped
     volumes:
-      - ./data/public/:/data/
+      - ./data/public/:/data/public/
     depends_on:
       - api-server
     ports:
