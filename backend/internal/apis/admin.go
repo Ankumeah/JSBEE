@@ -60,27 +60,25 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		ctx := c.Request.Context()
 		field := c.Query("field")
 
-		var err error
-		switch field {
-		case "volume":
-			err = app.DBController.IncrementVolume(ctx)
-		case "issue":
-			err = app.DBController.IncrementIssue(ctx)
-		default:
+		if field == "volume" {
+			if !handleError(
+				c, app.DBController.IncrementVolume(ctx),
+			) {
+				return
+			}
+		} else if field == "issue" {
+			if !handleError(
+				c, app.DBController.IncrementIssue(ctx),
+			) {
+				return
+			}
+
+			// TODO: Email authors
+		} else {
 			c.JSON(
 				http.StatusBadRequest,
-				gin.H{"error": "Must provide a field to increment"},
+				gin.H{"error": "Must provide a valid field"},
 			)
-			return
-		}
-
-		if err != nil {
-			c.JSON(
-				http.StatusInternalServerError,
-				gin.H{"error": "Internal server error"},
-			)
-			log.Printf("Error while incrementing %v: %v\n", field, err.Error())
-			return
 		}
 
 		c.Status(http.StatusNoContent)

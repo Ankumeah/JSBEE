@@ -25,6 +25,9 @@ func main() {
 	wg.Go(func() { connectObjectStore(Ctx, app) })
 	wg.Wait()
 
+	log.Println("Starting daily DB backups")
+	startDailyDBBackup(Ctx, app)
+
 	log.Println("Starting http server")
 	r := gin.Default()
 	apiGroup := r.Group(
