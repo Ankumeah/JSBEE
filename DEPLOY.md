@@ -37,14 +37,13 @@ Fill in `.env`
 | Env Var                  | Notes                                            |
 |--------------------------|--------------------------------------------------|
 | `API_VERSION`            | Api version, try to not to change this           |
-| `PORT`                   | Port which backend runs on                       |
+| `BACKEND_PORT`                   | Port which backend runs on                       |
 | `HOSTNAME`               | URL to the backend                               |
 | `REVERSE_PROXY_PORT`     | Port which reverse proxy runs on                 |
-| `CACHE_URL`              | URL to cache. Currently unused. Any value works  |
 | `DB_URL`                 | URL of the db, also supports some config options |
 | `FIREBASE_CREDENTIALS`   | Firebase auth credentials                        |
 | `FIREBASE_CLIENT_CONFIG` | Firebase OAuth 2.0 Client ID                     |
-| `OBJECT_STORE_CONFIG`    | look at `env.example` for more info              |
+| `OBJECT_STORE_CONFIG`    | Look at `env.example` for more info              |
 | `FRONTEND_SAVE_DIR`      | Dir to save static files to be served            |
 
 > Look at `env.example` for more info
@@ -56,9 +55,27 @@ values
 
 ## 3. Deploy
 
-```sh
-docker compose up --build
-```
+We have 2 options for deployment
+
+- ### 1. Docker compose
+  ```sh
+  docker compose up --build
+  ```
+
+- ### 2. Single docker container
+  Either use our provided docker image
+  ```sh
+  docker pull ankumeah/jsbee
+  ```
+  Or build it yourself
+  ```sh
+  docker build -t ankumeah/jsbee:latest .
+  ```
+
+  And then run with
+  ```sh
+  docker run --env-file .env -v ./data:/data/ -p 8000:8000 ankumeah/jsbee:latest
+  ```
 
 Open `http://<host>:8000`.
 
@@ -68,4 +85,3 @@ Open `http://<host>:8000`.
   ```sh
   sqlite3 data/jsbee.db "UPDATE users SET role = 'owner' WHERE email = 'your email';"
   ```
-- Edit the About page (Admin → About), the seed is placeholder text.

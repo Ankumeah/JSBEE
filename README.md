@@ -12,10 +12,7 @@ JSBEE (Journal of Sustainable Business in Emerging Economies) is a website to sh
 | Auth             | [Firebase](https://firebase.google.com/)  |
 
 ## How to run
-- Clone the repo
 - Read `DEPLOY.md`
-- Copy env.exmaple to .env and fill/replace the values to your liking
-- `docker compose up`!
 
 ## Contributing
 - Follow commit prefix conventions
