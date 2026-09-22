@@ -62,6 +62,6 @@ templ aboutPage(aboutURL string) {
 	</div>
 }
 
-templ AboutPage(firebaseClientConfig, aboutURL string) {
+templ AboutPage(firebaseClientConfig map[string]any, aboutURL string) {
 	@base(aboutInfo, aboutPage(aboutURL), firebaseClientConfig)
 }

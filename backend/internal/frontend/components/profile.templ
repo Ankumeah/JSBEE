@@ -285,6 +285,6 @@ if (user.role && user.role.can_review) {
 	</div>
 }
 
-templ ProfilePage(firebaseClientConfig string) {
+templ ProfilePage(firebaseClientConfig map[string]any) {
 	@base(profileInfo, profilePage(), firebaseClientConfig)
 }

@@ -12,10 +12,10 @@ import (
 // This struct is responsible for updating fronted components
 type ComponentUpdater struct {
 	savePath             string
-	firebaseClientConfig string
+	firebaseClientConfig map[string]any
 }
 
-func GetComponentUpdater(savePath string, firebaseClientConfig string) (*ComponentUpdater, error) {
+func GetComponentUpdater(savePath string, firebaseClientConfig map[string]any) (*ComponentUpdater, error) {
 	return &ComponentUpdater{
 		savePath:             savePath,
 		firebaseClientConfig: firebaseClientConfig,

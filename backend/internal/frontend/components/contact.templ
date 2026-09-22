@@ -42,6 +42,6 @@ templ contactPage() {
 	</div>
 }
 
-templ ContactPage(firebaseClientConfig string) {
+templ ContactPage(firebaseClientConfig map[string]any) {
 	@base(contactInfo, contactPage(), firebaseClientConfig)
 }

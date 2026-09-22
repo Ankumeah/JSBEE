@@ -18,10 +18,9 @@ type Config struct {
 	Port                 string
 	APIVersion           string
 	DBURL                string
-	CacheURL             string
 	FireBaseCredentials  []byte
 	FrontendSaveDir      string
-	FireBaseClientConfig string
+	FireBaseClientConfig map[string]any
 	ObjectStoreConfig    []byte
 }
 

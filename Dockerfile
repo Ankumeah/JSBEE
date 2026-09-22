@@ -40,10 +40,9 @@ COPY --from=builder /opt/backend/bin/api-server .
 COPY  reverse_proxy/ .
 RUN chmod +x /opt/nginx/run_nginx.sh
 
-ENTRYPOINT [ "sh", "-c", \
-  " \
-  /opt/nginx/init && \
-  /opt/nginx/api-server & \
-  /opt/nginx/run_nginx.sh \
-  " \
-]
+RUN mkdir -p /data/public/
+
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
+ENTRYPOINT [ "/opt/nginx/entrypoint.sh" ]

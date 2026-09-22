@@ -52,6 +52,6 @@ templ teamPage(leaders []database.User) {
 	</div>
 }
 
-templ TeamPage(leaders []database.User, firebaseClientConfig string) {
+templ TeamPage(leaders []database.User, firebaseClientConfig map[string]any) {
 	@base(teamInfo, teamPage(leaders), firebaseClientConfig)
 }

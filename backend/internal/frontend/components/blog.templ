@@ -154,6 +154,6 @@ templ blogPage() {
 	</div>
 }
 
-templ BlogPage(firebaseClientConfig string) {
+templ BlogPage(firebaseClientConfig map[string]any) {
 	@base(blogInfo, blogPage(), firebaseClientConfig)
 }

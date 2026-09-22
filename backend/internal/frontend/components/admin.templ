@@ -1086,6 +1086,6 @@ templ adminPage(aboutURL string) {
 	</div>
 }
 
-templ AdminDashboardPage(firebaseClientConfig, aboutURL string) {
+templ AdminDashboardPage(firebaseClientConfig map[string]any, aboutURL string) {
 	@base(adminInfo, adminPage(aboutURL), firebaseClientConfig)
 }

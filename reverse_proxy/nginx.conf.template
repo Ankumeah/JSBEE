@@ -5,11 +5,11 @@ http {
   include /etc/nginx/mime.types;
 
   upstream backend_cluster {
-    server $HOSTNAME:$PORT;
+    server $HOSTNAME:$BACKEND_PORT;
   }
 
   server {
-    listen 80;
+    listen $REVERSE_PROXY_PORT;
     server_name "";
 
     location /api/$API_VERSION {

@@ -274,6 +274,6 @@ templ indexPage() {
 	</div>
 }
 
-templ IndexPage(firebaseClientConfig string) {
+templ IndexPage(firebaseClientConfig map[string]any) {
 	@base(indexInfo, indexPage(), firebaseClientConfig)
 }

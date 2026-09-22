@@ -140,6 +140,6 @@ templ authorPage() {
 	</div>
 }
 
-templ AuthorPage(firebaseClientConfig string) {
+templ AuthorPage(firebaseClientConfig map[string]any) {
 	@base(authorInfo, authorPage(), firebaseClientConfig)
 }
