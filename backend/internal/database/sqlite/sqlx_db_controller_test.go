@@ -31,7 +31,7 @@ func TestMigrations(t *testing.T) {
 // happy path. It only proves that user related
 // functions work, not that they work well
 //
-// TODO: Check non happy paths
+// TODO: Add more tests
 func TestUser(t *testing.T) {
 	cases := []database.User{
 		database.User{

@@ -166,6 +166,6 @@ templ volumesPage(volumes []database.Volume, filesBaseURL string) {
 	</div>
 }
 
-templ VolumesPage(volumes []database.Volume, firebaseClientConfig string, filesBaseURL string) {
+templ VolumesPage(volumes []database.Volume, firebaseClientConfig map[string]any, filesBaseURL string) {
 	@base(volumesInfo, volumesPage(volumes, filesBaseURL), firebaseClientConfig)
 }

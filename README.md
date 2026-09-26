@@ -1,5 +1,5 @@
 # JSBEE
-JSBEE (Journal of Sustainable Businesses in Emerging Economies) is a website to share and read research papers at
+JSBEE (Journal of Sustainable Business in Emerging Economies) is a website to share and read research papers at
 
 ## Stack
 
@@ -12,10 +12,7 @@ JSBEE (Journal of Sustainable Businesses in Emerging Economies) is a website to 
 | Auth             | [Firebase](https://firebase.google.com/)  |
 
 ## How to run
-- Clone the repo
 - Read `DEPLOY.md`
-- Copy env.exmaple to .env and fill/replace the values to your liking
-- `docker compose up`!
 
 ## Contributing
 - Follow commit prefix conventions

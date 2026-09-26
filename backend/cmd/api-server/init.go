@@ -7,55 +7,77 @@ import (
 	"github.com/Ankumeah/JSBEE/backend/internal/objectstore"
 
 	"context"
-	"log"
+	"log/slog"
+	"os"
 )
+
+// Initalises the logger
+// Should be initalised before anything
+// else as almost everything can have errors
+func initLogger(app *a.App) {
+	app.Logger = slog.New(
+		slog.NewTextHandler(os.Stdout, nil),
+	)
+}
 
 // Initalises connection with firebase
 // Exits program on connection failure
 func initFirebase(ctx context.Context, app *a.App) {
-	log.Println("Initializeing firebase client")
+	app.Logger.InfoContext(ctx, "Initializeing firebase client")
 	var err error
 	app.FireBaseClient, err = middlewares.InitFirebase(
 		ctx, app.Config.FireBaseCredentials,
 	)
 	if err != nil {
-		log.Fatalf("Error while getting firebase client: %v\n", err.Error())
+		app.Logger.ErrorContext(ctx,
+			"Error while getting firebase client: "+err.Error(),
+		)
+		os.Exit(1)
 	}
-	log.Println("Firebase client initialized")
+	app.Logger.InfoContext(ctx, "Firebase client initialized")
 }
 
 // Creates the ComponentUpdater struct
 // Creates the save dir if it dosent exist
 // Exits program on any errors with mkdir
-func getComponentUpdater(app *a.App) {
-	log.Println("Getting component updater")
+func getComponentUpdater(ctx context.Context, app *a.App) {
+	app.Logger.InfoContext(ctx, "Getting component updater")
 	var err error
 	app.ComponentUpdater, err = frontend.GetComponentUpdater(
 		app.Config.FrontendSaveDir,
 		app.Config.FireBaseClientConfig,
 	)
 	if err != nil {
-		log.Fatalf("Error while getting component updater: %v\n", err.Error())
+		app.Logger.ErrorContext(ctx,
+			"Error while getting component updater: "+err.Error(),
+		)
+		os.Exit(1)
 	}
-	log.Println("Got component updater")
+	app.Logger.InfoContext(ctx, "Got component updater")
 }
 
 func connectObjectStore(ctx context.Context, app *a.App) {
-	log.Println("Connecting to object store")
+	app.Logger.InfoContext(ctx, "Connecting to object store")
 
 	config, err := objectstore.NewS3StaticConfigFromJSON(
 		app.Config.ObjectStoreConfig,
 	)
 	if err != nil {
-		log.Fatalf("Error while getting s3 config: %v\n", err.Error())
+		app.Logger.ErrorContext(ctx,
+			"Error while getting s3 config: "+err.Error(),
+		)
+		os.Exit(1)
 	}
 
 	app.ObjectStore, err = objectstore.GetStaticS3Client(
 		ctx, config,
 	)
 	if err != nil {
-		log.Fatalf("Error while getting s3 client: %v\n", err.Error())
+		app.Logger.ErrorContext(ctx,
+			"Error while getting s3 client: "+err.Error(),
+		)
+		os.Exit(1)
 	}
 
-	log.Println("Connected to object store")
+	app.Logger.InfoContext(ctx, "Connected to object store")
 }

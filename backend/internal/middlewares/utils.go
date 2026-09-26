@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"errors"
-	"log"
+	"fmt"
 	"net/http"
 )
 
@@ -36,7 +36,7 @@ func handleError(c *gin.Context, err error) bool {
 			http.StatusInternalServerError,
 			gin.H{"error": "Internal server error"},
 		)
-		log.Printf("Error: %v", err.Error())
+		c.Error(errors.New(fmt.Sprintf("%v: %v", c.FullPath(), err)))
 		return false
 	}
 

@@ -9,7 +9,7 @@ var aboutInfo = pageInfo{
 	description: "About us",
 }
 
-templ aboutPage() {
+templ aboutPage(aboutURL string) {
 	<div class="flex min-h-screen flex-col">
 		@navBar(provider.SiteName, "")
 		<header class="jsbee-band bg-[#16211B]">
@@ -25,12 +25,13 @@ templ aboutPage() {
 		</main>
 		@siteFooter(provider.SiteName)
 		<script>
+			var aboutFetchURL = {{ aboutURL }};
 			(function() {
 				function initAbout() {
 					var loading = document.getElementById('about-loading');
 					var errorEl = document.getElementById('about-error');
 					var contentEl = document.getElementById('about-content');
-					fetch('/api/v1/about/content')
+					fetch(aboutFetchURL)
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load about page');
 						}).then(function(resp) {
@@ -61,6 +62,6 @@ templ aboutPage() {
 	</div>
 }
 
-templ AboutPage(firebaseClientConfig string) {
-	@base(aboutInfo, aboutPage(), firebaseClientConfig)
+templ AboutPage(firebaseClientConfig map[string]any, aboutURL string) {
+	@base(aboutInfo, aboutPage(aboutURL), firebaseClientConfig)
 }

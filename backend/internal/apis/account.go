@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"errors"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -93,22 +92,12 @@ func account(r *gin.RouterGroup, app *a.App) {
 				Subscribed: subscribed,
 			}); errors.Is(err, database.ErrExistUser) {
 				existing, lookupErr := app.DBController.GetUserByEmail(ctx, email)
-				if lookupErr != nil {
-					c.JSON(
-						http.StatusInternalServerError,
-						gin.H{"error": "Internal server error"},
-					)
-					log.Printf("Error while looking up user uuid: %v\n", lookupErr.Error())
+				if handleError(c, lookupErr) {
 					return
 				}
 				userUUID = existing.UUID
 				isNewUser = false
-			} else if err != nil {
-				c.JSON(
-					http.StatusInternalServerError,
-					gin.H{"error": "Internal server error"},
-				)
-				log.Printf("Error while creating user uuid: %v\n", err.Error())
+			} else if !handleError(c, err) {
 				return
 			}
 
@@ -120,15 +109,10 @@ func account(r *gin.RouterGroup, app *a.App) {
 				map[string]interface{}{
 					provider.SiteName + "-uuid": userUUID.String(),
 				},
-			); err != nil {
+			); !handleError(c, err) {
 				if isNewUser {
 					app.DBController.DeleteUser(ctx, userUUID)
 				}
-				c.JSON(
-					http.StatusInternalServerError,
-					gin.H{"error": "Internal server error"},
-				)
-				log.Printf("Error while issueing custom user claim: %v\n", err.Error())
 				return
 			}
 		} else {

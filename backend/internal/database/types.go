@@ -19,43 +19,43 @@ type DBController interface {
 	// Add a new user
 	//
 	// May return the following errors:
-	//   - `database.ErrExistUser`
+	//   - `ErrExistUser`
 	//   - Errors by the underlying DB
 	AddUser(ctx context.Context, user User) error
 
 	// Delete a user
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidUser`
+	//   - `ErrInvalidUser`
 	//   - Errors by the underlying DB
 	DeleteUser(ctx context.Context, uuid uuid.UUID) error
 
 	// Sets a user's subscription
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidUser`
+	//   - `ErrInvalidUser`
 	//   - Errors by the underlying DB
 	SetSubscription(ctx context.Context, subscribed bool, uuid uuid.UUID) error
 
 	// Get the details of a user
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidUser`
+	//   - `ErrInvalidUser`
 	//   - Errors by the underlying DB
 	GetUser(ctx context.Context, uuid uuid.UUID) (User, error)
 
 	// Get the details of a user by email
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidUser`
+	//   - `ErrInvalidUser`
 	//   - Errors by the underlying DB
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 
 	// Adds a new unapproved paper
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidUser`
-	//   - `database.ErrExistPaper`
+	//   - `ErrInvalidUser`
+	//   - `ErrExistPaper`
 	//   - Errors by the underlying DB
 	AddPaper(ctx context.Context, paper Paper) error
 
@@ -65,33 +65,33 @@ type DBController interface {
 	// `paper.OwnerUUID` will be `nil`
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidPaper`
+	//   - `ErrInvalidPaper`
 	//   - Errors by the underlying DB
 	GetPaper(ctx context.Context, uuid uuid.UUID) (Paper, error)
 
 	// Get all papers by a user
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidUser`
+	//   - `ErrInvalidUser`
 	//   - Errors by the underlying DB
 	GetUserPapers(ctx context.Context, userUUID uuid.UUID) ([]Paper, error)
 
 	// Marks an unpublished paper as reviewed, moving it to the
 	// waiting area for publishing. Safe to run on an already
 	// reviewed (but unpublished) paper. Published papers are
-	// rejected with `database.ErrInvalidPaper`
+	// rejected with `ErrInvalidPaper`
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidPaper`
+	//   - `ErrInvalidPaper`
 	//   - Errors by the underlying DB
 	ApprovePaper(ctx context.Context, uuid uuid.UUID) error
 
 	// Deletes a paper if it is unapproved.
 	// In case the paper trying to be deleted is approved,
-	// `database.ErrInvalidPaper` is returned
+	// `ErrInvalidPaper` is returned
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidPaper`
+	//   - `ErrInvalidPaper`
 	//   - Errors by the underlying DB
 	RejectPaper(ctx context.Context, paperUUID uuid.UUID) error
 
@@ -135,24 +135,44 @@ type DBController interface {
 	//   - Errors by the underlying DB
 	IncrementIssue(ctx context.Context) error
 
+	// Executes the backup procedure
+	//
+	// May return the following errors:
+	//   - Errors from the underlying DB
+	BackupDB(ctx context.Context) (string, error)
+
 	// Changes the role of the given user
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidUser`
+	//   - `ErrInvalidUser`
 	//   - Errors from the underlying DB
 	ChangeRole(ctx context.Context, userUUID uuid.UUID, newRole roles.Role) error
+
+	// Sets a user's city lead to the given value.
+	// A nil newCityLead clears it back to NULL.
+	//
+	// May return the following errors:
+	//   - `ErrInvalidUser`
+	//   - Errors by the underlying DB
+	EditCityLead(ctx context.Context, userUUID uuid.UUID, newCityLead *string) error
+
+	// Get all users whose city lead is not NULL
+	//
+	// May return the following errors:
+	//   - Errors by the underlying DB
+	GetCityLeaders(ctx context.Context) ([]User, error)
 
 	// Adds a new blog entry
 	//
 	// May return the following errors:
-	//   - `database.ErrExistBlog`
+	//   - `ErrExistBlog`
 	//   - Errors by the underlying DB
 	AddBlog(ctx context.Context, blog Blog) error
 
 	// Gets the details of a blog entry
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidBlog`
+	//   - `ErrInvalidBlog`
 	//   - Errors by the underlying DB
 	GetBlog(ctx context.Context, uuid uuid.UUID) (Blog, error)
 
@@ -165,14 +185,14 @@ type DBController interface {
 	// Updates the title and/or file of a blog entry
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidBlog`
+	//   - `ErrInvalidBlog`
 	//   - Errors by the underlying DB
 	UpdateBlog(ctx context.Context, blog Blog) error
 
 	// Deletes a blog entry
 	//
 	// May return the following errors:
-	//   - `database.ErrInvalidBlog`
+	//   - `ErrInvalidBlog`
 	//   - Errors by the underlying DB
 	DeleteBlog(ctx context.Context, uuid uuid.UUID) error
 }
@@ -183,6 +203,7 @@ type User struct {
 	Email      string     `json:"email" binding:"required" db:"email"`
 	Role       roles.Role `json:"role" binding:"required" db:"role"`
 	Subscribed bool       `json:"subscribed" binding:"required" db:"subscribed"`
+	CityLead   *string    `json:"city_lead" db:"city_lead"`
 }
 
 type Paper struct {

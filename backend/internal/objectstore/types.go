@@ -32,5 +32,5 @@ type ObjectStore interface {
 	DeleteFile(ctx context.Context, filename string) error
 
 	// Store a db snapshot and remove older snapshots
-	StoreDBBackup(ctx context.Context, baseFilename string, backupPath string) error
+	StoreDBBackup(ctx context.Context, backupPath string) error
 }

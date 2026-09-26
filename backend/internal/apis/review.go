@@ -7,7 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"log"
+	"errors"
+	"fmt"
 	"net/http"
 	"uuid"
 )
@@ -24,7 +25,9 @@ func review(r *gin.RouterGroup, app *a.App) {
 					http.StatusInternalServerError,
 					gin.H{"error": "Internal server error"},
 				)
-				log.Println("Role field not set")
+				c.Error(
+					errors.New(c.FullPath() + ": Role field not set"),
+				)
 				return
 			}
 
@@ -34,7 +37,9 @@ func review(r *gin.RouterGroup, app *a.App) {
 					http.StatusInternalServerError,
 					gin.H{"error": "Internal server error"},
 				)
-				log.Printf("Invalid role: %v\n", value)
+				c.Error(errors.New(fmt.Sprintf(
+					"%v: Invalid role %v", c.FullPath(), value,
+				)))
 				return
 			}
 
@@ -68,13 +73,20 @@ func review(r *gin.RouterGroup, app *a.App) {
 
 		paperUUID, err := uuid.Parse(c.Param("paperUUID"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid uuid"})
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{"error": "Invalid uuid"},
+			)
 			return
 		}
 
-		if !handleError(c, app.DBController.ApprovePaper(ctx, paperUUID)) {
+		if !handleError(
+			c, app.DBController.ApprovePaper(ctx, paperUUID),
+		) {
 			return
 		}
+
+		// TODO: Email author
 
 		c.Status(http.StatusNoContent)
 	})
@@ -84,13 +96,20 @@ func review(r *gin.RouterGroup, app *a.App) {
 
 		paperUUID, err := uuid.Parse(c.Param("paperUUID"))
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid uuid"})
+			c.JSON(
+				http.StatusBadRequest,
+				gin.H{"error": "Invalid uuid"},
+			)
 			return
 		}
 
-		if !handleError(c, app.DBController.RejectPaper(ctx, paperUUID)) {
+		if !handleError(
+			c, app.DBController.RejectPaper(ctx, paperUUID),
+		) {
 			return
 		}
+
+		// TODO: Email author
 
 		c.Status(http.StatusNoContent)
 	})

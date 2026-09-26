@@ -228,6 +228,6 @@ templ reviewPage() {
 	</div>
 }
 
-templ ReviewDashboardPage(firebaseClientConfig string) {
+templ ReviewDashboardPage(firebaseClientConfig map[string]any) {
 	@base(reviewInfo, reviewPage(), firebaseClientConfig)
 }

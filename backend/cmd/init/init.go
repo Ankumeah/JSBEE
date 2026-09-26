@@ -11,7 +11,18 @@ import (
 	"bytes"
 	"context"
 	"log"
+	"log/slog"
+	"os"
 )
+
+// Initalises the logger
+// Should be initalised before anything
+// else as almost everything can have errors
+func initLogger(app *a.App) {
+	app.Logger = slog.New(
+		slog.NewTextHandler(os.Stdout, nil),
+	)
+}
 
 // Runs DB migrations
 // Exits program on any errors
@@ -69,8 +80,13 @@ func generateInitalComponents(ctx context.Context, app *a.App) {
 		log.Fatalf("Error while getting volumes: %v\n", err.Error())
 	}
 
+	leaders, err := app.DBController.GetCityLeaders(ctx)
+	if err != nil {
+		log.Fatalf("Error while getting city leaders: %v\n", err.Error())
+	}
+
 	if err := app.ComponentUpdater.UpdateAll(
-		ctx, volumes, app.ObjectStore.PublicBaseURL(),
+		ctx, volumes, leaders, app.ObjectStore.PublicBaseURL(),
 	); err != nil {
 		log.Fatalf("Error while generating inital components: %v\n", err.Error())
 	}
@@ -113,7 +129,7 @@ func initObjectStore(ctx context.Context, app *a.App) {
 func seedAboutPage(ctx context.Context, app *a.App) {
 	log.Println("Seeding about page")
 
-	content, err := app.ObjectStore.GetFile(ctx, provider.AboutFilename)
+	content, err := app.ObjectStore.GetFile(ctx, frontend.AboutFilename)
 	if err == nil {
 		content.Close()
 		log.Println("About page already exists")
@@ -122,11 +138,11 @@ func seedAboutPage(ctx context.Context, app *a.App) {
 
 	buf := bytes.NewBufferString(provider.AboutSeedContent)
 	if err := app.ObjectStore.AddFile(
-		ctx, provider.AboutFilename, buf, int64(buf.Len()),
+		ctx, frontend.AboutFilename, buf, int64(buf.Len()),
 	); err != nil {
 		log.Fatalf("Error while seeding about page: %v\n", err.Error())
 	}
-	if err := app.ObjectStore.PublicFile(ctx, provider.AboutFilename); err != nil {
+	if err := app.ObjectStore.PublicFile(ctx, frontend.AboutFilename); err != nil {
 		log.Fatalf("Error while publishing about page: %v\n", err.Error())
 	}
 

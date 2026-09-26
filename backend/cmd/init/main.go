@@ -16,6 +16,7 @@ func main() {
 
 	var wg sync.WaitGroup
 
+	initLogger(app)
 	loadEnv(app.Config)
 	wg.Go(func() { getComponentUpdater(app) })
 	wg.Go(func() {

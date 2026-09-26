@@ -161,7 +161,6 @@ func (s s3StaticClient) DeleteFile(
 
 func (s s3StaticClient) StoreDBBackup(
 	ctx context.Context,
-	baseFilename string,
 	backupPath string,
 ) error {
 	if s.maxDBSnapshots < 1 {

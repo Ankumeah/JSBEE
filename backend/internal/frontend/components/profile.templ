@@ -54,6 +54,10 @@ templ profilePage() {
 						<dt class="font-medium text-stone-500">Role</dt>
 						<dd id="profile-role" class="text-stone-900"></dd>
 					</div>
+					<div id="profile-city-row" class="hidden items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">City lead</dt>
+						<dd id="profile-city" class="font-medium text-[#33523B]"></dd>
+					</div>
 					<div class="flex items-center justify-between gap-4">
 						<dt class="font-medium text-stone-500">Subscribed</dt>
 						<dd class="flex items-center gap-3">
@@ -194,6 +198,12 @@ logoutBtn.addEventListener('click', function() {
 							document.getElementById('profile-name').textContent = user.name;
 							document.getElementById('profile-email').textContent = user.email;
 							document.getElementById('profile-role').textContent = user.role ? user.role.role : 'Unknown';
+							if (user.city_lead) {
+								document.getElementById('profile-city').textContent = user.city_lead;
+								var cityRow = document.getElementById('profile-city-row');
+								cityRow.classList.remove('hidden');
+								cityRow.classList.add('flex');
+							}
 							renderSubscription(user.subscribed);
 							document.getElementById('profile-title').textContent = user.name;
 if (user.role && user.role.can_review) {
@@ -275,6 +285,6 @@ if (user.role && user.role.can_review) {
 	</div>
 }
 
-templ ProfilePage(firebaseClientConfig string) {
+templ ProfilePage(firebaseClientConfig map[string]any) {
 	@base(profileInfo, profilePage(), firebaseClientConfig)
 }

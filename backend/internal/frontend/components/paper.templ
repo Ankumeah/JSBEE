@@ -159,6 +159,6 @@ templ paperPage() {
 	</div>
 }
 
-templ PaperPage(firebaseClientConfig string) {
+templ PaperPage(firebaseClientConfig map[string]any) {
 	@base(paperInfo, paperPage(), firebaseClientConfig)
 }
