@@ -1,19 +1,6 @@
 # JSBEE
 JSBEE (Journal of Sustainable Business in Emerging Economies) is a website to share and read research papers at
 
-## Stack
-
-| Component        | Stack                                     |
-|------------------|-------------------------------------------|
-| Primary Language | [Golang](https://go.dev/)                 |
-| Web server       | [Gin](https://gin-gonic.com/)             |
-| Database         | [SQLite](https://sqlite.org/)             |
-| Reverse Proxy    | [Nginx](https://nginx.org/)               |
-| Auth             | [Firebase](https://firebase.google.com/)  |
-
-## How to run
-- Read `DEPLOY.md`
-
 ## Contributing
 - Follow commit prefix conventions
 - Give commits clear messages, use commit bodies for longer messages
