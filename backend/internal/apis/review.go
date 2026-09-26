@@ -7,7 +7,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"log"
+	"errors"
+	"fmt"
 	"net/http"
 	"uuid"
 )
@@ -24,7 +25,9 @@ func review(r *gin.RouterGroup, app *a.App) {
 					http.StatusInternalServerError,
 					gin.H{"error": "Internal server error"},
 				)
-				log.Println("Role field not set")
+				c.Error(
+					errors.New(c.FullPath() + ": Role field not set"),
+				)
 				return
 			}
 
@@ -34,7 +37,9 @@ func review(r *gin.RouterGroup, app *a.App) {
 					http.StatusInternalServerError,
 					gin.H{"error": "Internal server error"},
 				)
-				log.Printf("Invalid role: %v\n", value)
+				c.Error(errors.New(fmt.Sprintf(
+					"%v: Invalid role %v", c.FullPath(), value,
+				)))
 				return
 			}
 

@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"context"
-	"log"
+	"os"
 	"sync"
 )
 
@@ -16,31 +16,33 @@ var Ctx = context.Background()
 var app = &a.App{Config: &a.Config{}}
 
 func main() {
-	loadEnv(app.Config)
+	initLogger(app)
+	loadEnv(Ctx, app)
 
 	var wg sync.WaitGroup
 	wg.Go(func() { initFirebase(Ctx, app) })
-	wg.Go(func() { getComponentUpdater(app) })
+	wg.Go(func() { getComponentUpdater(Ctx, app) })
 	wg.Go(func() { getDBConnection(Ctx, app) })
 	wg.Go(func() { connectObjectStore(Ctx, app) })
 	wg.Wait()
 
-	log.Println("Starting daily DB backups")
+	app.Logger.InfoContext(Ctx, "Starting daily DB backups")
 	startDailyDBBackup(Ctx, app)
 
-	log.Println("Starting http server")
+	app.Logger.InfoContext(Ctx, "Starting http server")
 	r := gin.Default()
 	apiGroup := r.Group(
 		"/api/"+app.Config.APIVersion+"/",
-		middlewares.LogMiddleware(),
+		middlewares.LogMiddleware(app, Ctx),
 	)
 	apis.Apis(apiGroup, app)
 
-	log.Println("Running backend on port: " + app.Config.Port)
-	log.Println("API_VERSION: " + app.Config.APIVersion)
+	app.Logger.InfoContext(Ctx, "Running backend on port: "+app.Config.Port)
+	app.Logger.InfoContext(Ctx, "API_VERSION: "+app.Config.APIVersion)
 
 	err := r.Run(":" + app.Config.Port)
 	if err != nil {
-		log.Fatalf("Error while running server: %v\n", err.Error())
+		app.Logger.ErrorContext(Ctx, "Error while running server: "+err.Error())
+		os.Exit(1)
 	}
 }

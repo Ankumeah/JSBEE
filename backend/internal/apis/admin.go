@@ -10,8 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"bytes"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -30,7 +30,9 @@ func admin(r *gin.RouterGroup, app *a.App) {
 					http.StatusInternalServerError,
 					gin.H{"error": "Internal server error"},
 				)
-				log.Println("Role field not set")
+				c.Error(
+					errors.New(c.FullPath() + ": Role field not set"),
+				)
 				return
 			}
 
@@ -40,7 +42,9 @@ func admin(r *gin.RouterGroup, app *a.App) {
 					http.StatusInternalServerError,
 					gin.H{"error": "Internal server error"},
 				)
-				log.Printf("Invalid role: %v\n", value)
+				c.Error(errors.New(fmt.Sprintf(
+					"%v: Invalid role %v", c.FullPath(), value,
+				)))
 				return
 			}
 
@@ -88,12 +92,7 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		ctx := c.Request.Context()
 
 		papers, err := app.DBController.GetReviewedPapers(ctx)
-		if err != nil {
-			c.JSON(
-				http.StatusInternalServerError,
-				gin.H{"error": "Internal server error"},
-			)
-			log.Printf("Error while getting reviewed papers: %v\n", err.Error())
+		if !handleError(c, err) {
 			return
 		}
 
@@ -104,33 +103,18 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		ctx := c.Request.Context()
 
 		count, err := app.DBController.PublishPapers(ctx)
-		if err != nil {
-			c.JSON(
-				http.StatusInternalServerError,
-				gin.H{"error": "Internal server error"},
-			)
-			log.Printf("Error while publishing papers: %v\n", err.Error())
+		if !handleError(c, err) {
 			return
 		}
 
 		if count > 0 {
 			volumes, err := app.DBController.GetVolumes(ctx)
-			if err != nil {
-				c.JSON(
-					http.StatusInternalServerError,
-					gin.H{"error": "Internal server error"},
-				)
-				log.Printf("Error while getting volumes: %v\n", err.Error())
+			if !handleError(c, err) {
 				return
 			}
 			if err := app.ComponentUpdater.UpdateVolumes(
 				ctx, volumes, app.ObjectStore.PublicBaseURL(),
-			); err != nil {
-				c.JSON(
-					http.StatusInternalServerError,
-					gin.H{"error": "Internal server error"},
-				)
-				log.Printf("Error while updating volumes: %v\n", err.Error())
+			); !handleError(c, err) {
 				return
 			}
 		}
@@ -214,20 +198,12 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		}
 
 		leaders, err := app.DBController.GetCityLeaders(ctx)
-		if err != nil {
-			c.JSON(
-				http.StatusInternalServerError,
-				gin.H{"error": "Internal server error"},
-			)
-			log.Printf("Error while getting city leaders: %v\n", err.Error())
+		if !handleError(c, err) {
 			return
 		}
-		if err := app.ComponentUpdater.UpdateTeam(ctx, leaders); err != nil {
-			c.JSON(
-				http.StatusInternalServerError,
-				gin.H{"error": "Internal server error"},
-			)
-			log.Printf("Error while updating team page: %v\n", err.Error())
+		if err := app.ComponentUpdater.UpdateTeam(
+			ctx, leaders,
+		); !handleError(c, err) {
 			return
 		}
 
@@ -413,11 +389,11 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		); !handleError(c, err) {
 			return
 		}
-		if err := app.ObjectStore.DeleteFile(
-			ctx, blog.Filename,
-		); err != nil {
-			log.Printf("Error while deleting blog file: %v\n", err.Error())
-		}
+		handleError(
+			c, app.ObjectStore.DeleteFile(
+				ctx, blog.Filename,
+			),
+		)
 
 		c.Status(http.StatusNoContent)
 	})

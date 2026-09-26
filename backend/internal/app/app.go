@@ -6,6 +6,8 @@ import (
 	"github.com/Ankumeah/JSBEE/backend/internal/objectstore"
 
 	"firebase.google.com/go/v4/auth"
+
+	"log/slog"
 )
 
 // This stuct contains all needed env vars
@@ -36,4 +38,5 @@ type App struct {
 	DBController     database.DBController
 	ComponentUpdater *frontend.ComponentUpdater
 	ObjectStore      objectstore.ObjectStore
+	Logger           *slog.Logger
 }

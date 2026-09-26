@@ -4,7 +4,6 @@ import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
 
 	"context"
-	"log"
 	"os"
 	"time"
 )
@@ -20,9 +19,11 @@ func startDailyDBBackup(ctx context.Context, app *a.App) {
 			backupCtx, cancel := context.WithTimeout(ctx, dbBackupTimeout)
 			defer cancel()
 			if err := storeBackup(backupCtx, app); err != nil {
-				log.Printf("Error while storing DB backup: %v\n", err.Error())
+				app.Logger.ErrorContext(ctx,
+					"Error while storing DB backup: "+err.Error(),
+				)
 			} else {
-				log.Println("Stored DB backup")
+				app.Logger.InfoContext(ctx, "Stored DB backup")
 			}
 		}
 

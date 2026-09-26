@@ -11,7 +11,18 @@ import (
 	"bytes"
 	"context"
 	"log"
+	"log/slog"
+	"os"
 )
+
+// Initalises the logger
+// Should be initalised before anything
+// else as almost everything can have errors
+func initLogger(app *a.App) {
+	app.Logger = slog.New(
+		slog.NewTextHandler(os.Stdout, nil),
+	)
+}
 
 // Runs DB migrations
 // Exits program on any errors

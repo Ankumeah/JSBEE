@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 	"slices"
 )
 
@@ -20,7 +19,7 @@ import (
 // This function will error on any DB error or
 // if any two migrations have the same number
 func ApplyMigrations(ctx context.Context, db *sqlx.DB) error {
-	var matchingVersions = false
+	var matchingVersions error
 
 	// Sort the migrations as they may be out of order as they
 	// are registered via init functions
@@ -32,17 +31,18 @@ func ApplyMigrations(ctx context.Context, db *sqlx.DB) error {
 				return -1
 			} else { // Just put the fries in the bag bro
 				// We use this to exit the function later
-				matchingVersions = true
-				log.Printf(
-					"Matching migration numbers: %v and %v\n",
-					a.Version(), b.Version(),
+				matchingVersions = errors.New(
+					fmt.Sprintf(
+						"Matching migration numbers: %v and %v\n",
+						a.Version(), b.Version(),
+					),
 				)
 				return 0
 			}
 		},
 	)
-	if matchingVersions {
-		return errors.New("Two migrations have matching version numbers")
+	if matchingVersions != nil {
+		return matchingVersions
 	}
 
 	// v0 is applied no matter what so that
