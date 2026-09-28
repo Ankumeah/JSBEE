@@ -70,23 +70,15 @@ func saveAssets(ctx context.Context, app *a.App) {
 }
 
 // Component files may not exist at launch, this generates
-// them and updates them if they alreday exist
+// them and updates them if they alreday exist.
+// Volumes and team pages are static shells, their data
+// is fetched at runtime from the public API.
 // Exits on any error
 func generateInitalComponents(ctx context.Context, app *a.App) {
 	log.Println("Generating inital components")
 
-	volumes, err := app.DBController.GetVolumes(ctx)
-	if err != nil {
-		log.Fatalf("Error while getting volumes: %v\n", err.Error())
-	}
-
-	leaders, err := app.DBController.GetCityLeaders(ctx)
-	if err != nil {
-		log.Fatalf("Error while getting city leaders: %v\n", err.Error())
-	}
-
 	if err := app.ComponentUpdater.UpdateAll(
-		ctx, volumes, leaders, app.ObjectStore.PublicBaseURL(),
+		ctx, app.ObjectStore.PublicBaseURL(),
 	); err != nil {
 		log.Fatalf("Error while generating inital components: %v\n", err.Error())
 	}

@@ -112,11 +112,10 @@ func admin(r *gin.RouterGroup, app *a.App) {
 			if !handleError(c, err) {
 				return
 			}
-			if err := app.ComponentUpdater.UpdateVolumes(
-				ctx, volumes, app.ObjectStore.PublicBaseURL(),
-			); !handleError(c, err) {
-				return
+			if app.Cache == nil {
+				app.Cache = map[string]any{}
 			}
+			app.Cache[a.CacheKeyVolumes] = volumes
 		}
 
 		c.JSON(http.StatusOK, gin.H{"count": count})
@@ -170,7 +169,6 @@ func admin(r *gin.RouterGroup, app *a.App) {
 	})
 
 	// This route sets a user's city lead.
-	// After every edit the static team page is rebuilt
 	group.PATCH("/city/:userUUID", func(c *gin.Context) {
 		ctx := c.Request.Context()
 
@@ -201,11 +199,10 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		if !handleError(c, err) {
 			return
 		}
-		if err := app.ComponentUpdater.UpdateTeam(
-			ctx, leaders,
-		); !handleError(c, err) {
-			return
+		if app.Cache == nil {
+			app.Cache = map[string]any{}
 		}
+		app.Cache[a.CacheKeyLeaders] = leaders
 
 		user, err := app.DBController.GetUser(ctx, userUUID)
 		if !handleError(c, err) {

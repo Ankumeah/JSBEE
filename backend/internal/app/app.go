@@ -39,4 +39,5 @@ type App struct {
 	ComponentUpdater *frontend.ComponentUpdater
 	ObjectStore      objectstore.ObjectStore
 	Logger           *slog.Logger
+	Cache            map[string]any
 }

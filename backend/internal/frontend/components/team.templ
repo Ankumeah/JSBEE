@@ -1,7 +1,6 @@
 package components
 
 import (
-	"github.com/Ankumeah/JSBEE/backend/internal/database"
 	"github.com/Ankumeah/JSBEE/backend/internal/provider"
 )
 
@@ -10,7 +9,7 @@ var teamInfo = pageInfo{
 	description: "JSBEE city leaders",
 }
 
-templ teamPage(leaders []database.User) {
+templ teamPage() {
 	<div class="flex min-h-screen flex-col">
 		@navBar(provider.SiteName, "")
 		<header class="jsbee-band bg-[#16211B]">
@@ -28,30 +27,80 @@ templ teamPage(leaders []database.User) {
 			</div>
 		</header>
 		<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
-			if len(leaders) == 0 {
-				<p class="mt-8 text-center text-sm text-stone-500">No city leaders yet.</p>
-			} else {
-				<ul class="mt-8 border-t border-[#B9C2B2]">
-					for _, leader := range leaders {
-						<li class="border-b border-[#D3D8C6]">
-							<a
-								href={ templ.SafeURL("/author?uuid=" + leader.UUID.String()) }
-								class="flex items-baseline justify-between gap-4 px-3 py-5 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#F5F6EF] hover:shadow-[0_4px_14px_-8px_rgba(22,33,27,0.4)]"
-							>
-								<span class="font-serif text-xl font-semibold text-stone-900">{ leader.Name }</span>
-								if leader.CityLead != nil {
-									<span class="shrink-0 text-sm font-medium text-[#33523B]">{ *leader.CityLead }</span>
-								}
-							</a>
-						</li>
-					}
-				</ul>
-			}
+			<div id="team-loading" class="mt-8 text-center text-sm text-stone-500">Loading team...</div>
+			<div id="team-error" class="mt-8 hidden text-center text-sm text-red-600"></div>
+			<p id="team-empty" class="mt-8 hidden text-center text-sm text-stone-500">No city leaders yet.</p>
+			<ul id="team-list" class="mt-8 hidden border-t border-[#B9C2B2]"></ul>
 		</main>
 		@siteFooter(provider.SiteName)
+		<script>
+			(function() {
+				var uuidPattern = /^[0-9a-fA-F-]{36}$/;
+
+				function initTeam() {
+					var loading = document.getElementById('team-loading');
+					var errorEl = document.getElementById('team-error');
+					var emptyEl = document.getElementById('team-empty');
+					var list = document.getElementById('team-list');
+
+					fetch('/api/v1/leaders')
+						.then(function(resp) {
+							return checkApiResponse(resp, 'Failed to load team');
+						})
+						.then(function(resp) {
+							return resp.json();
+						})
+						.then(function(data) {
+							var leaders = (data && Array.isArray(data.leaders)) ? data.leaders : [];
+							loading.classList.add('hidden');
+							if (!leaders.length) {
+								emptyEl.classList.remove('hidden');
+								return;
+							}
+							leaders.forEach(function(leader) {
+								if (typeof leader.uuid !== 'string' || !uuidPattern.test(leader.uuid)) {
+									return;
+								}
+								var li = document.createElement('li');
+								li.className = 'border-b border-[#D3D8C6]';
+								var link = document.createElement('a');
+								link.href = '/author?uuid=' + encodeURIComponent(leader.uuid);
+								link.className = 'flex items-baseline justify-between gap-4 px-3 py-5 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#F5F6EF] hover:shadow-[0_4px_14px_-8px_rgba(22,33,27,0.4)]';
+								var name = document.createElement('span');
+								name.className = 'font-serif text-xl font-semibold text-stone-900';
+								name.textContent = leader.name || 'Unknown';
+								link.appendChild(name);
+								if (leader.city_lead) {
+									var city = document.createElement('span');
+									city.className = 'shrink-0 text-sm font-medium text-[#33523B]';
+									city.textContent = leader.city_lead;
+									link.appendChild(city);
+								}
+								li.appendChild(link);
+								list.appendChild(li);
+							});
+							if (!list.children.length) {
+								emptyEl.classList.remove('hidden');
+								return;
+							}
+							list.classList.remove('hidden');
+						})
+						.catch(function(err) {
+							loading.classList.add('hidden');
+							errorEl.textContent = 'Failed to load team: ' + err.message;
+							errorEl.classList.remove('hidden');
+						});
+				}
+				if (document.readyState === 'loading') {
+					document.addEventListener('DOMContentLoaded', initTeam);
+				} else {
+					initTeam();
+				}
+			})();
+		</script>
 	</div>
 }
 
-templ TeamPage(leaders []database.User, firebaseClientConfig map[string]any) {
-	@base(teamInfo, teamPage(leaders), firebaseClientConfig)
+templ TeamPage(firebaseClientConfig map[string]any) {
+	@base(teamInfo, teamPage(), firebaseClientConfig)
 }

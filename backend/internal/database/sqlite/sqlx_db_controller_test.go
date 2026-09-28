@@ -247,7 +247,7 @@ func TestPublishPapersSingleQuery(t *testing.T) {
 	}
 
 	// Add 3 papers, approve all so they land in the waiting area
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		p := database.Paper{
 			UUID:      uuid.New(),
 			Title:     "Test" + string(rune('A'+i)),

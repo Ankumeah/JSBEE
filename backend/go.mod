@@ -5,8 +5,11 @@ go 1.27.0
 require (
 	firebase.google.com/go/v4 v4.21.0
 	github.com/a-h/templ v0.3.1020
+	github.com/aws/aws-lambda-go v1.55.1
+	github.com/awslabs/aws-lambda-go-api-proxy v0.16.2
 	github.com/gin-gonic/gin v1.12.0
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/minio/minio-go/v7 v7.3.0
 	golang.org/x/sys v0.47.0
 	google.golang.org/api v0.293.0
 	modernc.org/sqlite v1.56.0
@@ -68,7 +71,6 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/minio/crc64nvme v1.1.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
-	github.com/minio/minio-go/v7 v7.3.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/natefinch/atomic v1.0.1 // indirect

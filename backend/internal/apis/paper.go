@@ -14,7 +14,7 @@ import (
 	"uuid"
 )
 
-// This route deals with paper relasted features
+// This route deals with paper releated features
 func paper(r *gin.RouterGroup, app *a.App) {
 	group := r.Group("/paper")
 
@@ -70,9 +70,6 @@ func paper(r *gin.RouterGroup, app *a.App) {
 				return
 			}
 
-			// Published papers are served from the public bucket by
-			// `GET /files/:filename`, so make the file public right away.
-			// The filename is an unguessable uuid, paper metadata is public.
 			if err := app.ObjectStore.PublicFile(
 				ctx, filename,
 			); !handleError(c, err) {
@@ -109,10 +106,36 @@ func paper(r *gin.RouterGroup, app *a.App) {
 			return
 		}
 
-		// Direct public-bucket URL so browsers fetch the PDF
-		// straight from object storage, not through the backend
 		fileURL := app.ObjectStore.PublicBaseURL() + "/" + paper.Filename
 
 		c.JSON(http.StatusOK, gin.H{"paper": paper, "file_url": fileURL})
+	})
+
+	// Returns all published volumes
+	group.GET("/volumes", func(c *gin.Context) {
+		ctx := c.Request.Context()
+
+		if app.Cache == nil {
+			app.Cache = map[string]any{}
+		}
+
+		if cached, ok := app.Cache[a.CacheKeyVolumes]; ok {
+			if volumes, ok := cached.([]database.Volume); ok {
+				c.JSON(http.StatusOK, gin.H{"volumes": volumes})
+				return
+			}
+		}
+
+		volumes, err := app.DBController.GetVolumes(ctx)
+		if !handleError(c, err) {
+			return
+		}
+
+		if volumes == nil {
+			volumes = []database.Volume{}
+		}
+		app.Cache[a.CacheKeyVolumes] = volumes
+
+		c.JSON(http.StatusOK, gin.H{"volumes": volumes})
 	})
 }

@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"github.com/Ankumeah/JSBEE/backend/internal/database"
 	"github.com/Ankumeah/JSBEE/backend/internal/frontend/components"
 
 	"context"
@@ -34,12 +33,10 @@ func (u *ComponentUpdater) UpdateIndex(
 
 func (u *ComponentUpdater) UpdateVolumes(
 	ctx context.Context,
-	volumes []database.Volume,
-	filesBaseURL string,
 ) error {
 	return updateComponent(
 		ctx, path.Join(u.savePath, volumeFile),
-		components.VolumesPage(volumes, u.firebaseClientConfig, filesBaseURL),
+		components.VolumesPage(u.firebaseClientConfig),
 	)
 }
 
@@ -127,12 +124,11 @@ func (u *ComponentUpdater) UpdateAuthor(
 
 func (u *ComponentUpdater) UpdateTeam(
 	ctx context.Context,
-	leaders []database.User,
 ) error {
 	return updateComponent(
 		ctx,
 		path.Join(u.savePath, teamFile),
-		components.TeamPage(leaders, u.firebaseClientConfig),
+		components.TeamPage(u.firebaseClientConfig),
 	)
 }
 
@@ -151,15 +147,13 @@ func (u *ComponentUpdater) UpdateContact(
 // to make sure the static files always exist
 func (u *ComponentUpdater) UpdateAll(
 	ctx context.Context,
-	volumes []database.Volume,
-	leaders []database.User,
 	filesBaseURL string,
 ) error {
 	aboutURL := filesBaseURL + "/" + AboutFilename
 
 	for _, f := range []func() error{
 		func() error { return u.UpdateIndex(ctx) },
-		func() error { return u.UpdateVolumes(ctx, volumes, filesBaseURL) },
+		func() error { return u.UpdateVolumes(ctx) },
 		func() error { return u.UpdateNotFound(ctx) },
 		func() error { return u.UpdateProfile(ctx) },
 		func() error { return u.UpdatePaper(ctx) },
@@ -168,7 +162,7 @@ func (u *ComponentUpdater) UpdateAll(
 		func() error { return u.UpdateBlog(ctx) },
 		func() error { return u.UpdateAbout(ctx, aboutURL) },
 		func() error { return u.UpdateAuthor(ctx) },
-		func() error { return u.UpdateTeam(ctx, leaders) },
+		func() error { return u.UpdateTeam(ctx) },
 		func() error { return u.UpdateContact(ctx) },
 	} {
 		if err := f(); err != nil {

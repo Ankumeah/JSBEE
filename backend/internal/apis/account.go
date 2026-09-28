@@ -106,7 +106,7 @@ func account(r *gin.RouterGroup, app *a.App) {
 			if err := app.FireBaseClient.SetCustomUserClaims(
 				ctx,
 				token.UID,
-				map[string]interface{}{
+				map[string]any{
 					provider.SiteName + "-uuid": userUUID.String(),
 				},
 			); !handleError(c, err) {
