@@ -19,6 +19,7 @@ jobs:
         with:
           go-version: ${{ matrix.go-version }}
           cache: true
+          cache-dependency-path: "**/go.mod"
 
       - name: Set CI env
         run: echo 'CI=true' >> $GITHUB_ENV

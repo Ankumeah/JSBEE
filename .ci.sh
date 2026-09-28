@@ -5,7 +5,6 @@ set -eu
 run() {
   echo "  -> ${@}"
 
-  local output status
   if output=$("${@}" 2>&1); then
     return 0
   else
@@ -15,7 +14,7 @@ run() {
   fi
 }
 
-echo '=> Tmpl'
+echo '=> Templ'
 (
   cd backend
   go tool templ generate ./internal/frontend/

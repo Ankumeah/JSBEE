@@ -11,4 +11,4 @@ up:
 _pre_commit *options="-tags=sqlite,init":
   ./.ci.sh {{ options }}
 
-  #git add .
+  git add .
