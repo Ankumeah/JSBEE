@@ -1,0 +1,39 @@
+#! /bin/sh
+
+set -eu
+
+run() {
+  echo "  -> ${@}"
+
+  local output status
+  if output=$("${@}" 2>&1); then
+    return 0
+  else
+    status=${?}
+    echo "${output}"
+    return "${status}"
+  fi
+}
+
+echo '=> Tmpl'
+(
+  cd backend
+  go tool templ generate ./internal/frontend/
+)
+
+for dir in backend smtp_relay; do
+  (
+    echo "=> ${dir}"
+    cd "${dir}"
+
+    run go vet "${@}" ./...
+    run go fix -diff "${@}" ./...
+    run go test "${@}" ./...
+
+    if test -n "${CI:-}"; then
+      run gofmt -d .
+    else
+      run go fmt ./...
+    fi
+  )
+done
