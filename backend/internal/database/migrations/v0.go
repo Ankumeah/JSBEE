@@ -7,9 +7,8 @@ import (
 	"time"
 )
 
-// This is the core migration whihc tracks
-// all other migrations.
-// It also sets up WAL mode and `foreign_keys`
+// This is the core migration which tracks
+// all other migrations
 type v0 struct{}
 
 func (v0) Version() uint64 {
@@ -20,15 +19,6 @@ func (v0) Apply(
 	ctx context.Context,
 	db *sqlx.DB,
 ) error {
-	conifgQuery := `
-    PRAGMA foreign_keys = ON;
-    PRAGMA journal_mode = WAL;
-  `
-
-	if _, err := db.ExecContext(ctx, conifgQuery); err != nil {
-		return err
-	}
-
 	tx, err := db.BeginTxx(ctx, nil)
 	if err != nil {
 		return err

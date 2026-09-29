@@ -12,7 +12,7 @@ RUN  --mount=type=cache,target=/root/go/pkg/mod \
   --mount=type=cache,target=/root/.cache/go-build \
   go tool templ generate
 
-ARG db_type=sqlite
+ARG db_type=sqlite,modernc
 COPY . .
 RUN  --mount=type=cache,target=/root/go/pkg/mod \
   --mount=type=cache,target=/root/.cache/go-build \

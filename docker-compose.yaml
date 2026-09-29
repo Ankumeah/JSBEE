@@ -9,7 +9,7 @@ services:
       context: ./backend/
       dockerfile: Dockerfile.init
       args:
-        - "db_type=sqlite"
+        - "db_type=sqlite,modernc"
     <<: *env
     restart: on-failure
     volumes:

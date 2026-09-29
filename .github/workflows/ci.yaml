@@ -25,4 +25,4 @@ jobs:
         run: echo 'CI=true' >> $GITHUB_ENV
 
       - name: Run ci
-        run: ./.ci.sh -tags=sqlite,init
+        run: ./.ci.sh -tags=sqlite,modernc,init

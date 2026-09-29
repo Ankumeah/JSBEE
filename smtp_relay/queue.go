@@ -11,7 +11,7 @@ import (
 const queueSchema = `
   PRAGMA foreign_keys = ON;
 
-  CREATE TABLE IF NOT EXITS batches (
+  CREATE TABLE IF NOT EXISTS batches (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     uuid TEXT NOT NULL UNIQUE CHECK (uuid != ''),
     creation INTEGER NOT NULL

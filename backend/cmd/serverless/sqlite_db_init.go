@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-// Initalises connection with DB with sqlite
+// Initalises connection with DB with sqlite compatable DB
 // Exits program on connection failure
 func getDBConnection(ctx context.Context, app *a.App) {
 	app.Logger.InfoContext(ctx, "Getting DB connection")
