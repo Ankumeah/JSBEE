@@ -8,6 +8,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"net/http"
+	"time"
 	"uuid"
 )
 
@@ -157,6 +159,41 @@ func (s s3StaticClient) DeleteFile(
 		ctx, privateBucket, filename,
 		minio.RemoveObjectOptions{},
 	)
+}
+
+func (s s3StaticClient) PresignedUploadURL(
+	ctx context.Context,
+	filename string,
+	expiry time.Duration,
+) (string, error) {
+	url, err := s.client.PresignedPutObject(
+		ctx, privateBucket, filename, expiry,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return url.String(), nil
+}
+
+func (s s3StaticClient) PrivateFileSize(
+	ctx context.Context,
+	filename string,
+) (int64, error) {
+	info, err := s.client.StatObject(
+		ctx, privateBucket, filename,
+		minio.StatObjectOptions{},
+	)
+	if err != nil {
+		var errResp minio.ErrorResponse
+		if errors.As(err, &errResp) &&
+			errResp.StatusCode == http.StatusNotFound {
+			return 0, ErrNoSuchUpload
+		}
+		return 0, err
+	}
+
+	return info.Size, nil
 }
 
 func (s s3StaticClient) StoreDBBackup(

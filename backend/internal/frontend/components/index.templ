@@ -222,46 +222,61 @@ templ indexPage() {
 							showToast('Please choose a PDF file');
 							return;
 						}
-						if (fileInput.files[0].size > 100 * 1024 * 1024) {
-							showToast('File too large, max size is 100 MiB');
-							return;
-						}
 
-						var formData = new FormData();
-						formData.append('title', title);
-						formData.append('file', fileInput.files[0]);
+						var file = fileInput.files[0];
 
-						statusEl.textContent = 'Uploading...';
-						authFetch('/api/v1/paper', {
-							method: 'POST',
-							body: formData
-						}).then(function(resp) {
-							if (resp.status === 201) {
-								return resp.json().then(function(data) {
-									if (!data || !data.uuid) {
-										throw new Error('Upload failed: missing paper reference');
-									}
-									statusEl.textContent = 'Your paper was submitted for review. Reference: ' + data.uuid;
-									uploadForm.reset();
-								});
-							}
-							return resp.text().then(function(text) {
-								var message = text;
-								try {
-									message = JSON.parse(text).error || text;
-								} catch (e) {}
-								var uploadErr = new Error(message || 'Upload failed (HTTP ' + resp.status + ')');
-								uploadErr.status = resp.status;
-								throw uploadErr;
-							});
-						}).catch(function(err) {
+						function failUpload(err) {
 							if (isSessionExpiredError(err)) {
 								statusEl.textContent = 'Session expired, please sign in again';
 								handleSessionExpired();
 								return;
 							}
 							statusEl.textContent = 'Upload failed: ' + err.message;
-						});
+						}
+
+						// Large PDFs go direct to the object store: the
+						// backend issues a presigned URL, the browser PUTs
+						// the file there, then the backend confirms the
+						// private object and creates the paper row.
+						statusEl.textContent = 'Requesting upload...';
+						authFetch('/api/v1/paper/upload-url', {
+							method: 'POST'
+						}).then(function(resp) {
+							return checkApiResponse(resp, 'Could not start upload');
+						}).then(function(resp) {
+							return resp.json();
+						}).then(function(data) {
+							if (!data || !data.uuid || !data.upload_url) {
+								throw new Error('Upload failed: bad upload response');
+							}
+							statusEl.textContent = 'Uploading...';
+							return fetch(data.upload_url, {
+								method: 'PUT',
+								headers: { 'Content-Type': 'application/pdf' },
+								body: file
+							}).then(function(putResp) {
+								return checkApiResponse(putResp, 'Upload failed');
+							}).then(function() {
+								return data.uuid;
+							});
+						}).then(function(paperUUID) {
+							statusEl.textContent = 'Confirming...';
+							return authFetch('/api/v1/paper/confirm', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({ uuid: paperUUID, title: title })
+							}).then(function(resp) {
+								return checkApiResponse(resp, 'Could not confirm upload');
+							});
+						}).then(function(resp) {
+							return resp.json();
+						}).then(function(data) {
+							if (!data || !data.uuid) {
+								throw new Error('Upload failed: missing paper reference');
+							}
+							statusEl.textContent = 'Your paper was submitted for review. Reference: ' + data.uuid;
+							uploadForm.reset();
+						}).catch(failUpload);
 					});
 				}
 				if (document.readyState === 'loading') {

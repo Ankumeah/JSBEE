@@ -771,6 +771,7 @@ templ adminPage(aboutURL string) {
 
 					var blogLoaded = false;
 					var editingBlogUuid = null;
+					var editingBlogContent = null;
 
 					function formatAdminBlogDate(unix) {
 						return new Date(unix * 1000).toLocaleDateString(undefined, {
@@ -789,6 +790,7 @@ templ adminPage(aboutURL string) {
 
 					function resetBlogEditor() {
 						editingBlogUuid = null;
+						editingBlogContent = null;
 						document.getElementById('blog-title').value = '';
 						document.getElementById('blog-editor').value = '';
 						document.getElementById('blog-preview').innerHTML = '';
@@ -887,6 +889,7 @@ templ adminPage(aboutURL string) {
 										return resp.text();
 									}).then(function(md) {
 										editingBlogUuid = blog.uuid;
+										editingBlogContent = md;
 										document.getElementById('blog-title').value = blog.title;
 										document.getElementById('blog-editor').value = md;
 										try {
@@ -921,36 +924,18 @@ templ adminPage(aboutURL string) {
 							return;
 						}
 						saveBtn.disabled = true;
-						var payload = JSON.stringify({ title: title, content: content });
-						var request;
-						if (editingBlogUuid) {
-							request = authFetch('/api/v1/admin/blog/' + encodeURIComponent(editingBlogUuid), {
-								method: 'PATCH',
-								headers: { 'Content-Type': 'application/json' },
-								body: payload
-							}).then(function(resp) {
-								return checkApiResponse(resp, 'Failed to update post');
-							}).then(function() {
-								showToast('Post updated');
-							});
-						} else {
-							request = authFetch('/api/v1/admin/blog', {
-								method: 'POST',
-								headers: { 'Content-Type': 'application/json' },
-								body: payload
-							}).then(function(resp) {
-								return checkApiResponse(resp, 'Failed to publish post');
-							}).then(function(resp) {
-								return resp.json();
-							}).then(function() {
-								showToast('Post published');
+						// Post content goes direct to the object store via a
+						// presigned URL; only metadata passes through the API.
+						function putContent(uploadUrl, content) {
+							return fetch(uploadUrl, {
+								method: 'PUT',
+								headers: { 'Content-Type': 'text/markdown; charset=utf-8' },
+								body: content
+							}).then(function(putResp) {
+								return checkApiResponse(putResp, 'Failed to upload content');
 							});
 						}
-						request.then(function() {
-							resetBlogEditor();
-							blogLoaded = false;
-							loadAdminBlogs();
-						}).catch(function(err) {
+						function failBlogSave(err) {
 							if (isSessionExpiredError(err)) {
 								handleSessionExpired();
 								return;
@@ -960,7 +945,78 @@ templ adminPage(aboutURL string) {
 								return;
 							}
 							showToast(err.message);
-						}).finally(function() {
+						}
+						function finishBlogSave(message) {
+							resetBlogEditor();
+							blogLoaded = false;
+							loadAdminBlogs();
+							showToast(message);
+						}
+						var request;
+						if (editingBlogUuid) {
+							if (content === editingBlogContent) {
+								request = authFetch('/api/v1/admin/blog/' + encodeURIComponent(editingBlogUuid), {
+									method: 'PATCH',
+									headers: { 'Content-Type': 'application/json' },
+									body: JSON.stringify({ title: title })
+								}).then(function(resp) {
+									return checkApiResponse(resp, 'Failed to update post');
+								}).then(function() {
+									finishBlogSave('Post updated');
+								});
+							} else {
+								request = authFetch('/api/v1/admin/blog/' + encodeURIComponent(editingBlogUuid) + '/upload-url', {
+									method: 'POST'
+								}).then(function(resp) {
+									return checkApiResponse(resp, 'Failed to start upload');
+								}).then(function(resp) {
+									return resp.json();
+								}).then(function(data) {
+									if (!data || !data.upload_url) {
+										throw new Error('Failed to start upload: bad upload response');
+									}
+									return putContent(data.upload_url, content);
+								}).then(function() {
+									return authFetch('/api/v1/admin/blog/' + encodeURIComponent(editingBlogUuid), {
+										method: 'PATCH',
+										headers: { 'Content-Type': 'application/json' },
+										body: JSON.stringify({ title: title, content_replaced: true })
+									});
+								}).then(function(resp) {
+									return checkApiResponse(resp, 'Failed to update post');
+								}).then(function() {
+									finishBlogSave('Post updated');
+								});
+							}
+						} else {
+							request = authFetch('/api/v1/admin/blog/upload-url', {
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({ title: title })
+							}).then(function(resp) {
+								return checkApiResponse(resp, 'Failed to start upload');
+							}).then(function(resp) {
+								return resp.json();
+							}).then(function(data) {
+								if (!data || !data.uuid || !data.upload_url) {
+									throw new Error('Failed to start upload: bad upload response');
+								}
+								return putContent(data.upload_url, content).then(function() {
+									return data.uuid;
+								});
+							}).then(function(blogUUID) {
+								return authFetch('/api/v1/admin/blog/confirm', {
+									method: 'POST',
+									headers: { 'Content-Type': 'application/json' },
+									body: JSON.stringify({ uuid: blogUUID, title: title })
+								});
+							}).then(function(resp) {
+								return checkApiResponse(resp, 'Failed to publish post');
+							}).then(function() {
+								finishBlogSave('Post published');
+							});
+						}
+						request.catch(failBlogSave).finally(function() {
 							saveBtn.disabled = false;
 						});
 					});
@@ -1052,10 +1108,27 @@ templ adminPage(aboutURL string) {
 							return;
 						}
 						saveBtn.disabled = true;
-						authFetch('/api/v1/admin/about', {
-							method: 'PUT',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ content: content })
+						authFetch('/api/v1/admin/about/upload-url', {
+							method: 'POST'
+						}).then(function(resp) {
+							return checkApiResponse(resp, 'Failed to start upload');
+						}).then(function(resp) {
+							return resp.json();
+						}).then(function(data) {
+							if (!data || !data.upload_url) {
+								throw new Error('Failed to start upload: bad upload response');
+							}
+							return fetch(data.upload_url, {
+								method: 'PUT',
+								headers: { 'Content-Type': 'text/markdown; charset=utf-8' },
+								body: content
+							}).then(function(putResp) {
+								return checkApiResponse(putResp, 'Failed to upload content');
+							});
+						}).then(function() {
+							return authFetch('/api/v1/admin/about/confirm', {
+								method: 'PUT'
+							});
 						}).then(function(resp) {
 							return checkApiResponse(resp, 'Failed to save about page');
 						}).then(function() {

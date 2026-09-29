@@ -4,22 +4,45 @@ import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
 	"github.com/Ankumeah/JSBEE/backend/internal/database"
 	"github.com/Ankumeah/JSBEE/backend/internal/middlewares"
+	"github.com/Ankumeah/JSBEE/backend/internal/objectstore"
 
 	"github.com/gin-gonic/gin"
 
-	"bytes"
-	"fmt"
-	"io"
+	"errors"
 	"net/http"
+	"strings"
 	"uuid"
 )
 
-// This route deals with paper releated features
+// This route deals with all paper related apis
 func paper(r *gin.RouterGroup, app *a.App) {
 	group := r.Group("/paper")
 
-	// This route adds a new paper
-	group.POST("", middlewares.FireBaseAuthMiddleware(app),
+	// This route issues a presigned upload URL for a new paper
+	group.POST("/upload-url", middlewares.FireBaseAuthMiddleware(app),
+		func(c *gin.Context) {
+			ctx := c.Request.Context()
+
+			paperUUID := uuid.New()
+			filename := paperUUID.String() + ".pdf"
+
+			uploadURL, err := app.ObjectStore.PresignedUploadURL(
+				ctx, filename, uploadURLTTL,
+			)
+			if !handleError(c, err) {
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"uuid":       paperUUID,
+				"filename":   filename,
+				"upload_url": uploadURL,
+			})
+		},
+	)
+
+	// This route confirms a paper upload
+	group.POST("/confirm", middlewares.FireBaseAuthMiddleware(app),
 		func(c *gin.Context) {
 			ctx := c.Request.Context()
 
@@ -28,45 +51,39 @@ func paper(r *gin.RouterGroup, app *a.App) {
 				return
 			}
 
-			title := c.PostForm("title")
-			if title == "" {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Title is required"})
+			var body struct {
+				UUID  uuid.UUID `json:"uuid"`
+				Title string    `json:"title"`
+			}
+			if err := c.ShouldBindJSON(&body); err != nil {
+				c.JSON(http.StatusBadRequest,
+					gin.H{"error": "Must provide uuid and title"},
+				)
+				return
+			}
+			if strings.TrimSpace(body.Title) == "" {
+				c.JSON(http.StatusBadRequest,
+					gin.H{"error": "Title is required"},
+				)
 				return
 			}
 
-			file, _, err := c.Request.FormFile("file")
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "File is required"})
+			filename := body.UUID.String() + ".pdf"
+
+			size, err := app.ObjectStore.PrivateFileSize(ctx, filename)
+			if errors.Is(err, objectstore.ErrNoSuchUpload) {
+				c.JSON(http.StatusBadRequest,
+					gin.H{"error": "Upload not found, request a new upload URL"},
+				)
 				return
 			}
-			defer file.Close()
-
-			buf := bytes.NewBuffer(nil)
-			size, err := io.Copy(buf, io.LimitReader(file, maxPaperSize+1))
 			if !handleError(c, err) {
 				return
 			}
 
 			if size <= 0 {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Empty file"})
-				return
-			}
-			if size > maxPaperSize {
-				c.JSON(
-					http.StatusRequestEntityTooLarge,
-					gin.H{"error": fmt.Sprintf(
-						"File too large, max size is %d bytes", maxPaperSize,
-					)},
-				)
-				return
-			}
-
-			paperUUID := uuid.New()
-			filename := paperUUID.String() + ".pdf"
-
-			if err := app.ObjectStore.AddFile(
-				ctx, filename, buf, size,
-			); !handleError(c, err) {
+				app.ObjectStore.DeleteFile(ctx, filename)
 				return
 			}
 
@@ -78,8 +95,8 @@ func paper(r *gin.RouterGroup, app *a.App) {
 			}
 
 			if err := app.DBController.AddPaper(ctx, database.Paper{
-				UUID:      paperUUID,
-				Title:     title,
+				UUID:      body.UUID,
+				Title:     strings.TrimSpace(body.Title),
 				Filename:  filename,
 				OwnerUUID: &userUUID,
 			}); !handleError(c, err) {
@@ -87,7 +104,7 @@ func paper(r *gin.RouterGroup, app *a.App) {
 				return
 			}
 
-			c.JSON(http.StatusCreated, gin.H{"uuid": paperUUID})
+			c.JSON(http.StatusCreated, gin.H{"uuid": body.UUID})
 		},
 	)
 
