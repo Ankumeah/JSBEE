@@ -2,7 +2,7 @@ package components
 
 templ navBar(siteName string, current string) {
 	<header
-		class="sticky top-0 z-40 border-b border-[#B9C2B2] bg-[#F5F6EF]/90 backdrop-blur-xl"
+		class="sticky top-0 z-40 border-b border-[#DDD5C2] bg-[#FAF7EF]/95 backdrop-blur"
 		x-data="{ open: false }"
 	>
 		<nav class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3.5 sm:px-6">
@@ -12,7 +12,7 @@ templ navBar(siteName string, current string) {
 			</a>
 			<button
 				type="button"
-				class="inline-flex items-center rounded-md border border-stone-300 px-3 py-1.5 text-sm font-medium text-stone-700 md:hidden"
+				class="inline-flex items-center rounded-[3px] border border-[#DDD5C2] px-3 py-1.5 text-sm font-medium text-stone-700 md:hidden"
 				@click="open = !open"
 				:aria-expanded="open.toString()"
 				aria-controls="site-menu"
@@ -21,12 +21,12 @@ templ navBar(siteName string, current string) {
 			</button>
 			<ul
 				id="site-menu"
-				class="hidden items-center gap-8 text-sm font-medium text-stone-600 md:flex"
+				class="hidden items-center gap-7 text-sm font-medium text-stone-600 md:flex"
 			>
 				<li>
 					<a
 						href="/"
-						class={ "hover:text-emerald-900", templ.KV("text-emerald-900 underline decoration-amber-700 decoration-2 underline-offset-8", current == "home") }
+						class={ "hover:text-[#33523B]", templ.KV("text-[#33523B] underline decoration-[#33523B] decoration-2 underline-offset-8", current == "home") }
 					>
 						Home
 					</a>
@@ -34,7 +34,7 @@ templ navBar(siteName string, current string) {
 				<li>
 					<a
 						href="/volumes"
-						class={ "hover:text-emerald-900", templ.KV("text-emerald-900 underline decoration-amber-700 decoration-2 underline-offset-8", current == "volumes") }
+						class={ "hover:text-[#33523B]", templ.KV("text-[#33523B] underline decoration-[#33523B] decoration-2 underline-offset-8", current == "volumes") }
 					>
 						Volumes
 					</a>
@@ -42,9 +42,45 @@ templ navBar(siteName string, current string) {
 				<li>
 					<a
 						href="/blog"
-						class={ "hover:text-emerald-900", templ.KV("text-emerald-900 underline decoration-amber-700 decoration-2 underline-offset-8", current == "blog") }
+						class={ "hover:text-[#33523B]", templ.KV("text-[#33523B] underline decoration-[#33523B] decoration-2 underline-offset-8", current == "blog") }
 					>
 						Blog
+					</a>
+				</li>
+				<li>
+					<a
+						href="/about"
+						class={ "hover:text-[#33523B]", templ.KV("text-[#33523B] underline decoration-[#33523B] decoration-2 underline-offset-8", current == "about") }
+					>
+						About
+					</a>
+				</li>
+				<li>
+					<a
+						href="/team"
+						class={ "hover:text-[#33523B]", templ.KV("text-[#33523B] underline decoration-[#33523B] decoration-2 underline-offset-8", current == "team") }
+					>
+						Team
+					</a>
+				</li>
+				<li>
+					<a
+						href="/contact"
+						class={ "hover:text-[#33523B]", templ.KV("text-[#33523B] underline decoration-[#33523B] decoration-2 underline-offset-8", current == "contact") }
+					>
+						Contact
+					</a>
+				</li>
+				<li>
+					<a
+						href="/volumes#browse"
+						class="inline-flex items-center gap-1.5 hover:text-[#33523B]"
+						aria-label="Search research"
+					>
+						<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/>
+						</svg>
+						<span class="sr-only">Search research</span>
 					</a>
 				</li>
 			<li>
@@ -86,19 +122,31 @@ templ navBar(siteName string, current string) {
 		</nav>
 		<ul
 			id="site-menu-mobile"
-			class="space-y-1 border-t border-stone-200 px-4 py-3 text-sm font-medium md:hidden"
+			class="space-y-1 border-t border-[#DDD5C2] px-4 py-3 text-sm font-medium md:hidden"
 			x-cloak
 			x-show="open"
 			x-transition
 		>
 			<li>
-				<a href="/" class="block rounded px-2 py-2 hover:bg-stone-100">Home</a>
+				<a href="/" class="block rounded px-2 py-2 hover:bg-[#F2EDE1]">Home</a>
 			</li>
 			<li>
-				<a href="/volumes" class="block rounded px-2 py-2 hover:bg-stone-100">Volumes</a>
+				<a href="/volumes" class="block rounded px-2 py-2 hover:bg-[#F2EDE1]">Volumes</a>
 			</li>
 			<li>
-				<a href="/blog" class="block rounded px-2 py-2 hover:bg-stone-100">Blog</a>
+				<a href="/blog" class="block rounded px-2 py-2 hover:bg-[#F2EDE1]">Blog</a>
+			</li>
+			<li>
+				<a href="/about" class="block rounded px-2 py-2 hover:bg-[#F2EDE1]">About</a>
+			</li>
+			<li>
+				<a href="/team" class="block rounded px-2 py-2 hover:bg-[#F2EDE1]">Team</a>
+			</li>
+			<li>
+				<a href="/contact" class="block rounded px-2 py-2 hover:bg-[#F2EDE1]">Contact</a>
+			</li>
+			<li>
+				<a href="/volumes#browse" class="block rounded px-2 py-2 hover:bg-[#F2EDE1]">Search research</a>
 			</li>
 			<li>
 				if current == "profile" {

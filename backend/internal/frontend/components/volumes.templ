@@ -14,33 +14,37 @@ templ volumesPage() {
 		@navBar(provider.SiteName, "volumes")
 		<header class="jsbee-band bg-[#16211B]">
 			<div class="mx-auto max-w-5xl px-4 py-12 sm:px-6 sm:py-16">
-				<p class="font-serif text-lg italic text-[#C9A44A]">The library</p>
+				<p class="font-serif text-lg italic text-[#B9C2B2]">The library</p>
 				<h1 class="mt-3 font-serif text-4xl font-semibold text-[#F2F3EA] sm:text-5xl">Volumes</h1>
 				<p class="mt-4 max-w-2xl leading-relaxed text-[#B9C2B2]">
 					Published papers grouped by volume and issue.
 				</p>
-				<label class="mt-7 block max-w-md">
-					<span class="sr-only">Filter papers</span>
+				<div id="browse" class="mt-7 max-w-md scroll-mt-24">
+					<label for="volumes-filter" class="block text-sm font-medium text-[#EDEFE4]">
+						Search research
+					</label>
 					<input
 						id="volumes-filter"
 						type="search"
-						placeholder="Filter by title"
-						class="w-full rounded-[3px] border border-[#F2F3EA]/20 bg-[#0E1511] px-4 py-2.5 text-sm text-[#F2F3EA] placeholder:text-[#6E7768] outline-none transition-all focus:border-[#C9A44A] focus:ring-2 focus:ring-[#C9A44A]/30"
+						placeholder="Filter by title or author"
+						class="mt-1.5 w-full rounded-[3px] border border-[#F2F3EA]/20 bg-[#0E1511] px-4 py-2.5 text-sm text-[#F2F3EA] placeholder:text-[#6E7768] outline-none transition-all focus:border-[#F2F3EA]/60"
 					/>
-				</label>
+				</div>
 			</div>
 		</header>
 		<main class="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6">
+			<p id="volumes-count" class="hidden text-sm text-stone-500"></p>
 			<div id="volumes-loading" class="mt-10 text-stone-500">Loading volumes...</div>
-			<div id="volumes-error" class="mt-10 hidden text-sm text-red-600"></div>
+			<div id="volumes-error" class="mt-10 hidden text-sm text-[#7F1D1D]"></div>
 			<p id="volumes-empty" class="mt-10 hidden text-stone-500">No volumes have been published yet.</p>
 			<p id="volumes-no-match" class="mt-10 hidden text-stone-500">No papers match your filter.</p>
-			<div id="volumes-list" class="mt-4 hidden border-t border-[#B9C2B2]"></div>
+			<div id="volumes-list" class="mt-4 hidden border-t border-[#DDD5C2]"></div>
 		</main>
 		@siteFooter(provider.SiteName)
 		<script>
 			(function() {
 				var uuidPattern = /^[0-9a-fA-F-]{36}$/;
+				var totalPapers = 0;
 
 				function safePaperUUID(uuid) {
 					return typeof uuid === 'string' && uuidPattern.test(uuid) ? uuid : null;
@@ -57,43 +61,45 @@ templ volumesPage() {
 					return node;
 				}
 
-				function paperLink(paper) {
+				function paperItem(paper, volumeNumber, issueNumber) {
+					var li = el('li', 'border-b border-[#E7E0CF] last:border-0');
+					li.setAttribute('data-title', (paper.title || '').toLowerCase());
+					li.setAttribute('data-author', '');
+					var wrap = el('div', 'jsbee-row-hover px-3 py-4');
+					var row = el('div', 'flex items-baseline gap-2');
+					var link = el('a', 'min-w-0 font-serif text-lg font-medium text-stone-900 hover:underline hover:decoration-[#33523B] hover:underline-offset-4');
 					var uuid = safePaperUUID(paper.uuid);
-					var link = el('a');
-					link.className = 'flex min-w-0 flex-1 flex-col gap-1 rounded-[3px] px-3 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#F5F6EF] hover:shadow-[0_4px_14px_-8px_rgba(22,33,27,0.4)] sm:flex-row sm:items-baseline sm:gap-3';
 					if (uuid) {
 						link.href = '/paper?uuid=' + encodeURIComponent(uuid);
 					} else {
 						link.setAttribute('aria-disabled', 'true');
 					}
-					if (paper.number != null) {
-						link.appendChild(el('span', 'shrink-0 font-mono text-xs text-[#9A7B2D]', '#' + paper.number));
-					}
-					link.appendChild(el('span', 'font-medium text-stone-900', paper.title || 'Untitled'));
-					return link;
-				}
-
-				function paperItem(paper) {
-					var li = el('li', 'border-b border-stone-100 last:border-0');
-					li.setAttribute('data-title', (paper.title || '').toLowerCase());
-					var row = el('div', 'flex items-baseline gap-2');
-					row.appendChild(paperLink(paper));
+					link.textContent = paper.title || 'Untitled';
+					row.appendChild(link);
+					row.appendChild(el('span', 'jsbee-leader', null));
 					var ownerUUID = safePaperUUID(paper.owner_uuid);
 					if (ownerUUID) {
-						var owner = el('span', 'flex shrink-0 items-baseline gap-1.5 py-3 pr-1 text-sm text-stone-400');
-						owner.appendChild(el('span', null, '-'));
-						var authorLink = el('a', 'jsbee-author-link transition-colors hover:text-[#33523B] hover:underline', '—');
+						var by = el('span', 'flex shrink-0 items-baseline gap-1 text-sm text-stone-500');
+						by.appendChild(el('span', null, 'By'));
+						var authorLink = el('a', 'jsbee-author-link font-medium text-[#33523B] hover:underline hover:underline-offset-4', '…');
 						authorLink.href = '/author?uuid=' + encodeURIComponent(ownerUUID);
 						authorLink.setAttribute('data-owner', ownerUUID);
-						owner.appendChild(authorLink);
-						row.appendChild(owner);
+						by.appendChild(authorLink);
+						row.appendChild(by);
 					}
-					li.appendChild(row);
+					wrap.appendChild(row);
+					var meta = [];
+					if (paper.number != null) {
+						meta.push('Paper № ' + paper.number);
+					}
+					meta.push('Volume ' + volumeNumber + ', Issue ' + issueNumber);
+					wrap.appendChild(el('p', 'mt-1 text-xs text-stone-500', meta.join(', ')));
+					li.appendChild(wrap);
 					return li;
 				}
 
-				function issueBlock(issue) {
-					var block = el('div', 'mt-5 border-t border-[#D3D8C6] pt-4');
+				function issueBlock(issue, volumeNumber) {
+					var block = el('div', 'mt-5 border-t border-[#E7E0CF] pt-4');
 					block.setAttribute('data-issue', '');
 					block.appendChild(el('h3', 'font-serif text-lg text-[#33523B]', 'Issue ' + issue.number));
 					var papers = Array.isArray(issue.papers) ? issue.papers : [];
@@ -102,7 +108,7 @@ templ volumesPage() {
 					} else {
 						var ul = el('ul', 'mt-1');
 						papers.forEach(function(paper) {
-							ul.appendChild(paperItem(paper));
+							ul.appendChild(paperItem(paper, volumeNumber, issue.number));
 						});
 						block.appendChild(ul);
 					}
@@ -110,7 +116,7 @@ templ volumesPage() {
 				}
 
 				function volumeBlock(volume) {
-					var section = el('section', 'border-b border-[#B9C2B2] py-8');
+					var section = el('section', 'border-b border-[#DDD5C2] py-8');
 					section.setAttribute('data-volume', '');
 					var toggle = el('button', 'flex w-full items-center justify-between gap-4 text-left');
 					toggle.type = 'button';
@@ -124,7 +130,7 @@ templ volumesPage() {
 						body.appendChild(el('p', 'mt-4 text-sm text-stone-500', 'No issues in this volume.'));
 					} else {
 						issues.forEach(function(issue) {
-							body.appendChild(issueBlock(issue));
+							body.appendChild(issueBlock(issue, volume.number));
 						});
 					}
 					toggle.addEventListener('click', function() {
@@ -140,15 +146,18 @@ templ volumesPage() {
 				function loadAuthorNames() {
 					var links = document.querySelectorAll('.jsbee-author-link[data-owner]');
 					if (!links.length) {
+						applyFilter();
 						return;
 					}
 					var seen = {};
+					var pending = 0;
 					Array.prototype.forEach.call(links, function(link) {
 						var uuid = link.getAttribute('data-owner');
 						if (!uuid || seen[uuid]) {
 							return;
 						}
 						seen[uuid] = true;
+						pending += 1;
 						fetch('/api/v1/user?uuid=' + encodeURIComponent(uuid))
 							.then(function(resp) {
 								return checkApiResponse(resp, 'Failed to load author');
@@ -162,15 +171,27 @@ templ volumesPage() {
 									document.querySelectorAll('.jsbee-author-link[data-owner="' + uuid + '"]'),
 									function(node) {
 										node.textContent = data.user.name;
+										var li = node.closest('li[data-author]');
+										if (li) {
+											li.setAttribute('data-author', data.user.name.toLowerCase());
+										}
 									}
 								);
-							}).catch(function() {});
+							}).catch(function() {}).finally(function() {
+								pending -= 1;
+								if (pending === 0) {
+									applyFilter();
+								}
+							});
 					});
+					if (pending === 0) {
+						applyFilter();
+					}
 				}
 
 				function applyFilter() {
-					var q = document.getElementById('volumes-filter').value.toLowerCase();
-					var anyVisible = false;
+					var q = document.getElementById('volumes-filter').value.toLowerCase().trim();
+					var visible = 0;
 					Array.prototype.forEach.call(
 						document.querySelectorAll('#volumes-list [data-volume]'),
 						function(section) {
@@ -182,9 +203,14 @@ templ volumesPage() {
 									Array.prototype.forEach.call(
 										block.querySelectorAll('li[data-title]'),
 										function(li) {
-											var match = q === '' || li.getAttribute('data-title').indexOf(q) !== -1;
+											var title = li.getAttribute('data-title') || '';
+											var author = li.getAttribute('data-author') || '';
+											var match = q === '' || title.indexOf(q) !== -1 || author.indexOf(q) !== -1;
 											li.classList.toggle('hidden', !match);
 											issueVisible = issueVisible || match;
+											if (match) {
+												visible += 1;
+											}
 										}
 									);
 									block.classList.toggle('hidden', !issueVisible);
@@ -192,10 +218,15 @@ templ volumesPage() {
 								}
 							);
 							section.classList.toggle('hidden', !sectionVisible);
-							anyVisible = anyVisible || sectionVisible;
 						}
 					);
-					document.getElementById('volumes-no-match').classList.toggle('hidden', anyVisible || q === '');
+					var countEl = document.getElementById('volumes-count');
+					if (q === '') {
+						countEl.textContent = totalPapers === 1 ? '1 paper' : totalPapers + ' papers';
+					} else {
+						countEl.textContent = visible === 1 ? '1 matching paper' : visible + ' matching papers';
+					}
+					document.getElementById('volumes-no-match').classList.toggle('hidden', visible > 0 || q === '');
 				}
 
 				function initVolumes() {
@@ -223,6 +254,8 @@ templ volumesPage() {
 							volumes.forEach(function(volume) {
 								list.appendChild(volumeBlock(volume));
 							});
+							totalPapers = list.querySelectorAll('li[data-title]').length;
+							document.getElementById('volumes-count').classList.remove('hidden');
 							list.classList.remove('hidden');
 							loadAuthorNames();
 						})

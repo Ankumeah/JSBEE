@@ -3,7 +3,7 @@ package components
 templ myPapers() {
 	<div
 		id="my-papers-box"
-		class="mt-6 hidden border-y border-[#B9C2B2] py-5"
+		class="mt-6 hidden border-y border-[#DDD5C2] py-5"
 		x-data="{ open: false }"
 	>
 		<button
@@ -34,9 +34,9 @@ templ myPapers() {
 		>
 			<div id="my-papers-loading" class="font-mono text-xs text-stone-400">Loading...</div>
 			<div id="my-papers-empty" class="hidden text-stone-500">You haven't uploaded any papers yet.</div>
-			<ul id="my-papers-list" class="hidden divide-y divide-stone-100"></ul>
-			<div id="my-papers-error" class="hidden text-red-600"></div>
+			<ul id="my-papers-list" class="hidden divide-y divide-[#E7E0CF]"></ul>
+			<div id="my-papers-error" class="hidden text-[#7F1D1D]"></div>
 		</div>
-		<span class="hidden flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 mr-2 font-mono text-xs text-amber-800 font-medium text-stone-900 shrink-0 text-sm text-stone-500 rounded hover:bg-stone-100/50"></span>
+		<span class="hidden flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 mr-2 text-xs font-semibold text-[#33523B] font-medium text-stone-900 shrink-0 text-sm text-stone-500 rounded-[3px] hover:bg-[#F2EDE1]"></span>
 	</div>
 }
