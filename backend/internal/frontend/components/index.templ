@@ -80,11 +80,6 @@ templ indexPage() {
 				</dl>
 			</div>
 		</section>
-		<section id="featured" class="mx-auto hidden max-w-5xl px-4 pt-14 sm:px-6">
-			<p class="font-serif text-lg italic text-stone-500">From the latest volume</p>
-			<h2 class="mt-2 font-serif text-3xl font-semibold leading-snug text-stone-900 sm:text-4xl">Featured research</h2>
-			<div id="featured-list" class="mt-8 border-t border-[#DDD5C2]"></div>
-		</section>
 		<section id="latest" class="mx-auto hidden max-w-5xl px-4 pt-14 sm:px-6">
 			<div class="flex flex-wrap items-baseline justify-between gap-3">
 				<div>
@@ -176,6 +171,42 @@ templ indexPage() {
 							placeholder="e.g. Green finance adoption in emerging markets"
 							class="mt-1.5 w-full rounded-[3px] border border-[#F2F3EA]/20 bg-[#0E1511] px-3 py-2.5 text-sm text-[#F2F3EA] placeholder:text-[#6E7768] focus:border-[#F2F3EA]/60 focus:outline-none"
 						/>
+					</div>
+					<div>
+						<label
+							for="publish-location"
+							class="block text-sm font-medium text-[#EDEFE4]"
+						>
+							Location
+						</label>
+						<input
+							id="publish-location"
+							type="text"
+							name="location"
+							required
+							maxlength="120"
+							placeholder="e.g. Mumbai, India"
+							class="mt-1.5 w-full rounded-[3px] border border-[#F2F3EA]/20 bg-[#0E1511] px-3 py-2.5 text-sm text-[#F2F3EA] placeholder:text-[#6E7768] focus:border-[#F2F3EA]/60 focus:outline-none"
+						/>
+						<p class="mt-1 text-xs text-[#8E9787]">Where the paper was written.</p>
+					</div>
+					<div>
+						<label
+							for="publish-category"
+							class="block text-sm font-medium text-[#EDEFE4]"
+						>
+							Category
+						</label>
+						<input
+							id="publish-category"
+							type="text"
+							name="category"
+							required
+							maxlength="120"
+							placeholder="e.g. Economics"
+							class="mt-1.5 w-full rounded-[3px] border border-[#F2F3EA]/20 bg-[#0E1511] px-3 py-2.5 text-sm text-[#F2F3EA] placeholder:text-[#6E7768] focus:border-[#F2F3EA]/60 focus:outline-none"
+						/>
+						<p class="mt-1 text-xs text-[#8E9787]">The research area, e.g. Sustainability, Business, Economics.</p>
 					</div>
 					<div>
 						<label
@@ -293,39 +324,6 @@ templ indexPage() {
 					return (uuid && names[uuid]) || null;
 				}
 
-				// Featured: large serif titles with footnote-style metadata.
-				function featuredRow(paper, names) {
-					var wrap = el('article', 'border-b border-[#DDD5C2] py-7');
-					var href = paperHref(paper);
-					var title = el('h3', 'max-w-2xl font-serif text-2xl font-semibold leading-snug text-stone-900 sm:text-3xl', paper.title || 'Untitled');
-					if (href) {
-						var link = el('a', 'hover:underline hover:decoration-[#33523B] hover:underline-offset-4');
-						link.href = href;
-						link.appendChild(title);
-						wrap.appendChild(link);
-					} else {
-						wrap.appendChild(title);
-					}
-					var meta = el('p', 'mt-2 text-sm text-stone-500');
-					var bits = [];
-					var name = authorName(paper, names);
-					if (name) {
-						bits.push('By ' + name);
-					}
-					if (paper.number != null) {
-						bits.push('Paper № ' + paper.number);
-					}
-					bits.push('Volume ' + paper._volume + ', Issue ' + paper._issue);
-					meta.textContent = bits.join(', ');
-					wrap.appendChild(meta);
-					if (href) {
-						var read = el('a', 'jsbee-btn mt-3 inline-block text-sm font-medium text-[#33523B] hover:underline hover:underline-offset-4', 'Read research');
-						read.href = href;
-						wrap.appendChild(read);
-					}
-					return wrap;
-				}
-
 				// Latest: journal index rows with a dotted leader.
 				function latestRow(paper, names) {
 					var li = el('li', 'border-b border-[#DDD5C2]');
@@ -370,20 +368,8 @@ templ indexPage() {
 					jsbeeCountUp(document.getElementById('stat-cities'), Object.keys(cities).length);
 				}
 
-				function renderFeatured(papers, names) {
-					if (!papers.length) {
-						return;
-					}
-					var section = document.getElementById('featured');
-					var list = document.getElementById('featured-list');
-					papers.slice(0, 3).forEach(function(paper) {
-						list.appendChild(featuredRow(paper, names));
-					});
-					section.classList.remove('hidden');
-				}
-
 				function renderLatest(papers, names) {
-					var rest = papers.slice(3, 8);
+					var rest = papers.slice(0, 5);
 					if (!rest.length) {
 						return;
 					}
@@ -451,8 +437,7 @@ templ indexPage() {
 						if (!papers.length) {
 							return;
 						}
-						resolveAuthorNames(papers.slice(0, 8), function(names) {
-							renderFeatured(papers, names);
+						resolveAuthorNames(papers.slice(0, 5), function(names) {
 							renderLatest(papers, names);
 						});
 					});
@@ -487,9 +472,27 @@ templ indexPage() {
 					uploadForm.addEventListener('submit', function(event) {
 						event.preventDefault();
 						var title = document.getElementById('publish-title').value.trim();
+						var location = document.getElementById('publish-location').value.trim();
+						var category = document.getElementById('publish-category').value.trim();
 						var fileInput = document.getElementById('publish-file');
 						if (!title) {
 							showToast('Please enter a paper title');
+							return;
+						}
+						if (!location) {
+							showToast('Please enter where the paper was written');
+							return;
+						}
+						if (location.length > 120) {
+							showToast('Location must be at most 120 characters');
+							return;
+						}
+						if (!category) {
+							showToast('Please enter a category');
+							return;
+						}
+						if (category.length > 120) {
+							showToast('Category must be at most 120 characters');
 							return;
 						}
 						if (!fileInput.files || fileInput.files.length === 0) {
@@ -542,7 +545,7 @@ templ indexPage() {
 							return authFetch('/api/v1/paper/confirm', {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
-								body: JSON.stringify({ uuid: paperUUID, title: title })
+								body: JSON.stringify({ uuid: paperUUID, title: title, location: location, category: category })
 							}).then(function(resp) {
 								return checkApiResponse(resp, 'Could not confirm upload');
 							});

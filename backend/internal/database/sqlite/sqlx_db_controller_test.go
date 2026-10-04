@@ -110,6 +110,8 @@ func TestPapers(t *testing.T) {
 		Number:    nil,
 		Filename:  "test.pdf",
 		OwnerUUID: nil,
+		Location:  "Mumbai, India",
+		Category:  "Economics",
 	}
 	expectedResult := database.Volume{
 		Number: 1,
@@ -214,11 +216,17 @@ func TestPapers(t *testing.T) {
 	issue := volume.Issues[0]
 	gotPaper := issue.Papers[0]
 
+	ownerMatch := (gotPaper.OwnerUUID == nil && paper.OwnerUUID == nil) ||
+		(gotPaper.OwnerUUID != nil && paper.OwnerUUID != nil &&
+			*gotPaper.OwnerUUID == *paper.OwnerUUID)
+
 	if gotPaper.UUID != paper.UUID ||
 		gotPaper.Title != paper.Title ||
 		gotPaper.Filename != paper.Filename ||
-		gotPaper.OwnerUUID != paper.OwnerUUID {
-		t.Log("Papers dont match")
+		!ownerMatch ||
+		gotPaper.Location != paper.Location ||
+		gotPaper.Category != paper.Category {
+		t.Fatal("Papers dont match")
 	}
 }
 

@@ -213,6 +213,12 @@ type Paper struct {
 	Filename  string     `json:"filename" binding:"required" db:"filename"`
 	OwnerUUID *uuid.UUID `json:"owner_uuid" binding:"required" db:"owner_uuid"`
 	Reviewed  bool       `json:"reviewed" binding:"required" db:"reviewed"`
+	// Location names where the paper was written (free text, e.g. a
+	// city and country). Empty only for papers submitted before v7.
+	Location string `json:"location" binding:"required" db:"location"`
+	// Category names the paper's research area (free text, e.g.
+	// "Economics"). Empty only for papers submitted before v7.
+	Category string `json:"category" binding:"required" db:"category"`
 }
 
 type Issue struct {

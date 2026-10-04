@@ -26,9 +26,29 @@ templ volumesPage() {
 					<input
 						id="volumes-filter"
 						type="search"
-						placeholder="Filter by title or author"
+						placeholder="Filter by title, author, category or location"
 						class="mt-1.5 w-full rounded-[3px] border border-[#F2F3EA]/20 bg-[#0E1511] px-4 py-2.5 text-sm text-[#F2F3EA] placeholder:text-[#6E7768] outline-none transition-all focus:border-[#F2F3EA]/60"
 					/>
+					<div class="mt-3 flex flex-col gap-3 sm:flex-row">
+						<label class="flex-1">
+							<span class="sr-only">Filter by category</span>
+							<select
+								id="volumes-category"
+								class="w-full rounded-[3px] border border-[#F2F3EA]/20 bg-[#0E1511] px-3 py-2 text-sm text-[#F2F3EA] outline-none transition-all focus:border-[#F2F3EA]/60"
+							>
+								<option value="">All categories</option>
+							</select>
+						</label>
+						<label class="flex-1">
+							<span class="sr-only">Filter by location</span>
+							<select
+								id="volumes-location"
+								class="w-full rounded-[3px] border border-[#F2F3EA]/20 bg-[#0E1511] px-3 py-2 text-sm text-[#F2F3EA] outline-none transition-all focus:border-[#F2F3EA]/60"
+							>
+								<option value="">All locations</option>
+							</select>
+						</label>
+					</div>
 				</div>
 			</div>
 		</header>
@@ -65,6 +85,10 @@ templ volumesPage() {
 					var li = el('li', 'border-b border-[#E7E0CF] last:border-0');
 					li.setAttribute('data-title', (paper.title || '').toLowerCase());
 					li.setAttribute('data-author', '');
+					li.setAttribute('data-location', (paper.location || '').toLowerCase());
+					li.setAttribute('data-category', (paper.category || '').toLowerCase());
+					li.setAttribute('data-location-display', paper.location || '');
+					li.setAttribute('data-category-display', paper.category || '');
 					var wrap = el('div', 'jsbee-row-hover px-3 py-4');
 					var row = el('div', 'flex items-baseline gap-2');
 					var link = el('a', 'min-w-0 font-serif text-lg font-medium text-stone-900 hover:underline hover:decoration-[#33523B] hover:underline-offset-4');
@@ -93,6 +117,12 @@ templ volumesPage() {
 						meta.push('Paper № ' + paper.number);
 					}
 					meta.push('Volume ' + volumeNumber + ', Issue ' + issueNumber);
+					if (paper.category) {
+						meta.push(paper.category);
+					}
+					if (paper.location) {
+						meta.push(paper.location);
+					}
 					wrap.appendChild(el('p', 'mt-1 text-xs text-stone-500', meta.join(', ')));
 					li.appendChild(wrap);
 					return li;
@@ -191,6 +221,9 @@ templ volumesPage() {
 
 				function applyFilter() {
 					var q = document.getElementById('volumes-filter').value.toLowerCase().trim();
+					var category = document.getElementById('volumes-category').value.toLowerCase();
+					var location = document.getElementById('volumes-location').value.toLowerCase();
+					var filtered = q !== '' || category !== '' || location !== '';
 					var visible = 0;
 					Array.prototype.forEach.call(
 						document.querySelectorAll('#volumes-list [data-volume]'),
@@ -205,7 +238,16 @@ templ volumesPage() {
 										function(li) {
 											var title = li.getAttribute('data-title') || '';
 											var author = li.getAttribute('data-author') || '';
-											var match = q === '' || title.indexOf(q) !== -1 || author.indexOf(q) !== -1;
+											var loc = li.getAttribute('data-location') || '';
+											var cat = li.getAttribute('data-category') || '';
+											var matchText = q === '' ||
+												title.indexOf(q) !== -1 ||
+												author.indexOf(q) !== -1 ||
+												loc.indexOf(q) !== -1 ||
+												cat.indexOf(q) !== -1;
+											var matchCategory = category === '' || cat === category;
+											var matchLocation = location === '' || loc === location;
+											var match = matchText && matchCategory && matchLocation;
 											li.classList.toggle('hidden', !match);
 											issueVisible = issueVisible || match;
 											if (match) {
@@ -221,12 +263,47 @@ templ volumesPage() {
 						}
 					);
 					var countEl = document.getElementById('volumes-count');
-					if (q === '') {
+					if (!filtered) {
 						countEl.textContent = totalPapers === 1 ? '1 paper' : totalPapers + ' papers';
 					} else {
 						countEl.textContent = visible === 1 ? '1 matching paper' : visible + ' matching papers';
 					}
-					document.getElementById('volumes-no-match').classList.toggle('hidden', visible > 0 || q === '');
+					document.getElementById('volumes-no-match').classList.toggle('hidden', visible > 0 || !filtered);
+				}
+
+				// Dropdown options come from the data itself so they can
+				// never drift from what is actually published. Papers from
+				// before location/category existed carry empty values and
+				// are left out of the options.
+				function buildFilters() {
+					var categories = {};
+					var locations = {};
+					Array.prototype.forEach.call(
+						document.querySelectorAll('#volumes-list li[data-title]'),
+						function(li) {
+							var cat = li.getAttribute('data-category') || '';
+							var loc = li.getAttribute('data-location') || '';
+							if (cat && !categories[cat]) {
+								categories[cat] = li.getAttribute('data-category-display') || cat;
+							}
+							if (loc && !locations[loc]) {
+								locations[loc] = li.getAttribute('data-location-display') || loc;
+							}
+						}
+					);
+					function fill(id, values) {
+						var select = document.getElementById(id);
+						Object.keys(values).sort(function(a, b) {
+							return values[a].toLowerCase().localeCompare(values[b].toLowerCase());
+						}).forEach(function(value) {
+							var option = document.createElement('option');
+							option.value = value;
+							option.textContent = values[value];
+							select.appendChild(option);
+						});
+					}
+					fill('volumes-category', categories);
+					fill('volumes-location', locations);
 				}
 
 				function initVolumes() {
@@ -236,6 +313,8 @@ templ volumesPage() {
 					var list = document.getElementById('volumes-list');
 
 					document.getElementById('volumes-filter').addEventListener('input', applyFilter);
+					document.getElementById('volumes-category').addEventListener('change', applyFilter);
+					document.getElementById('volumes-location').addEventListener('change', applyFilter);
 
 					fetch('/api/v1/paper/volumes')
 						.then(function(resp) {
@@ -257,6 +336,7 @@ templ volumesPage() {
 							totalPapers = list.querySelectorAll('li[data-title]').length;
 							document.getElementById('volumes-count').classList.remove('hidden');
 							list.classList.remove('hidden');
+							buildFilters();
 							loadAuthorNames();
 						})
 						.catch(function(err) {

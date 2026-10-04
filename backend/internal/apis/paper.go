@@ -52,18 +52,27 @@ func paper(r *gin.RouterGroup, app *a.App) {
 			}
 
 			var body struct {
-				UUID  uuid.UUID `json:"uuid"`
-				Title string    `json:"title"`
+				UUID     uuid.UUID `json:"uuid"`
+				Title    string    `json:"title"`
+				Location string    `json:"location"`
+				Category string    `json:"category"`
 			}
 			if err := c.ShouldBindJSON(&body); err != nil {
 				c.JSON(http.StatusBadRequest,
-					gin.H{"error": "Must provide uuid and title"},
+					gin.H{"error": "Must provide uuid, title, location and category"},
 				)
 				return
 			}
 			if strings.TrimSpace(body.Title) == "" {
 				c.JSON(http.StatusBadRequest,
 					gin.H{"error": "Title is required"},
+				)
+				return
+			}
+			location, category, err := validatePaperMetadata(body.Location, body.Category)
+			if err != nil {
+				c.JSON(http.StatusBadRequest,
+					gin.H{"error": err.Error()},
 				)
 				return
 			}
@@ -99,6 +108,8 @@ func paper(r *gin.RouterGroup, app *a.App) {
 				Title:     strings.TrimSpace(body.Title),
 				Filename:  filename,
 				OwnerUUID: &userUUID,
+				Location:  location,
+				Category:  category,
 			}); !handleError(c, "AddPaper", err) {
 				app.ObjectStore.DeleteFile(ctx, filename)
 				return

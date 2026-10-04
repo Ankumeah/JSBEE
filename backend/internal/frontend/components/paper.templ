@@ -43,6 +43,14 @@ templ paperPage() {
 						<dd id="paper-context" class="text-stone-900"></dd>
 					</div>
 					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">Category</dt>
+						<dd id="paper-category" class="text-stone-900"></dd>
+					</div>
+					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
+						<dt class="font-medium text-stone-500">Location</dt>
+						<dd id="paper-location" class="text-stone-900"></dd>
+					</div>
+					<div class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
 						<dt class="font-medium text-stone-500">Status</dt>
 						<dd id="paper-status" class="text-stone-900"></dd>
 					</div>
@@ -230,6 +238,9 @@ templ paperPage() {
 							}
 							document.getElementById('paper-number').textContent =
 								paper.number != null ? '№ ' + paper.number : 'Not assigned yet';
+							// Papers submitted before location/category existed carry empty values.
+							document.getElementById('paper-category').textContent = paper.category || 'Not listed';
+							document.getElementById('paper-location').textContent = paper.location || 'Not listed';
 							document.getElementById('paper-status').textContent = statusLabel(paper);
 							if (paper.filename && data.file_url) {
 								var read = document.getElementById('paper-read-link');

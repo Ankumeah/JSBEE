@@ -40,7 +40,7 @@ func TestPagesRender(t *testing.T) {
 	if err := IndexPage(cfg).Render(context.Background(), &idx); err != nil {
 		t.Fatalf("index render failed: %v", err)
 	}
-	for _, id := range []string{"stats", "featured", "latest", "researchers", "publish", "stat-papers"} {
+	for _, id := range []string{"stats", "latest", "researchers", "publish", "stat-papers"} {
 		if !strings.Contains(idx.String(), `id="`+id+`"`) {
 			t.Errorf("index: missing section %s", id)
 		}

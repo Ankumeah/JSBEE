@@ -34,7 +34,7 @@ func (s *SqlxDBController) GetUnapprovedPapers(
 	ctx context.Context,
 ) ([]database.Paper, error) {
 	query := `
-    SELECT uuid, title, number, filename, owner_uuid, reviewed
+    SELECT uuid, title, number, filename, owner_uuid, reviewed, location, category
     FROM papers
     WHERE (number IS NULL AND reviewed = 0)
   `
@@ -49,7 +49,7 @@ func (s *SqlxDBController) GetReviewedPapers(
 	ctx context.Context,
 ) ([]database.Paper, error) {
 	query := `
-    SELECT uuid, title, number, filename, owner_uuid, reviewed
+    SELECT uuid, title, number, filename, owner_uuid, reviewed, location, category
     FROM papers
     WHERE (number IS NULL AND reviewed = 1)
   `

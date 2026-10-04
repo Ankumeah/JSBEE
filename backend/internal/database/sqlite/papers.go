@@ -14,12 +14,13 @@ func (s *SqlxDBController) AddPaper(
 	paper database.Paper,
 ) error {
 	query := s.db.Rebind(`
-    INSERT INTO papers (uuid, title, filename, owner_uuid)
-    VALUES (?, ?, ?, ?);
+    INSERT INTO papers (uuid, title, filename, owner_uuid, location, category)
+    VALUES (?, ?, ?, ?, ?, ?);
   `)
 
 	if _, err := s.db.ExecContext(
 		ctx, query, paper.UUID, paper.Title, paper.Filename, paper.OwnerUUID,
+		paper.Location, paper.Category,
 	); isUniqueViolation(err) {
 		return database.ErrExistPaper
 	} else if isForeignKeyViolation(err) {
@@ -36,7 +37,7 @@ func (s *SqlxDBController) GetUserPapers(
 	userUUID uuid.UUID,
 ) ([]database.Paper, error) {
 	query := s.db.Rebind(`
-    SELECT uuid, title, number, filename, owner_uuid, reviewed
+    SELECT uuid, title, number, filename, owner_uuid, reviewed, location, category
     FROM papers
     WHERE (owner_uuid = ?);
   `)
@@ -52,7 +53,7 @@ func (s *SqlxDBController) GetPaper(
 	uuid uuid.UUID,
 ) (database.Paper, error) {
 	query := s.db.Rebind(`
-    SELECT uuid, title, number, filename, owner_uuid, reviewed
+    SELECT uuid, title, number, filename, owner_uuid, reviewed, location, category
     FROM papers
     WHERE (uuid = ?);
   `)
@@ -70,7 +71,7 @@ func (s *SqlxDBController) GetVolumes(
 	ctx context.Context,
 ) ([]database.Volume, error) {
 	query := `
-    SELECT title, number, filename, volume, issue, uuid, owner_uuid, reviewed
+    SELECT title, number, filename, volume, issue, uuid, owner_uuid, reviewed, location, category
     FROM papers
     WHERE (number IS NOT NULL)
     ORDER BY volume, issue, number;
@@ -91,6 +92,7 @@ func (s *SqlxDBController) GetVolumes(
 		if err := rows.Scan(
 			&paper.Title, &paper.Number, &paper.Filename,
 			&volume, &issue, &paper.UUID, &paper.OwnerUUID, &paper.Reviewed,
+			&paper.Location, &paper.Category,
 		); err != nil {
 			return nil, err
 		}
