@@ -1,6 +1,9 @@
-package objectstore
+package s3
 
-import "strings"
+import (
+	"encoding/json"
+	"strings"
+)
 
 const backupBucket = "backup"
 const publicBucket = "public"
@@ -14,8 +17,24 @@ var buckets []string = []string{
 	privateBucket,
 }
 
-// Public base URL for files in the public bucket, derived from
-// the static config (path-style: `<scheme>://<url>/<publicBucket>`)
+type s3StaticConfig struct {
+	AccessKey      string `json:"access_key"`
+	SecretKey      string `json:"secret_key"`
+	Region         string `json:"region"`
+	MaxDBSnapshots uint   `json:"max_db_snapshots"`
+	Url            string `json:"url"`
+	Secure         bool   `json:"secure"`
+}
+
+func NewS3StaticConfigFromJSON(
+	configJSON []byte,
+) (s3StaticConfig, error) {
+	var config s3StaticConfig
+	err := json.Unmarshal(configJSON, &config)
+
+	return config, err
+}
+
 func publicBaseURLFromConfig(config s3StaticConfig) string {
 	scheme := "https"
 	if !config.Secure {

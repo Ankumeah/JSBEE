@@ -1,6 +1,8 @@
 # JSBEE
 JSBEE (Journal of Sustainable Business in Emerging Economies) is a website to share and read research papers at
 
+> This is the branch made for netlify deplyments, alot of things may eb undocumented here
+
 ## Stack
 
 | Component        | Stack                                     |

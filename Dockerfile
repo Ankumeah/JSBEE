@@ -13,20 +13,21 @@ RUN  --mount=type=cache,target=/root/go/pkg/mod \
   go tool templ generate
 
 ARG db_type=sqlite,modernc
+ARG store=s3
 COPY backend/ .
 
 RUN  --mount=type=cache,target=/root/go/pkg/mod \
   --mount=type=cache,target=/root/.cache/go-build \
   go build \
   -ldflags="-s -w" \
-  -tags="${db_type},init" \
+  -tags="${db_type},${store},init" \
   -o ./bin/init \
   ./cmd/init/
 RUN  --mount=type=cache,target=/root/go/pkg/mod \
   --mount=type=cache,target=/root/.cache/go-build \
   go build \
   -ldflags="-s -w" \
-  -tags="${db_type}" \
+  -tags="${db_type},${store}" \
   -o ./bin/api-server \
   ./cmd/api-server/
 

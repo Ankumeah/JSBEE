@@ -89,18 +89,12 @@ func generateInitalComponents(ctx context.Context, app *a.App) {
 func connectObjectStore(ctx context.Context, app *a.App) {
 	log.Println("Connecting to object store")
 
-	config, err := objectstore.NewS3StaticConfigFromJSON(
-		app.Config.ObjectStoreConfig,
+	var err error
+	app.ObjectStore, err = objectstore.GetObjectStore(
+		ctx, string(app.Config.ObjectStoreConfig),
 	)
 	if err != nil {
-		log.Fatalf("Error while getting s3 config: %v\n", err.Error())
-	}
-
-	app.ObjectStore, err = objectstore.GetStaticS3Client(
-		ctx, config,
-	)
-	if err != nil {
-		log.Fatalf("Error while getting s3 client: %v\n", err.Error())
+		log.Fatalf("Error while getting object store client: %v\n", err.Error())
 	}
 
 	log.Println("Connected to object store")

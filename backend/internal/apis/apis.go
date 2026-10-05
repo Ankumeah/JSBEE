@@ -15,4 +15,5 @@ func Apis(r *gin.RouterGroup, app *a.App) {
 	admin(r, app)
 	blog(r, app)
 	public(r, app)
+	blob(r, app)
 }

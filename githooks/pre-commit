@@ -1,3 +1,3 @@
 #! /bin/env sh
 
-exec ./.ci.sh -tags=sqlite,modernc,init
+exec ./.ci.sh -tags=sqlite,modernc,init,s3

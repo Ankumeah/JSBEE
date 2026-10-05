@@ -24,5 +24,8 @@ jobs:
       - name: Set CI env
         run: echo 'CI=true' >> $GITHUB_ENV
 
-      - name: Run ci
-        run: ./.ci.sh -tags=sqlite,modernc,init
+      - name: Run ci (with s3)
+        run: ./.ci.sh -tags=sqlite,modernc,init,s3
+
+      - name: Run ci (with netlifyblob)
+        run: ./.ci.sh -tags=sqlite,modernc,init,netlifyblob

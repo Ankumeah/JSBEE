@@ -4,7 +4,7 @@ import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
 	"github.com/Ankumeah/JSBEE/backend/internal/database"
 	"github.com/Ankumeah/JSBEE/backend/internal/middlewares"
-	"github.com/Ankumeah/JSBEE/backend/internal/objectstore"
+	storeerrors "github.com/Ankumeah/JSBEE/backend/internal/objectstore/errors"
 
 	"github.com/gin-gonic/gin"
 
@@ -26,8 +26,8 @@ func paper(r *gin.RouterGroup, app *a.App) {
 			paperUUID := uuid.New()
 			filename := paperUUID.String() + ".pdf"
 
-			uploadURL, err := app.ObjectStore.PresignedUploadURL(
-				ctx, filename, uploadURLTTL,
+			uploadURL, err := issueUploadURL(
+				ctx, app, filename,
 			)
 			if !handleError(c, "PresignedUploadURL", err) {
 				return
@@ -80,7 +80,7 @@ func paper(r *gin.RouterGroup, app *a.App) {
 			filename := body.UUID.String() + ".pdf"
 
 			size, err := app.ObjectStore.PrivateFileSize(ctx, filename)
-			if errors.Is(err, objectstore.ErrNoSuchUpload) {
+			if errors.Is(err, storeerrors.ErrNotFound) {
 				c.JSON(http.StatusBadRequest,
 					gin.H{"error": "Upload not found, request a new upload URL"},
 				)
@@ -134,7 +134,7 @@ func paper(r *gin.RouterGroup, app *a.App) {
 			return
 		}
 
-		fileURL := app.ObjectStore.PublicBaseURL() + "/" + paper.Filename
+		fileURL := publicFileURL(app, paper.Filename)
 
 		c.JSON(http.StatusOK, gin.H{"paper": paper, "file_url": fileURL})
 	})

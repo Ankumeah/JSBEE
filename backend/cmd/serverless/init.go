@@ -39,22 +39,13 @@ func initFirebase(ctx context.Context, app *a.App) {
 func connectObjectStore(ctx context.Context, app *a.App) {
 	app.Logger.InfoContext(ctx, "Connecting to object store")
 
-	config, err := objectstore.NewS3StaticConfigFromJSON(
-		app.Config.ObjectStoreConfig,
+	var err error
+	app.ObjectStore, err = objectstore.GetObjectStore(
+		ctx, string(app.Config.ObjectStoreConfig),
 	)
 	if err != nil {
 		app.Logger.ErrorContext(ctx,
-			"Error while getting s3 config: "+err.Error(),
-		)
-		os.Exit(1)
-	}
-
-	app.ObjectStore, err = objectstore.GetStaticS3Client(
-		ctx, config,
-	)
-	if err != nil {
-		app.Logger.ErrorContext(ctx,
-			"Error while getting s3 client: "+err.Error(),
+			"Error while getting object store client: "+err.Error(),
 		)
 		os.Exit(1)
 	}

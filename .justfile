@@ -8,7 +8,7 @@ up:
   docker compose up --build
 
 [linux, macos]
-_pre_commit *options="-tags=sqlite,modernc,init":
+_pre_commit *options="-tags=sqlite,modernc,init,s3":
   ./.ci.sh {{ options }}
 
   git add .

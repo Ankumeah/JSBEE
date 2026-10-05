@@ -5,7 +5,7 @@ import (
 	"github.com/Ankumeah/JSBEE/backend/internal/database"
 	"github.com/Ankumeah/JSBEE/backend/internal/frontend"
 	"github.com/Ankumeah/JSBEE/backend/internal/middlewares"
-	"github.com/Ankumeah/JSBEE/backend/internal/objectstore"
+	storeerrors "github.com/Ankumeah/JSBEE/backend/internal/objectstore/errors"
 	"github.com/Ankumeah/JSBEE/backend/internal/roles"
 
 	"github.com/gin-gonic/gin"
@@ -240,8 +240,8 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		blogUUID := uuid.New()
 		filename := fmt.Sprintf("blog-%s.md", blogUUID.String())
 
-		uploadURL, err := app.ObjectStore.PresignedUploadURL(
-			ctx, filename, uploadURLTTL,
+		uploadURL, err := issueUploadURL(
+			ctx, app, filename,
 		)
 		if !handleError(c, "PresignedUploadURL", err) {
 			return
@@ -280,7 +280,7 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		filename := fmt.Sprintf("blog-%s.md", body.UUID.String())
 
 		size, err := app.ObjectStore.PrivateFileSize(ctx, filename)
-		if errors.Is(err, objectstore.ErrNoSuchUpload) {
+		if errors.Is(err, storeerrors.ErrNotFound) {
 			c.JSON(http.StatusBadRequest,
 				gin.H{"error": "Upload not found, request a new upload URL"},
 			)
@@ -332,8 +332,8 @@ func admin(r *gin.RouterGroup, app *a.App) {
 			return
 		}
 
-		uploadURL, err := app.ObjectStore.PresignedUploadURL(
-			ctx, blog.Filename, uploadURLTTL,
+		uploadURL, err := issueUploadURL(
+			ctx, app, blog.Filename,
 		)
 		if !handleError(c, "PresignedUploadURL", err) {
 			return
@@ -392,7 +392,7 @@ func admin(r *gin.RouterGroup, app *a.App) {
 
 		if body.ContentReplaced {
 			size, err := app.ObjectStore.PrivateFileSize(ctx, blog.Filename)
-			if errors.Is(err, objectstore.ErrNoSuchUpload) {
+			if errors.Is(err, storeerrors.ErrNotFound) {
 				c.JSON(http.StatusBadRequest,
 					gin.H{"error": "Upload not found, request a new upload URL"},
 				)
@@ -457,8 +457,8 @@ func admin(r *gin.RouterGroup, app *a.App) {
 	group.POST("/about/upload-url", func(c *gin.Context) {
 		ctx := c.Request.Context()
 
-		uploadURL, err := app.ObjectStore.PresignedUploadURL(
-			ctx, frontend.AboutFilename, uploadURLTTL,
+		uploadURL, err := issueUploadURL(
+			ctx, app, frontend.AboutFilename,
 		)
 		if !handleError(c, "PresignedUploadURL", err) {
 			return
@@ -475,7 +475,7 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		ctx := c.Request.Context()
 
 		size, err := app.ObjectStore.PrivateFileSize(ctx, frontend.AboutFilename)
-		if errors.Is(err, objectstore.ErrNoSuchUpload) {
+		if errors.Is(err, storeerrors.ErrNotFound) {
 			c.JSON(http.StatusBadRequest,
 				gin.H{"error": "Upload not found, request a new upload URL"},
 			)
