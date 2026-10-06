@@ -20,64 +20,48 @@ import (
 )
 
 const privatePrefix = "private/"
-const publicPrefix  = "public/"
-const backupPrefix  = "backup/"
-const backupBase    = "jsbee.sql.bak."
+const publicPrefix = "public/"
+const backupPrefix = "backup/"
+const backupBase = "jsbee.sql.bak."
 
 const bunBinary = "bun"
 
-// Store implements the object store over
-// Netlify Blobs by shelling out to a bun run helper
+const helperScript = "blob.mjs"
+const helperPackage = "package.json"
+
+const shippedScriptsDir = "backend/internal/objectstore/netlifyblob/scripts"
+
 type Store struct {
-	cfg        Config
-	bin        string
-	scriptsDir string
+	bin            string
+	scriptsDir     string
+	env            []string
+	timeout        time.Duration
+	maxDBSnapshots uint
+	uploadSecret   string
 }
 
-
-func resolveScriptsDir() (string, error) {
-	const script = "blob.mjs"
-	relForms := []string{
-		"backend/internal/objectstore/netlifyblob/scripts",
-		"internal/objectstore/netlifyblob/scripts",
+func materialize(ctx context.Context, bin string) (string, error) {
+	if err := os.MkdirAll(shippedScriptsDir, 0755); err != nil {
+		return "", fmt.Errorf("netlifyblob: cannot create helper dir: %w", err)
 	}
-	var candidates []string
-	if cwd, err := os.Getwd(); err == nil {
-		dir := cwd
-		for {
-			for _, rel := range relForms {
-				candidates = append(candidates, filepath.Join(dir, rel))
-			}
-			parent := filepath.Dir(dir)
-			if parent == dir {
-				break
-			}
-			dir = parent
+	for name, data := range map[string][]byte{
+		helperScript:  helperScriptBytes,
+		helperPackage: helperPackageJSONBytes,
+	} {
+		if err := os.WriteFile(filepath.Join(shippedScriptsDir, name), data, 0644); err != nil {
+			return "", fmt.Errorf("netlifyblob: cannot write helper file: %w", err)
 		}
 	}
-	if exe, err := os.Executable(); err == nil {
-		dir := filepath.Dir(exe)
-		candidates = append(candidates,
-			filepath.Join(dir, "backend/internal/objectstore/netlifyblob/scripts"),
-			filepath.Join(dir, "internal/objectstore/netlifyblob/scripts"),
-			filepath.Join(dir, "netlifyblob-scripts"),
-			filepath.Join(dir, "scripts"),
-		)
-	}
-	var tried []string
-	for _, c := range candidates {
-		abs, err := filepath.Abs(c)
-		if err != nil {
-			continue
+	cmd := exec.CommandContext(ctx, bin, "install")
+	cmd.Dir = shippedScriptsDir
+	if out, err := cmd.CombinedOutput(); err != nil {
+		out = bytes.TrimSpace(out)
+		if len(out) > 2048 {
+			out = out[:2048]
 		}
-		tried = append(tried, abs)
-		if info, err := os.Stat(filepath.Join(abs, script)); err == nil && !info.IsDir() {
-			return abs, nil
-		}
+		return "", fmt.Errorf("netlifyblob: bun install failed: %v: %s", err, out)
 	}
-	return "", fmt.Errorf(
-		"netlifyblob: helper scripts not found (tried %s)", strings.Join(tried, ", "),
-	)
+	return shippedScriptsDir, nil
 }
 
 func New(ctx context.Context, cfg Config) (*Store, error) {
@@ -87,34 +71,29 @@ func New(ctx context.Context, cfg Config) (*Store, error) {
 			"netlifyblob: %s not on PATH: %w", bunBinary, err,
 		)
 	}
-	scriptsDir, err := resolveScriptsDir()
+	dir, err := materialize(ctx, bin)
 	if err != nil {
 		return nil, err
 	}
-	return &Store{cfg: cfg, bin: bin, scriptsDir: scriptsDir}, nil
-}
-
-func newWithScriptsDir(
-	ctx context.Context,
-	cfg Config,
-	bin, scriptsDir string,
-) (*Store, error) {
-	resolved, err := exec.LookPath(bin)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"netlifyblob: runtime %q not found: %w", bin, err,
-		)
-	}
-	if info, err := os.Stat(filepath.Join(scriptsDir, "blob.mjs")); err != nil || info.IsDir() {
-		return nil, fmt.Errorf("netlifyblob: helper not found in %s", scriptsDir)
-	}
-	return &Store{cfg: cfg, bin: resolved, scriptsDir: scriptsDir}, nil
+	return &Store{
+		bin:        bin,
+		scriptsDir: dir,
+		env: []string{
+			"BLOB_SITE_ID=" + cfg.SiteID,
+			"BLOB_TOKEN=" + cfg.Token,
+			"BLOB_API_URL=" + cfg.APIURL,
+			"BLOB_STORE=" + cfg.Store,
+		},
+		timeout:        cfg.Timeout,
+		maxDBSnapshots: cfg.MaxDBSnapshots,
+		uploadSecret:   cfg.UploadSecret,
+	}, nil
 }
 
 func (s *Store) withTimeout(
 	ctx context.Context,
 ) (context.Context, context.CancelFunc) {
-	return context.WithTimeout(ctx, s.cfg.Timeout)
+	return context.WithTimeout(ctx, s.timeout)
 }
 
 func (s *Store) Init(ctx context.Context) error {
@@ -241,7 +220,7 @@ func (s *Store) StoreDBBackup(
 	ctx context.Context,
 	backupPath string,
 ) error {
-	if s.cfg.MaxDBSnapshots < 1 {
+	if s.maxDBSnapshots < 1 {
 		return nil
 	}
 	f, err := os.Open(backupPath)
@@ -270,7 +249,7 @@ func (s *Store) StoreDBBackup(
 		return fmt.Errorf("netlifyblob: bad list response: %w", err)
 	}
 	sort.Strings(listed.Keys)
-	for len(listed.Keys) > int(s.cfg.MaxDBSnapshots) {
+	for len(listed.Keys) > int(s.maxDBSnapshots) {
 		oldest := listed.Keys[0]
 		listed.Keys = listed.Keys[1:]
 		if _, err := s.run(ctx, "del", []string{oldest}, nil); err != nil {
@@ -290,10 +269,10 @@ func (s *Store) stream(
 	args []string,
 ) (io.ReadCloser, error) {
 	argv := append(
-		[]string{filepath.Join(s.scriptsDir, "blob.mjs"), op}, args...,
+		[]string{filepath.Join(s.scriptsDir, helperScript), op}, args...,
 	)
 	cmd := exec.CommandContext(ctx, s.bin, argv...)
-	cmd.Env = helperEnv(os.Environ(), s.cfg)
+	cmd.Env = s.env
 	cmd.Stdin = nil
 	var stderr bytes.Buffer
 	cmd.Stderr = &limitedWriter{W: &stderr, N: 4 << 10}

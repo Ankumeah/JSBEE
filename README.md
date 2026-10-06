@@ -1,7 +1,10 @@
 # JSBEE
 JSBEE (Journal of Sustainable Business in Emerging Economies) is a website to share and read research papers at
 
-> This is the branch made for netlify deplyments, alot of things may eb undocumented here
+> This is the branch made for netlify deplyments
+> This was haistly made due to client set time constrains and contins heavy use
+of AI especially within `./backend/internal/objectstore/` and hence
+even basic working is not garanteed
 
 ## Stack
 
@@ -17,9 +20,4 @@ JSBEE (Journal of Sustainable Business in Emerging Economies) is a website to sh
 - Read `DEPLOY.md`
 
 ## Contributing
-- Follow commit prefix conventions
-- Give commits clear messages, use commit bodies for longer messages
-- AI assisted is allowed, Slop written isen't
-- Make regular use of comments
-- Make sure to either use the githooks provided (`./githooks/`) or manually run them before commting
-- Every package within `./backend/internal/` contains a README.md, make sure to read those to get details for every package
+- No PRs are accepted into this branch, instead contribute to the `master` branch

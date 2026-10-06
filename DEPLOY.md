@@ -43,7 +43,8 @@ Fill in `.env`
 | `DB_URL`                 | URL of the db, also supports some config options |
 | `FIREBASE_CREDENTIALS`   | Firebase auth credentials                        |
 | `FIREBASE_CLIENT_CONFIG` | Firebase OAuth 2.0 Client ID                     |
-| `OBJECT_STORE_CONFIG`    | Look at `env.example` for more info              |
+| `BLOB_*`                 | Netlify Blobs driver vars, see `env.example`    |
+| `S3_*`                   | S3 driver vars, see `env.example`                |
 | `FRONTEND_SAVE_DIR`      | Dir to save static files to be served            |
 
 > Look at `env.example` for more info

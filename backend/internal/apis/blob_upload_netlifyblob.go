@@ -20,8 +20,12 @@ import (
 
 const maxProxyUploadBytes = 100 << 20
 
-func blobConfig(app *a.App) (netlifyblob.Config, error) {
-	return netlifyblob.ParseConfig(app.Config.ObjectStoreConfig)
+func blobStore(app *a.App) (*netlifyblob.Store, error) {
+	s, ok := app.ObjectStore.(*netlifyblob.Store)
+	if !ok {
+		return nil, errors.New("netlifyblob store not configured")
+	}
+	return s, nil
 }
 
 func blobAPIPrefix(app *a.App) string {
@@ -33,11 +37,11 @@ func issueUploadURL(
 	app *a.App,
 	filename string,
 ) (string, error) {
-	cfg, err := blobConfig(app)
+	s, err := blobStore(app)
 	if err != nil {
 		return "", err
 	}
-	exp, sig, err := netlifyblob.IssueUploadTicket(cfg, filename, uploadURLTTL)
+	exp, sig, err := s.IssueUploadTicket(filename, uploadURLTTL)
 	if err != nil {
 		return "", err
 	}
@@ -56,8 +60,8 @@ func blob(r *gin.RouterGroup, app *a.App) {
 	g.PUT("/upload/:filename", func(c *gin.Context) {
 		ctx := c.Request.Context()
 		filename := c.Param("filename")
-		cfg, err := blobConfig(app)
-		if !handleError(c, "blobConfig", err) {
+		store, err := blobStore(app)
+		if !handleError(c, "blobStore", err) {
 			return
 		}
 		exp, err := strconv.ParseInt(c.Query("exp"), 10, 64)
@@ -65,8 +69,8 @@ func blob(r *gin.RouterGroup, app *a.App) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ticket"})
 			return
 		}
-		if err := netlifyblob.VerifyUploadTicket(
-			cfg, filename, exp, c.Query("sig"),
+		if err := store.VerifyUploadTicket(
+			filename, exp, c.Query("sig"),
 		); err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Invalid ticket"})
 			return

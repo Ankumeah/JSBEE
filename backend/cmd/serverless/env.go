@@ -2,6 +2,7 @@ package main
 
 import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
+	"github.com/Ankumeah/JSBEE/backend/internal/objectstore"
 
 	"context"
 	"encoding/json"
@@ -15,7 +16,6 @@ var envVars = map[string]string{
 
 	"DB_URL": "",
 
-	"OBJECT_STORE_CONFIG":    "",
 	"FIREBASE_CREDENTIALS":   "",
 	"FIREBASE_CLIENT_CONFIG": "",
 }
@@ -25,6 +25,9 @@ var envVars = map[string]string{
 func loadEnv(ctx context.Context, app *a.App) {
 	app.Logger.InfoContext(ctx, "Loading env")
 
+	for _, key := range objectstore.StoreEnvKeys() {
+		envVars[key] = ""
+	}
 	for env := range envVars {
 		_env, ok := os.LookupEnv(env)
 		if !ok {
@@ -45,7 +48,6 @@ func setSettings(ctx context.Context, app *a.App) {
 	app.Config.DBURL = envVars["DB_URL"]
 
 	app.Config.FireBaseCredentials = []byte(envVars["FIREBASE_CREDENTIALS"])
-	app.Config.ObjectStoreConfig = []byte(envVars["OBJECT_STORE_CONFIG"])
 
 	firebaseClientConfig, err := jsObjectFromJSON(envVars["FIREBASE_CLIENT_CONFIG"])
 	if err != nil {

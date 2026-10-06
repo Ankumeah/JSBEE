@@ -18,8 +18,7 @@ func ticketMAC(secret, filename string, exp int64) []byte {
 	return mac.Sum(nil)
 }
 
-func IssueUploadTicket(
-	cfg Config,
+func (s *Store) IssueUploadTicket(
 	filename string,
 	ttl time.Duration,
 ) (exp int64, sig string, err error) {
@@ -27,16 +26,15 @@ func IssueUploadTicket(
 		return 0, "", fmt.Errorf("netlifyblob: bad ticket ttl")
 	}
 	exp = time.Now().Add(ttl).Unix()
-	return exp, hex.EncodeToString(ticketMAC(cfg.UploadSecret, filename, exp)), nil
+	return exp, hex.EncodeToString(ticketMAC(s.uploadSecret, filename, exp)), nil
 }
 
-func VerifyUploadTicket(
-	cfg Config,
+func (s *Store) VerifyUploadTicket(
 	filename string,
 	exp int64,
 	sig string,
 ) error {
-	want := ticketMAC(cfg.UploadSecret, filename, exp)
+	want := ticketMAC(s.uploadSecret, filename, exp)
 	got, err := hex.DecodeString(sig)
 	if err != nil {
 		return fmt.Errorf("netlifyblob: bad ticket signature")

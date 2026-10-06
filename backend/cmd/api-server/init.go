@@ -61,7 +61,7 @@ func connectObjectStore(ctx context.Context, app *a.App) {
 
 	var err error
 	app.ObjectStore, err = objectstore.GetObjectStore(
-		ctx, string(app.Config.ObjectStoreConfig),
+		ctx, envVars,
 	)
 	if err != nil {
 		app.Logger.ErrorContext(ctx,

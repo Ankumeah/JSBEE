@@ -1,9 +1,6 @@
 package s3
 
-import (
-	"encoding/json"
-	"strings"
-)
+import "strings"
 
 const backupBucket = "backup"
 const publicBucket = "public"
@@ -18,21 +15,30 @@ var buckets []string = []string{
 }
 
 type s3StaticConfig struct {
-	AccessKey      string `json:"access_key"`
-	SecretKey      string `json:"secret_key"`
-	Region         string `json:"region"`
-	MaxDBSnapshots uint   `json:"max_db_snapshots"`
-	Url            string `json:"url"`
-	Secure         bool   `json:"secure"`
+	AccessKey      string
+	SecretKey      string
+	Region         string
+	MaxDBSnapshots uint
+	Url            string
+	Secure         bool
 }
 
-func NewS3StaticConfigFromJSON(
-	configJSON []byte,
-) (s3StaticConfig, error) {
-	var config s3StaticConfig
-	err := json.Unmarshal(configJSON, &config)
-
-	return config, err
+func NewConfig(
+	accessKey string,
+	secretKey string,
+	region string,
+	maxDBSnapshots uint,
+	url string,
+	secure bool,
+) s3StaticConfig {
+	return s3StaticConfig{
+		AccessKey:      accessKey,
+		SecretKey:      secretKey,
+		Region:         region,
+		MaxDBSnapshots: maxDBSnapshots,
+		Url:            url,
+		Secure:         secure,
+	}
 }
 
 func publicBaseURLFromConfig(config s3StaticConfig) string {

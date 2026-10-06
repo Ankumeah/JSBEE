@@ -8,13 +8,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 )
 
-// stderrJSON is the error envelope scripts/blob.mjs prints on failure
 type stderrJSON struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
@@ -45,26 +43,6 @@ func scriptErr(op string, args []string, stderr []byte, err error) error {
 	return fmt.Errorf("netlifyblob: %s failed: %s", label, trimmed)
 }
 
-func helperEnv(base []string, cfg Config) []string {
-	out := make([]string, 0, len(base)+4)
-	for _, kv := range base {
-		if strings.HasPrefix(kv, "BLOB_SITE_ID=") ||
-			strings.HasPrefix(kv, "BLOB_TOKEN=") ||
-			strings.HasPrefix(kv, "BLOB_API_URL=") ||
-			strings.HasPrefix(kv, "BLOB_STORE=") {
-			continue
-		}
-		out = append(out, kv)
-	}
-	out = append(out,
-		"BLOB_SITE_ID="+cfg.SiteID,
-		"BLOB_TOKEN="+cfg.Token,
-		"BLOB_API_URL="+cfg.APIURL,
-		"BLOB_STORE="+cfg.Store,
-	)
-	return out
-}
-
 func (s *Store) run(
 	ctx context.Context,
 	op string,
@@ -72,10 +50,10 @@ func (s *Store) run(
 	stdin io.Reader,
 ) ([]byte, error) {
 	argv := make([]string, 0, len(args)+2)
-	argv = append(argv, filepath.Join(s.scriptsDir, "blob.mjs"), op)
+	argv = append(argv, filepath.Join(s.scriptsDir, helperScript), op)
 	argv = append(argv, args...)
 	cmd := exec.CommandContext(ctx, s.bin, argv...)
-	cmd.Env = helperEnv(os.Environ(), s.cfg)
+	cmd.Env = s.env
 	if stdin != nil {
 		cmd.Stdin = stdin
 	}

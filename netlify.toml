@@ -4,10 +4,6 @@
 
 [build]
   command = """
-    (
-      cd backend/internal/objectstore/netlifyblob/scripts &&
-      bun install &&
-    ) &&
     cd backend &&
     go tool templ generate ./internal/frontend/ &&
     go build -tags=sqlite,turso,init,netlifyblob -o /tmp/jsbee-init ./cmd/init &&
@@ -18,7 +14,6 @@
 
 [functions]
   directory = "netlify/functions"
-  included_files = ["backend/internal/objectstore/netlifyblob/scripts/**"]
 
 [[redirects]]
   from = "/api/*"

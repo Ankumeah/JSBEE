@@ -23,7 +23,6 @@ type Config struct {
 	FireBaseCredentials  []byte
 	FrontendSaveDir      string
 	FireBaseClientConfig map[string]any
-	ObjectStoreConfig    []byte
 }
 
 // This struct containing shared structs
