@@ -2,7 +2,6 @@ package main
 
 import (
 	a "github.com/Ankumeah/JSBEE/backend/internal/app"
-	"github.com/Ankumeah/JSBEE/backend/internal/objectstore"
 
 	"encoding/json"
 	"log"
@@ -12,6 +11,7 @@ import (
 // Temprory map to store type unsafe env vars
 var envVars = map[string]string{
 	"DB_URL":                 "",
+	"OBJECT_STORE_CONFIG":    "",
 	"FRONTEND_SAVE_DIR":      "",
 	"FIREBASE_CLIENT_CONFIG": "",
 }
@@ -21,9 +21,6 @@ var envVars = map[string]string{
 func loadEnv(s *a.Config) {
 	log.Println("Loading env")
 
-	for _, key := range objectstore.StoreEnvKeys() {
-		envVars[key] = ""
-	}
 	for env := range envVars {
 		_env, ok := os.LookupEnv(env)
 		if !ok {

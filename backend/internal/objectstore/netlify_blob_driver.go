@@ -6,35 +6,34 @@ import (
 	"github.com/Ankumeah/JSBEE/backend/internal/objectstore/netlifyblob"
 
 	"context"
-	"strconv"
+	"encoding/json"
 	"time"
 )
-
-func StoreEnvKeys() []string {
-	return []string{
-		"BLOB_SITE_ID",
-		"BLOB_TOKEN",
-		"BLOB_API_URL",
-		"BLOB_STORE",
-		"BLOB_TIMEOUT_MS",
-		"BLOB_MAX_DB_SNAPSHOTS",
-		"BLOB_UPLOAD_SECRET",
-	}
-}
 
 func GetObjectStore(
 	ctx context.Context,
 	env map[string]string,
 ) (ObjectStore, error) {
-	ms, _ := strconv.ParseInt(env["BLOB_TIMEOUT_MS"], 10, 64)
-	n, _ := strconv.ParseUint(env["BLOB_MAX_DB_SNAPSHOTS"], 10, 32)
+	var raw struct {
+		SiteID         string `json:"site_id"`
+		Token          string `json:"token"`
+		APIURL         string `json:"api_url"`
+		Store          string `json:"store"`
+		TimeoutMS      int64  `json:"timeout_ms"`
+		MaxDBSnapshots uint   `json:"max_db_snapshots"`
+		UploadSecret   string `json:"upload_secret"`
+	}
+	if err := json.Unmarshal([]byte(env["OBJECT_STORE_CONFIG"]), &raw); err != nil {
+		return nil, err
+	}
+
 	return netlifyblob.New(ctx, netlifyblob.NewConfig(
-		env["BLOB_SITE_ID"],
-		env["BLOB_TOKEN"],
-		env["BLOB_API_URL"],
-		env["BLOB_STORE"],
-		time.Duration(ms)*time.Millisecond,
-		uint(n),
-		env["BLOB_UPLOAD_SECRET"],
+		raw.SiteID,
+		raw.Token,
+		raw.APIURL,
+		raw.Store,
+		time.Duration(raw.TimeoutMS)*time.Millisecond,
+		raw.MaxDBSnapshots,
+		raw.UploadSecret,
 	))
 }
