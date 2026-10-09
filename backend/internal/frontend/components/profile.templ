@@ -238,12 +238,12 @@ if (user.role && user.role.can_review) {
 										var li = document.createElement('li');
 										var a = document.createElement('a');
 										a.href = '/paper?uuid=' + encodeURIComponent(paper.uuid);
-										a.className = 'flex flex-col gap-1 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 rounded-[3px] hover:bg-[#F2EDE1]';
+										a.className = 'flex flex-col gap-1 px-3 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-6 rounded-[3px] hover:bg-[#F2EDE1]';
 										var left = document.createElement('div');
 										if (paper.number != null) {
 											var num = document.createElement('span');
 											num.className = 'mr-2 text-xs font-semibold text-[#33523B]';
-											num.textContent = '№ ' + paper.number;
+											num.textContent = 'No. ' + paper.number;
 											left.appendChild(num);
 										}
 										var title = document.createElement('span');

@@ -89,7 +89,7 @@ templ volumesPage() {
 					li.setAttribute('data-category', (paper.category || '').toLowerCase());
 					li.setAttribute('data-location-display', paper.location || '');
 					li.setAttribute('data-category-display', paper.category || '');
-					var wrap = el('div', 'jsbee-row-hover px-3 py-4');
+					var wrap = el('div', 'jsbee-row-hover cursor-pointer px-3 py-4');
 					var row = el('div', 'flex items-baseline gap-2');
 					var link = el('a', 'min-w-0 font-serif text-lg font-medium text-stone-900 hover:underline hover:decoration-[#33523B] hover:underline-offset-4');
 					var uuid = safePaperUUID(paper.uuid);
@@ -114,7 +114,7 @@ templ volumesPage() {
 					wrap.appendChild(row);
 					var meta = [];
 					if (paper.number != null) {
-						meta.push('Paper № ' + paper.number);
+						meta.push('Paper No. ' + paper.number);
 					}
 					meta.push('Volume ' + volumeNumber + ', Issue ' + issueNumber);
 					if (paper.category) {
@@ -124,6 +124,14 @@ templ volumesPage() {
 						meta.push(paper.location);
 					}
 					wrap.appendChild(el('p', 'mt-1 text-xs text-stone-500', meta.join(', ')));
+					if (uuid) {
+						wrap.addEventListener('click', function(e) {
+							if (e.target.closest('a')) {
+								return;
+							}
+							window.location.href = '/paper?uuid=' + encodeURIComponent(uuid);
+						});
+					}
 					li.appendChild(wrap);
 					return li;
 				}

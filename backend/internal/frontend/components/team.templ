@@ -1,12 +1,29 @@
 package components
 
 import (
+	"strings"
+
 	"github.com/Ankumeah/JSBEE/backend/internal/provider"
 )
 
 var teamInfo = pageInfo{
 	title:       "Our team",
-	description: "JSBEE city leaders",
+	description: "JSBEE core members and city leaders",
+}
+
+templ coreCard(role string, last bool) {
+	<article class={ "border-t border-[#DDD5C2] pt-6", templ.KV("border-b pb-6", last) }>
+		<div class="flex gap-5">
+			<img src={ provider.CoreMembers[role].ImagePath } alt={ provider.CoreMembers[role].Name } class="h-24 w-24 shrink-0 rounded-[3px] object-cover"/>
+			<div>
+				<h3 class="font-serif text-xl font-semibold text-stone-900">{ provider.CoreMembers[role].Name }</h3>
+				<p class="mt-1 text-sm font-medium text-[#33523B]">{ role }</p>
+			</div>
+		</div>
+		for j, para := range strings.Split(provider.CoreMembers[role].Description, "\n\n") {
+			<p class={ "text-sm leading-relaxed text-stone-600", templ.KV("mt-4", j == 0), templ.KV("mt-3", j > 0) }>{ para }</p>
+		}
+	</article>
 }
 
 templ teamPage() {
@@ -17,7 +34,7 @@ templ teamPage() {
 				<p class="font-serif text-lg italic text-[#B9C2B2]">Who leads where</p>
 				<h1 class="mt-3 font-serif text-4xl font-semibold text-[#F2F3EA] sm:text-5xl">Our team</h1>
 				<p class="mt-4 max-w-2xl leading-relaxed text-[#B9C2B2]">
-					City leaders representing JSBEE in their cities.
+					The core members building JSBEE, and the city leaders representing it.
 				</p>
 				if provider.CityLeadEmail != "" {
 					<p class="mt-3 max-w-2xl leading-relaxed text-[#B9C2B2]">
@@ -27,17 +44,59 @@ templ teamPage() {
 			</div>
 		</header>
 		<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
-			<div id="team-loading" class="mt-8 text-center text-sm text-stone-500">Loading team...</div>
-			<div id="team-error" class="mt-8 hidden text-center text-sm text-[#7F1D1D]"></div>
-			<p id="team-empty" class="mt-8 hidden text-center text-sm text-stone-500">No city leaders yet.</p>
-			<ul id="team-list" class="mt-8 hidden border-t border-[#DDD5C2]"></ul>
+			<div class="flex gap-2 border-b border-[#DDD5C2]" role="tablist">
+				<button
+					id="tab-core"
+					type="button"
+					role="tab"
+					class="border-b-2 border-[#33523B] px-4 py-2.5 text-sm font-semibold text-stone-900"
+				>
+					Core members
+				</button>
+				<button
+					id="tab-leaders"
+					type="button"
+					role="tab"
+					class="border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-stone-500 hover:text-stone-900"
+				>
+					City leaders
+				</button>
+			</div>
+			<div id="panel-core" class="mt-8 grid gap-10">
+				for i, role := range provider.CoreMemberOrder {
+					@coreCard(role, i == len(provider.CoreMemberOrder)-1)
+				}
+			</div>
+			<div id="panel-leaders" class="hidden">
+				<div id="team-loading" class="mt-8 text-center text-sm text-stone-500">Loading team...</div>
+				<div id="team-error" class="mt-8 hidden text-center text-sm text-[#7F1D1D]"></div>
+				<p id="team-empty" class="mt-8 hidden text-center text-sm text-stone-500">No city leaders yet.</p>
+				<ul id="team-list" class="mt-8 hidden border-t border-[#DDD5C2]"></ul>
+			</div>
 		</main>
 		@siteFooter(provider.SiteName)
 		<script>
 			(function() {
 				var uuidPattern = /^[0-9a-fA-F-]{36}$/;
+				var activeTab = 'border-b-2 border-[#33523B] px-4 py-2.5 text-sm font-semibold text-stone-900';
+				var inactiveTab = 'border-b-2 border-transparent px-4 py-2.5 text-sm font-medium text-stone-500 hover:text-stone-900';
+
+				function selectTab(which) {
+					var core = which === 'core';
+					document.getElementById('panel-core').classList.toggle('hidden', !core);
+					document.getElementById('panel-leaders').classList.toggle('hidden', core);
+					document.getElementById('tab-core').className = core ? activeTab : inactiveTab;
+					document.getElementById('tab-leaders').className = core ? inactiveTab : activeTab;
+				}
 
 				function initTeam() {
+					document.getElementById('tab-core').addEventListener('click', function() {
+						selectTab('core');
+					});
+					document.getElementById('tab-leaders').addEventListener('click', function() {
+						selectTab('leaders');
+					});
+
 					var loading = document.getElementById('team-loading');
 					var errorEl = document.getElementById('team-error');
 					var emptyEl = document.getElementById('team-empty');

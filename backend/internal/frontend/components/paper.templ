@@ -115,7 +115,7 @@ templ paperPage() {
 					var link = el('a', 'jsbee-row-hover flex min-w-0 flex-1 items-baseline gap-3 px-3 py-4');
 					link.href = '/paper?uuid=' + encodeURIComponent(paper.uuid);
 					if (paper.number != null) {
-						link.appendChild(el('span', 'shrink-0 text-xs font-semibold text-[#33523B]', '№ ' + paper.number));
+						link.appendChild(el('span', 'shrink-0 text-xs font-semibold text-[#33523B]', 'No. ' + paper.number));
 					}
 					link.appendChild(el('span', 'font-serif text-lg font-medium text-stone-900', paper.title || 'Untitled'));
 					li.appendChild(link);
@@ -237,7 +237,7 @@ templ paperPage() {
 								document.getElementById('paper-author-unknown').classList.remove('hidden');
 							}
 							document.getElementById('paper-number').textContent =
-								paper.number != null ? '№ ' + paper.number : 'Not assigned yet';
+								paper.number != null ? 'No. ' + paper.number : 'Not assigned yet';
 							// Papers submitted before location/category existed carry empty values.
 							document.getElementById('paper-category').textContent = paper.category || 'Not listed';
 							document.getElementById('paper-location').textContent = paper.location || 'Not listed';
