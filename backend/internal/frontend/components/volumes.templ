@@ -196,7 +196,7 @@ templ volumesPage() {
 						}
 						seen[uuid] = true;
 						pending += 1;
-						fetch('/api/v1/user?uuid=' + encodeURIComponent(uuid))
+						fetchWithRetry('/api/v1/user?uuid=' + encodeURIComponent(uuid))
 							.then(function(resp) {
 								return checkApiResponse(resp, 'Failed to load author');
 							}).then(function(resp) {
@@ -324,7 +324,7 @@ templ volumesPage() {
 					document.getElementById('volumes-category').addEventListener('change', applyFilter);
 					document.getElementById('volumes-location').addEventListener('change', applyFilter);
 
-					fetch('/api/v1/paper/volumes')
+					fetchWithRetry('/api/v1/paper/volumes')
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load volumes');
 						})

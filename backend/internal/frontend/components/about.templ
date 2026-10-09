@@ -31,7 +31,7 @@ templ aboutPage(aboutURL string) {
 					var loading = document.getElementById('about-loading');
 					var errorEl = document.getElementById('about-error');
 					var contentEl = document.getElementById('about-content');
-					fetch(aboutFetchURL)
+					fetchWithRetry(aboutFetchURL)
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load about page');
 						}).then(function(resp) {

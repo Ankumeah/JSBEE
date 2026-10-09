@@ -69,7 +69,7 @@ templ blogPage() {
 					var errorEl = document.getElementById('blog-error');
 					var emptyEl = document.getElementById('blog-empty');
 					var listEl = document.getElementById('blog-list');
-					fetch('/api/v1/blogs')
+					fetchWithRetry('/api/v1/blogs')
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load posts');
 						}).then(function(resp) {
@@ -112,7 +112,7 @@ templ blogPage() {
 					var postEl = document.getElementById('blog-post');
 					var listEl = document.getElementById('blog-list');
 					var emptyEl = document.getElementById('blog-empty');
-					fetch('/api/v1/blogs/' + encodeURIComponent(uuid))
+					fetchWithRetry('/api/v1/blogs/' + encodeURIComponent(uuid))
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load post');
 						}).then(function(resp) {
@@ -125,7 +125,7 @@ templ blogPage() {
 							document.getElementById('blog-post-title').textContent = blog.title;
 							document.title = blog.title;
 							document.getElementById('blog-post-date').textContent = formatBlogDate(blog.created_at);
-							return fetch('/api/v1/blogs/' + encodeURIComponent(blog.uuid) + '/content');
+							return fetchWithRetry('/api/v1/blogs/' + encodeURIComponent(blog.uuid) + '/content');
 						}).then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load post content');
 						}).then(function(resp) {

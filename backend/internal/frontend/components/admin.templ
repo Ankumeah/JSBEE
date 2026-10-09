@@ -403,7 +403,7 @@ templ adminPage(aboutURL string) {
 						countEl.textContent = '';
 						badge.classList.add('hidden');
 						badge.textContent = '';
-						return authFetch('/api/v1/admin/reviewed').then(function(resp) {
+						return authFetchWithRetry('/api/v1/admin/reviewed').then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load reviewed papers');
 						}).then(function(resp) {
 							return resp.json();
@@ -472,7 +472,7 @@ templ adminPage(aboutURL string) {
 					function doPublish() {
 						var publishBtn = document.getElementById('btn-publish');
 						publishBtn.disabled = true;
-						authFetch('/api/v1/admin/publish', {
+						authFetchWithRetry('/api/v1/admin/publish', {
 							method: 'POST'
 						}).then(function(resp) {
 							return checkApiResponse(resp, 'Failed to publish papers');
@@ -532,7 +532,7 @@ templ adminPage(aboutURL string) {
 						if (btn) {
 							btn.disabled = true;
 						}
-						authFetch('/api/v1/admin/increment?field=' + field, {
+						authFetchWithRetry('/api/v1/admin/increment?field=' + field, {
 							method: 'POST'
 						}).then(function(resp) {
 							return checkApiResponse(resp, 'Failed to create ' + field);
@@ -570,7 +570,7 @@ templ adminPage(aboutURL string) {
 							return;
 						}
 						findBtn.disabled = true;
-						fetch('/api/v1/user?email=' + encodeURIComponent(email))
+						fetchWithRetry('/api/v1/user?email=' + encodeURIComponent(email))
 							.then(function(resp) {
 								return checkApiResponse(resp, 'Failed to find user');
 							}).then(function(resp) {
@@ -636,7 +636,7 @@ templ adminPage(aboutURL string) {
 					function doChangeRole(userUuid, newRole) {
 						var btn = document.getElementById('btn-change-role');
 						btn.disabled = true;
-						authFetch('/api/v1/admin/role/' + encodeURIComponent(userUuid) + '?role=' + encodeURIComponent(newRole), {
+						authFetchWithRetry('/api/v1/admin/role/' + encodeURIComponent(userUuid) + '?role=' + encodeURIComponent(newRole), {
 							method: 'PATCH'
 						}).then(function(resp) {
 							return checkApiResponse(resp, 'Failed to change role');
@@ -676,7 +676,7 @@ templ adminPage(aboutURL string) {
 							return;
 						}
 						findBtn.disabled = true;
-						fetch('/api/v1/user?email=' + encodeURIComponent(email))
+						fetchWithRetry('/api/v1/user?email=' + encodeURIComponent(email))
 							.then(function(resp) {
 								return checkApiResponse(resp, 'Failed to find user');
 							}).then(function(resp) {
@@ -739,7 +739,7 @@ templ adminPage(aboutURL string) {
 						if (cityLead) {
 							url += '?city=' + encodeURIComponent(cityLead);
 						}
-						authFetch(url, {
+						authFetchWithRetry(url, {
 							method: 'PATCH'
 						}).then(function(resp) {
 							return checkApiResponse(resp, 'Failed to update city lead');
@@ -815,7 +815,7 @@ templ adminPage(aboutURL string) {
 						emptyEl.classList.add('hidden');
 						listEl.classList.add('hidden');
 						listEl.innerHTML = '';
-						fetch('/api/v1/blogs')
+						fetchWithRetry('/api/v1/blogs')
 							.then(function(resp) {
 								return checkApiResponse(resp, 'Failed to load posts');
 							}).then(function(resp) {
@@ -872,7 +872,7 @@ templ adminPage(aboutURL string) {
 					}
 
 					function editBlog(blogUuid) {
-						fetch('/api/v1/blogs/' + encodeURIComponent(blogUuid))
+						fetchWithRetry('/api/v1/blogs/' + encodeURIComponent(blogUuid))
 							.then(function(resp) {
 								return checkApiResponse(resp, 'Failed to load post');
 							}).then(function(resp) {
@@ -882,7 +882,7 @@ templ adminPage(aboutURL string) {
 									throw new Error('Post not found');
 								}
 								var blog = data.blog;
-								return fetch('/api/v1/blogs/' + encodeURIComponent(blog.uuid) + '/content')
+								return fetchWithRetry('/api/v1/blogs/' + encodeURIComponent(blog.uuid) + '/content')
 									.then(function(resp) {
 										return checkApiResponse(resp, 'Failed to load post content');
 									}).then(function(resp) {
@@ -927,7 +927,7 @@ templ adminPage(aboutURL string) {
 						// Post content goes direct to the object store via a
 						// presigned URL; only metadata passes through the API.
 						function putContent(uploadUrl, content) {
-							return fetch(uploadUrl, {
+							return fetchWithRetry(uploadUrl, {
 								method: 'PUT',
 								headers: { 'Content-Type': 'text/markdown; charset=utf-8' },
 								body: content
@@ -955,7 +955,7 @@ templ adminPage(aboutURL string) {
 						var request;
 						if (editingBlogUuid) {
 							if (content === editingBlogContent) {
-								request = authFetch('/api/v1/admin/blog/' + encodeURIComponent(editingBlogUuid), {
+								request = authFetchWithRetry('/api/v1/admin/blog/' + encodeURIComponent(editingBlogUuid), {
 									method: 'PATCH',
 									headers: { 'Content-Type': 'application/json' },
 									body: JSON.stringify({ title: title })
@@ -965,7 +965,7 @@ templ adminPage(aboutURL string) {
 									finishBlogSave('Post updated');
 								});
 							} else {
-								request = authFetch('/api/v1/admin/blog/' + encodeURIComponent(editingBlogUuid) + '/upload-url', {
+								request = authFetchWithRetry('/api/v1/admin/blog/' + encodeURIComponent(editingBlogUuid) + '/upload-url', {
 									method: 'POST'
 								}).then(function(resp) {
 									return checkApiResponse(resp, 'Failed to start upload');
@@ -977,7 +977,7 @@ templ adminPage(aboutURL string) {
 									}
 									return putContent(data.upload_url, content);
 								}).then(function() {
-									return authFetch('/api/v1/admin/blog/' + encodeURIComponent(editingBlogUuid), {
+									return authFetchWithRetry('/api/v1/admin/blog/' + encodeURIComponent(editingBlogUuid), {
 										method: 'PATCH',
 										headers: { 'Content-Type': 'application/json' },
 										body: JSON.stringify({ title: title, content_replaced: true })
@@ -989,7 +989,7 @@ templ adminPage(aboutURL string) {
 								});
 							}
 						} else {
-							request = authFetch('/api/v1/admin/blog/upload-url', {
+							request = authFetchWithRetry('/api/v1/admin/blog/upload-url', {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
 								body: JSON.stringify({ title: title })
@@ -1005,7 +1005,7 @@ templ adminPage(aboutURL string) {
 									return data.uuid;
 								});
 							}).then(function(blogUUID) {
-								return authFetch('/api/v1/admin/blog/confirm', {
+								return authFetchWithRetry('/api/v1/admin/blog/confirm', {
 									method: 'POST',
 									headers: { 'Content-Type': 'application/json' },
 									body: JSON.stringify({ uuid: blogUUID, title: title })
@@ -1041,7 +1041,7 @@ templ adminPage(aboutURL string) {
 					}
 
 					function doDeleteBlog(blogUuid, row) {
-						authFetch('/api/v1/admin/blog/' + encodeURIComponent(blogUuid), {
+						authFetchWithRetry('/api/v1/admin/blog/' + encodeURIComponent(blogUuid), {
 							method: 'DELETE'
 						}).then(function(resp) {
 							return checkApiResponse(resp, 'Failed to delete post');
@@ -1080,7 +1080,7 @@ templ adminPage(aboutURL string) {
 					function loadAboutContent() {
 						var loading = document.getElementById('about-admin-loading');
 						loading.classList.remove('hidden');
-						fetch(adminAboutURL)
+						fetchWithRetry(adminAboutURL)
 							.then(function(resp) {
 								return checkApiResponse(resp, 'Failed to load about page');
 							}).then(function(resp) {
@@ -1108,7 +1108,7 @@ templ adminPage(aboutURL string) {
 							return;
 						}
 						saveBtn.disabled = true;
-						authFetch('/api/v1/admin/about/upload-url', {
+						authFetchWithRetry('/api/v1/admin/about/upload-url', {
 							method: 'POST'
 						}).then(function(resp) {
 							return checkApiResponse(resp, 'Failed to start upload');
@@ -1118,7 +1118,7 @@ templ adminPage(aboutURL string) {
 							if (!data || !data.upload_url) {
 								throw new Error('Failed to start upload: bad upload response');
 							}
-							return fetch(data.upload_url, {
+							return fetchWithRetry(data.upload_url, {
 								method: 'PUT',
 								headers: { 'Content-Type': 'text/markdown; charset=utf-8' },
 								body: content
@@ -1126,7 +1126,7 @@ templ adminPage(aboutURL string) {
 								return checkApiResponse(putResp, 'Failed to upload content');
 							});
 						}).then(function() {
-							return authFetch('/api/v1/admin/about/confirm', {
+							return authFetchWithRetry('/api/v1/admin/about/confirm', {
 								method: 'PUT'
 							});
 						}).then(function(resp) {

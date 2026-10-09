@@ -163,6 +163,83 @@ templ base(info pageInfo, content templ.Component, firebaseClientConfig map[stri
 					return err && err.status === 401;
 				}
 
+				// Transient-failure retry with exponential backoff.
+				// Only network errors plus HTTP 429 / 5xx are retried; other
+				// statuses (400, 401, 403, 404, ...) fail fast so the caller
+				// can show the real error. Intermediate failures are silent:
+				// after `retries` is exhausted the last response (or network
+				// error) is returned/thrown, so the caller's existing
+				// checkApiResponse + catch path shows the eventual error
+				// message to the user.
+				// Usage: fetchWithRetry('/api/v1/blogs', {}, { retries: 3, baseDelayMs: 500, onRetry: function(n, max) {} });
+				function jsbeeSleep(ms) {
+					return new Promise(function(resolve) {
+						setTimeout(resolve, ms);
+					});
+				}
+
+				function jsbeeRetryDelayMs(retryIndex, baseDelayMs, maxDelayMs) {
+					var base = baseDelayMs || 500;
+					var max = maxDelayMs || 4000;
+					var exp = base * Math.pow(2, retryIndex);
+					var capped = Math.min(exp, max);
+					return capped + Math.floor(Math.random() * Math.min(capped * 0.25, 500));
+				}
+
+				function jsbeeIsRetryableStatus(status) {
+					return status === 429 || (status >= 500 && status <= 599);
+				}
+
+				function jsbeeWithRetry(sender, retryOptions) {
+					var opts = retryOptions || {};
+					var maxRetries = typeof opts.retries === 'number' ? opts.retries : 3;
+					var baseDelayMs = opts.baseDelayMs || 500;
+					var maxDelayMs = opts.maxDelayMs || 4000;
+					var onRetry = opts.onRetry;
+					var attemptsUsed = 0;
+					function notifyRetry() {
+						if (typeof onRetry === 'function') {
+							try {
+								onRetry(attemptsUsed, maxRetries);
+							} catch (e) {}
+						}
+					}
+					function scheduleRetry() {
+						attemptsUsed += 1;
+						notifyRetry();
+						return jsbeeSleep(jsbeeRetryDelayMs(attemptsUsed - 1, baseDelayMs, maxDelayMs)).then(attemptSend);
+					}
+					function attemptSend() {
+						return sender().then(function(resp) {
+							if (resp && attemptsUsed < maxRetries && jsbeeIsRetryableStatus(resp.status)) {
+								return scheduleRetry();
+							}
+							return resp;
+						}, function(networkErr) {
+							if (attemptsUsed >= maxRetries) {
+								throw networkErr;
+							}
+							return scheduleRetry();
+						});
+					}
+					return attemptSend();
+				}
+
+				function fetchWithRetry(url, options, retryOptions) {
+					return jsbeeWithRetry(function() {
+						return fetch(url, options);
+					}, retryOptions);
+				}
+
+				// Same retry policy for authenticated API calls. Each attempt
+				// goes through authFetch (fresh token + its single 401
+				// reauth); 401/403 responses are never retried here.
+				function authFetchWithRetry(path, options, retryOptions) {
+					return jsbeeWithRetry(function() {
+						return authFetch(path, options);
+					}, retryOptions);
+				}
+
 				function handleSessionExpired() {
 					_authReadyPromise = null;
 					firebaseAuth.signOut().catch(function() {});
@@ -288,7 +365,7 @@ templ base(info pageInfo, content templ.Component, firebaseClientConfig map[stri
 							return reauthenticate();
 						});
 					}).then(function(idToken) {
-						return fetch('/api/v1/account', {
+						return fetchWithRetry('/api/v1/account', {
 							method: 'POST',
 							headers: { 'Authorization': 'Bearer ' + idToken }
 						}).then(function(resp) {

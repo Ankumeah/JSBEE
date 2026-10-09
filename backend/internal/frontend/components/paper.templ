@@ -92,7 +92,7 @@ templ paperPage() {
 				}
 
 				function loadContext(currentUUID) {
-					fetch('/api/v1/paper/volumes')
+					fetchWithRetry('/api/v1/paper/volumes')
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load volumes');
 						}).then(function(resp) {
@@ -141,7 +141,7 @@ templ paperPage() {
 						return;
 					}
 
-					fetch('/api/v1/paper/' + encodeURIComponent(uuid))
+					fetchWithRetry('/api/v1/paper/' + encodeURIComponent(uuid))
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load paper');
 						})
@@ -158,7 +158,7 @@ templ paperPage() {
 							if (paper.owner_uuid) {
 								var authorLink = document.getElementById('paper-author-link');
 								authorLink.href = '/author?uuid=' + encodeURIComponent(paper.owner_uuid);
-								fetch('/api/v1/user?uuid=' + encodeURIComponent(paper.owner_uuid))
+								fetchWithRetry('/api/v1/user?uuid=' + encodeURIComponent(paper.owner_uuid))
 									.then(function(resp) {
 										return checkApiResponse(resp, 'Failed to load author');
 									}).then(function(resp) {

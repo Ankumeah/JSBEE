@@ -59,7 +59,7 @@ templ profilePage() {
 						<dd id="profile-city" class="font-medium text-[#33523B]"></dd>
 					</div>
 					<div class="flex items-center justify-between gap-4">
-						<dt class="font-medium text-stone-500">Subscribed</dt>
+						<dt class="font-medium text-stone-500">Subscribed to email</dt>
 						<dd class="flex items-center gap-3">
 							<span id="profile-subscribed" class="text-stone-900"></span>
 							<button
@@ -116,7 +116,7 @@ templ profilePage() {
 					subBtn.addEventListener('click', function() {
 						var subscribed = subValue.textContent === 'Yes';
 						subBtn.disabled = true;
-						authFetch('/api/v1/account?sub=' + !subscribed, {
+						authFetchWithRetry('/api/v1/account?sub=' + !subscribed, {
 							method: 'PATCH'
 						}).then(function(resp) {
 								return checkApiResponse(resp, 'Failed to update subscription');
@@ -183,7 +183,7 @@ logoutBtn.addEventListener('click', function() {
 							});
 							return;
 						}
-						fetch('/api/v1/user?uuid=' + encodeURIComponent(uuid))
+						fetchWithRetry('/api/v1/user?uuid=' + encodeURIComponent(uuid))
 							.then(function(resp) {
 								return checkApiResponse(resp, 'Failed to load profile');
 							})
@@ -219,7 +219,7 @@ if (user.role && user.role.can_review) {
 
 							var papersBox = document.getElementById('my-papers-box');
 							papersBox.classList.remove('hidden');
-							fetch('/api/v1/user/papers?uuid=' + encodeURIComponent(uuid))
+							fetchWithRetry('/api/v1/user/papers?uuid=' + encodeURIComponent(uuid))
 									.then(function(resp) {
 										return checkApiResponse(resp, 'Failed to load papers');
 									}).then(function(resp) {

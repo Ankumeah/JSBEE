@@ -111,6 +111,13 @@ func review(r *gin.RouterGroup, app *a.App) {
 			return
 		}
 
+    if !handleError(
+      c, "RejectPaper",
+      app.ObjectStore.DeleteFile(ctx, paperUUID.String() + ".pdf"),
+    ) {
+      return
+    }
+
 		// TODO: Email author
 
 		c.Status(http.StatusNoContent)

@@ -65,13 +65,13 @@ templ authorPage() {
 						return;
 					}
 
-					var userReq = fetch('/api/v1/user?uuid=' + encodeURIComponent(uuid))
+					var userReq = fetchWithRetry('/api/v1/user?uuid=' + encodeURIComponent(uuid))
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load author');
 						}).then(function(resp) {
 							return resp.json();
 						});
-					var papersReq = fetch('/api/v1/user/papers?uuid=' + encodeURIComponent(uuid))
+					var papersReq = fetchWithRetry('/api/v1/user/papers?uuid=' + encodeURIComponent(uuid))
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load papers');
 						}).then(function(resp) {

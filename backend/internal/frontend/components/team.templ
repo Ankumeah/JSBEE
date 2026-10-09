@@ -102,7 +102,7 @@ templ teamPage() {
 					var emptyEl = document.getElementById('team-empty');
 					var list = document.getElementById('team-list');
 
-					fetch('/api/v1/leaders')
+					fetchWithRetry('/api/v1/leaders')
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load team');
 						})

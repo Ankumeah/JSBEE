@@ -301,7 +301,7 @@ templ indexPage() {
 					var names = {};
 					var pending = uuids.length;
 					uuids.forEach(function(uuid) {
-						fetch('/api/v1/user?uuid=' + encodeURIComponent(uuid))
+						fetchWithRetry('/api/v1/user?uuid=' + encodeURIComponent(uuid))
 							.then(function(resp) {
 								return checkApiResponse(resp, 'Failed to load author');
 							}).then(function(resp) {
@@ -405,7 +405,7 @@ templ indexPage() {
 				}
 
 				function initHome() {
-					var volumesReq = fetch('/api/v1/paper/volumes')
+					var volumesReq = fetchWithRetry('/api/v1/paper/volumes')
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load volumes');
 						}).then(function(resp) {
@@ -415,7 +415,7 @@ templ indexPage() {
 						}).catch(function() {
 							return [];
 						});
-					var leadersReq = fetch('/api/v1/leaders')
+					var leadersReq = fetchWithRetry('/api/v1/leaders')
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load team');
 						}).then(function(resp) {
@@ -520,7 +520,7 @@ templ indexPage() {
 						// the file there, then the backend confirms the
 						// private object and creates the paper row.
 						statusEl.textContent = 'Requesting upload...';
-						authFetch('/api/v1/paper/upload-url', {
+						authFetchWithRetry('/api/v1/paper/upload-url', {
 							method: 'POST'
 						}).then(function(resp) {
 							return checkApiResponse(resp, 'Could not start upload');
@@ -531,7 +531,7 @@ templ indexPage() {
 								throw new Error('Upload failed: bad upload response');
 							}
 							statusEl.textContent = 'Uploading, please wait a minute...';
-							return fetch(data.upload_url, {
+							return fetchWithRetry(data.upload_url, {
 								method: 'PUT',
 								headers: { 'Content-Type': 'application/pdf' },
 								body: file
@@ -542,7 +542,7 @@ templ indexPage() {
 							});
 						}).then(function(paperUUID) {
 							statusEl.textContent = 'Confirming...';
-							return authFetch('/api/v1/paper/confirm', {
+							return authFetchWithRetry('/api/v1/paper/confirm', {
 								method: 'POST',
 								headers: { 'Content-Type': 'application/json' },
 								body: JSON.stringify({ uuid: paperUUID, title: title, location: location, category: category })
