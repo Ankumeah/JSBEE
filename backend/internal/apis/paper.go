@@ -143,11 +143,7 @@ func paper(r *gin.RouterGroup, app *a.App) {
 	group.GET("/volumes", func(c *gin.Context) {
 		ctx := c.Request.Context()
 
-		if app.Cache == nil {
-			app.Cache = map[string]any{}
-		}
-
-		if cached, ok := app.Cache[a.CacheKeyVolumes]; ok {
+		if cached, ok := app.Cache.Load(a.CacheKeyVolumes); ok {
 			if volumes, ok := cached.([]database.Volume); ok {
 				c.JSON(http.StatusOK, gin.H{"volumes": volumes})
 				return
@@ -162,7 +158,7 @@ func paper(r *gin.RouterGroup, app *a.App) {
 		if volumes == nil {
 			volumes = []database.Volume{}
 		}
-		app.Cache[a.CacheKeyVolumes] = volumes
+		app.Cache.Store(a.CacheKeyVolumes, volumes)
 
 		c.JSON(http.StatusOK, gin.H{"volumes": volumes})
 	})

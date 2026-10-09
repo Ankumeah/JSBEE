@@ -68,10 +68,6 @@ templ paperPage() {
 				</a>
 				<p id="paper-file-empty" class="mt-6 hidden text-sm text-stone-500">No readable file is attached to this paper yet.</p>
 			</div>
-			<section id="paper-related" class="mt-12 hidden">
-				<h2 class="border-t border-[#DDD5C2] pt-5 font-serif text-2xl font-semibold text-stone-900">Related research</h2>
-				<ul id="paper-related-list" class="mt-2"></ul>
-			</section>
 			<a
 				id="paper-back-link"
 				href="/volumes"
@@ -85,21 +81,6 @@ templ paperPage() {
 			(function() {
 				var uuidPattern = /^[0-9a-fA-F-]{36}$/;
 
-				function safeUUID(uuid) {
-					return typeof uuid === 'string' && uuidPattern.test(uuid) ? uuid : null;
-				}
-
-				function el(tag, className, text) {
-					var node = document.createElement(tag);
-					if (className) {
-						node.className = className;
-					}
-					if (text != null) {
-						node.textContent = text;
-					}
-					return node;
-				}
-
 				function statusLabel(paper) {
 					if (paper.number != null) {
 						return 'Published';
@@ -110,19 +91,7 @@ templ paperPage() {
 					return 'Pending review';
 				}
 
-				function relatedRow(paper) {
-					var li = el('li', 'border-b border-[#E7E0CF] last:border-0');
-					var link = el('a', 'jsbee-row-hover flex min-w-0 flex-1 items-baseline gap-3 px-3 py-4');
-					link.href = '/paper?uuid=' + encodeURIComponent(paper.uuid);
-					if (paper.number != null) {
-						link.appendChild(el('span', 'shrink-0 text-xs font-semibold text-[#33523B]', 'No. ' + paper.number));
-					}
-					link.appendChild(el('span', 'font-serif text-lg font-medium text-stone-900', paper.title || 'Untitled'));
-					li.appendChild(link);
-					return li;
-				}
-
-				function loadRelated(currentUUID) {
+				function loadContext(currentUUID) {
 					fetch('/api/v1/paper/volumes')
 						.then(function(resp) {
 							return checkApiResponse(resp, 'Failed to load volumes');
@@ -131,32 +100,13 @@ templ paperPage() {
 						}).then(function(data) {
 							var volumes = (data && Array.isArray(data.volumes)) ? data.volumes : [];
 							// Papers carry no volume reference, so locate the
-							// current paper first, then gather neighbours.
+							// current paper first for its volume and issue.
 							var context = null;
 							volumes.forEach(function(volume) {
 								((volume && volume.issues) || []).forEach(function(issue) {
 									((issue && issue.papers) || []).forEach(function(paper) {
 										if (paper.uuid === currentUUID) {
 											context = { volume: volume.number, issue: issue.number };
-										}
-									});
-								});
-							});
-							var sameIssue = [];
-							var sameVolume = [];
-							var fallback = [];
-							volumes.forEach(function(volume) {
-								((volume && volume.issues) || []).forEach(function(issue) {
-									((issue && issue.papers) || []).forEach(function(paper) {
-										if (!safeUUID(paper.uuid) || paper.uuid === currentUUID) {
-											return;
-										}
-										if (context && volume.number === context.volume && issue.number === context.issue) {
-											sameIssue.push(paper);
-										} else if (context && volume.number === context.volume) {
-											sameVolume.push(paper);
-										} else {
-											fallback.push(paper);
 										}
 									});
 								});
@@ -169,16 +119,6 @@ templ paperPage() {
 							} else {
 								document.getElementById('paper-context').textContent = 'Not assigned yet';
 							}
-							var picks = sameIssue.concat(sameVolume, fallback).slice(0, 4);
-							if (!picks.length) {
-								return;
-							}
-							var section = document.getElementById('paper-related');
-							var list = document.getElementById('paper-related-list');
-							picks.forEach(function(paper) {
-								list.appendChild(relatedRow(paper));
-							});
-							section.classList.remove('hidden');
 						}).catch(function() {});
 				}
 
@@ -254,7 +194,7 @@ templ paperPage() {
 							loading.classList.add('hidden');
 							errorEl.classList.add('hidden');
 							card.classList.remove('hidden');
-							loadRelated(paper.uuid);
+							loadContext(paper.uuid);
 						})
 						.catch(function(err) {
 							loading.classList.add('hidden');

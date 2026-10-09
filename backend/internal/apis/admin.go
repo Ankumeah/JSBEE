@@ -115,10 +115,7 @@ func admin(r *gin.RouterGroup, app *a.App) {
 			if !handleError(c, "GetVolumes", err) {
 				return
 			}
-			if app.Cache == nil {
-				app.Cache = map[string]any{}
-			}
-			app.Cache[a.CacheKeyVolumes] = volumes
+			app.Cache.Store(a.CacheKeyVolumes, volumes)
 		}
 
 		c.JSON(http.StatusOK, gin.H{"count": count})
@@ -202,10 +199,7 @@ func admin(r *gin.RouterGroup, app *a.App) {
 		if !handleError(c, "GetCityLeaders", err) {
 			return
 		}
-		if app.Cache == nil {
-			app.Cache = map[string]any{}
-		}
-		app.Cache[a.CacheKeyLeaders] = leaders
+		app.Cache.Store(a.CacheKeyLeaders, leaders)
 
 		user, err := app.DBController.GetUser(ctx, userUUID)
 		if !handleError(c, "GetUser", err) {

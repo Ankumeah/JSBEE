@@ -31,8 +31,6 @@ func main() {
 	initLogger(app)
 	loadEnv(Ctx, app)
 
-	app.Cache = map[string]any{}
-
 	var wg sync.WaitGroup
 	wg.Go(func() { initFirebase(Ctx, app) })
 	wg.Go(func() { getDBConnection(Ctx, app) })

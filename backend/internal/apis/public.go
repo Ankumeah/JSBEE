@@ -16,11 +16,7 @@ func public(r *gin.RouterGroup, app *a.App) {
 	r.GET("/leaders", func(c *gin.Context) {
 		ctx := c.Request.Context()
 
-		if app.Cache == nil {
-			app.Cache = map[string]any{}
-		}
-
-		if cached, ok := app.Cache[a.CacheKeyLeaders]; ok {
+		if cached, ok := app.Cache.Load(a.CacheKeyLeaders); ok {
 			if leaders, ok := cached.([]database.User); ok {
 				c.JSON(http.StatusOK, gin.H{"leaders": leaders})
 				return
@@ -32,7 +28,7 @@ func public(r *gin.RouterGroup, app *a.App) {
 			return
 		}
 
-		app.Cache[a.CacheKeyLeaders] = leaders
+		app.Cache.Store(a.CacheKeyLeaders, leaders)
 
 		if leaders == nil {
 			leaders = []database.User{}

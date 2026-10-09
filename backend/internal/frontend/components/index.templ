@@ -530,7 +530,7 @@ templ indexPage() {
 							if (!data || !data.uuid || !data.upload_url) {
 								throw new Error('Upload failed: bad upload response');
 							}
-							statusEl.textContent = 'Uploading...';
+							statusEl.textContent = 'Uploading, please wait a minute...';
 							return fetch(data.upload_url, {
 								method: 'PUT',
 								headers: { 'Content-Type': 'application/pdf' },

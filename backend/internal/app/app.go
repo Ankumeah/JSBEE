@@ -8,6 +8,7 @@ import (
 	"firebase.google.com/go/v4/auth"
 
 	"log/slog"
+	"sync"
 )
 
 // This stuct contains all needed env vars
@@ -39,5 +40,5 @@ type App struct {
 	ComponentUpdater *frontend.ComponentUpdater
 	ObjectStore      objectstore.ObjectStore
 	Logger           *slog.Logger
-	Cache            map[string]any
+	Cache            sync.Map
 }
