@@ -5,8 +5,9 @@ import (
 )
 
 var indexInfo = pageInfo{
-	title:       provider.SiteName,
-	description: provider.SiteDescription,
+	title:       "JSBEE | Journal of Sustainable Business in Emerging Economies",
+	description: "JSBEE is a student-led, open-access journal publishing research on sustainability, business and economics in emerging economies. Read volumes, meet researchers, submit your paper.",
+	canonical:   "/",
 }
 
 templ indexPage() {
@@ -235,6 +236,17 @@ templ indexPage() {
 			</div>
 			</div>
 		</section>
+		<noscript>
+			<section class="mx-auto max-w-5xl px-4 py-14 sm:px-6">
+				<h2 class="font-serif text-3xl font-semibold text-stone-900">Latest publications</h2>
+				<p class="mt-4 leading-relaxed text-stone-600">
+					JSBEE publishes student research on sustainability, business and economics in emerging economies.
+					<a href="/volumes" class="font-medium text-[#33523B] hover:underline hover:underline-offset-4">Browse the full library</a>,
+					read <a href="/blog" class="font-medium text-[#33523B] hover:underline hover:underline-offset-4">notes from the editors</a>,
+					or learn <a href="/about" class="font-medium text-[#33523B] hover:underline hover:underline-offset-4">more about us</a>.
+				</p>
+			</section>
+		</noscript>
 		</main>
 		@siteFooter(provider.SiteName)
 		<script>

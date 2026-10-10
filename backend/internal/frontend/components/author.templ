@@ -5,8 +5,9 @@ import (
 )
 
 var authorInfo = pageInfo{
-	title:       "Author",
-	description: "Author details and papers",
+	title:       "Author | JSBEE researchers",
+	description: "JSBEE author profile — student researcher papers on sustainability, business and economics in emerging economies.",
+	canonical:   "/author",
 }
 
 templ authorPage() {
@@ -46,6 +47,12 @@ templ authorPage() {
 			>
 				View all volumes
 			</a>
+			<noscript>
+				<p class="mt-8 leading-relaxed text-stone-600">
+					This is a JSBEE researcher profile listing student papers on sustainability, business and economics.
+					Enable JavaScript to see details, or <a href="/volumes" class="font-medium text-[#33523B] hover:underline hover:underline-offset-4">browse all volumes</a>.
+				</p>
+			</noscript>
 		</main>
 		@siteFooter(provider.SiteName)
 		<span class="hidden border-b border-[#E7E0CF] last:border-0 jsbee-row-hover px-3 py-4 flex items-baseline gap-3 font-serif text-lg font-medium text-stone-900 shrink-0 text-xs font-semibold text-[#33523B]"></span>

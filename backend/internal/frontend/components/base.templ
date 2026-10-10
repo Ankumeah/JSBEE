@@ -1,5 +1,9 @@
 package components
 
+import (
+	"github.com/Ankumeah/JSBEE/backend/internal/provider"
+)
+
 templ base(info pageInfo, content templ.Component, firebaseClientConfig map[string]any) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -7,8 +11,54 @@ templ base(info pageInfo, content templ.Component, firebaseClientConfig map[stri
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<meta name="description" content={ info.description }/>
+			if info.robots != "" {
+				<meta name="robots" content={ info.robots }/>
+			} else {
+				<meta name="robots" content="index, follow"/>
+			}
+			<meta name="author" content="JSBEE"/>
+			<meta name="theme-color" content="#16211B"/>
+			<link rel="canonical" href={ provider.SiteURL + info.canonical }/>
+			<meta property="og:site_name" content="JSBEE"/>
+			<meta property="og:title" content={ info.title }/>
+			<meta property="og:description" content={ info.description }/>
+			if info.ogType != "" {
+				<meta property="og:type" content={ info.ogType }/>
+			} else {
+				<meta property="og:type" content="website"/>
+			}
+			<meta property="og:url" content={ provider.SiteURL + info.canonical }/>
+			<meta property="og:image" content={ provider.SiteURL + "/favicon.png" }/>
+			<meta name="twitter:card" content="summary"/>
+			<meta name="twitter:title" content={ info.title }/>
+			<meta name="twitter:description" content={ info.description }/>
+			<meta name="twitter:image" content={ provider.SiteURL + "/favicon.png" }/>
 			<title>{ info.title }</title>
-      <link rel="icon" href="/favicon.png" type="image/png">
+			<link rel="icon" href="/favicon.png" type="image/png"/>
+			<link rel="apple-touch-icon" href="/favicon.png"/>
+			<script type="application/ld+json">
+				{
+					"@context": "https://schema.org",
+					"@graph": [
+						{
+							"@type": "Organization",
+							"name": "JSBEE",
+							"alternateName": "Journal of Sustainable Business in Emerging Economies",
+							"url": "https://jsbee.in/",
+							"logo": "https://jsbee.in/favicon.png",
+							"sameAs": [
+								"https://www.instagram.com/jsbee.research",
+								"https://www.linkedin.com/company/journal-of-sustainable-business-in-emerging-economies"
+							]
+						},
+						{
+							"@type": "WebSite",
+							"name": "JSBEE",
+							"url": "https://jsbee.in/"
+						}
+					]
+				}
+			</script>
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
 			<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&display=swap" rel="stylesheet"/>

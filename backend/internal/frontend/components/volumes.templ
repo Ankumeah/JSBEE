@@ -5,8 +5,9 @@ import (
 )
 
 var volumesInfo = pageInfo{
-	title:       "Volumes",
-	description: "View all volumes",
+	title:       "Volumes | JSBEE student research library",
+	description: "Browse all JSBEE volumes and issues — student research papers on sustainability, business, economics and emerging economies. Search by title, author, category or location.",
+	canonical:   "/volumes",
 }
 
 templ volumesPage() {
@@ -59,6 +60,14 @@ templ volumesPage() {
 			<p id="volumes-empty" class="mt-10 hidden text-stone-500">No volumes have been published yet.</p>
 			<p id="volumes-no-match" class="mt-10 hidden text-stone-500">No papers match your filter.</p>
 			<div id="volumes-list" class="mt-4 hidden border-t border-[#DDD5C2]"></div>
+			<noscript>
+				<p class="mt-10 leading-relaxed text-stone-600">
+					The JSBEE library holds student research papers on sustainability, business, economics and emerging economies,
+					grouped by volume and issue. Enable JavaScript to search by title, author, category or location —
+					or start from <a href="/" class="font-medium text-[#33523B] hover:underline hover:underline-offset-4">the homepage</a>
+					and <a href="/blog" class="font-medium text-[#33523B] hover:underline hover:underline-offset-4">the blog</a>.
+				</p>
+			</noscript>
 		</main>
 		@siteFooter(provider.SiteName)
 		<script>

@@ -2,6 +2,8 @@ package provider
 
 const SiteName = "JSBEE"
 const SiteDescription = "Journal of Sustainable Business in Emerging Economies"
+const SiteTagline = "A student-led platform for the next generation of thinkers"
+const SiteURL = "https://jsbee.netlify.app"
 
 const AboutSeedContent = "# Welcome to JSBEE\n" +
 	"\n" +

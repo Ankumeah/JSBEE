@@ -10,6 +10,13 @@ import (
 type pageInfo struct {
 	title       string
 	description string
+	// canonical is the site-relative path ("/volumes"). Empty = homepage.
+	canonical string
+	// robots overrides the default "index, follow".
+	// Use "noindex, nofollow" for private pages (profile/review/admin).
+	robots string
+	// ogType is "website" (default) or "article" for paper/blog detail views.
+	ogType string
 }
 
 type socialLink struct {

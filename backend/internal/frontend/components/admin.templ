@@ -5,8 +5,10 @@ import (
 )
 
 var adminInfo = pageInfo{
-	title:       "Admin",
-	description: "Admin dashboard",
+	title:       "Admin | JSBEE",
+	description: "Admin dashboard.",
+	canonical:   "/admin",
+	robots:      "noindex, nofollow",
 }
 
 templ adminPage(aboutURL string) {

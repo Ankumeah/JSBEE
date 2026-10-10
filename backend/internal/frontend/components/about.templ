@@ -5,8 +5,9 @@ import (
 )
 
 var aboutInfo = pageInfo{
-	title:       "About us",
-	description: "About us",
+	title:       "About us | JSBEE student-led research journal",
+	description: "JSBEE, the Journal of Sustainable Business in Emerging Economies, is a student-led initiative helping young people explore ideas, publish research and create impact.",
+	canonical:   "/about",
 }
 
 templ aboutPage(aboutURL string) {
@@ -22,6 +23,14 @@ templ aboutPage(aboutURL string) {
 			<div id="about-loading" class="mt-8 text-center text-sm text-stone-500">Loading...</div>
 			<div id="about-error" class="mt-8 hidden text-center text-sm text-[#7F1D1D]"></div>
 			<article id="about-content" class="blog-content mt-8 hidden"></article>
+			<noscript>
+				<p class="mt-8 leading-relaxed text-stone-600">
+					JSBEE, the Journal of Sustainable Business in Emerging Economies, is a student-led initiative helping young people
+					explore ideas, publish research on sustainability, business and economics, and create impact.
+					Meet <a href="/team" class="font-medium text-[#33523B] hover:underline hover:underline-offset-4">the team</a>
+					or <a href="/volumes" class="font-medium text-[#33523B] hover:underline hover:underline-offset-4">read the volumes</a>.
+				</p>
+			</noscript>
 		</main>
 		@siteFooter(provider.SiteName)
 		<script>

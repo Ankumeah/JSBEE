@@ -5,8 +5,10 @@ import (
 )
 
 var paperInfo = pageInfo{
-	title:       "Paper",
-	description: "Paper details",
+	title:       "Research paper | JSBEE",
+	description: "Read a student research paper on sustainability, business or economics in emerging economies. Free to read, reviewed by JSBEE student editors.",
+	canonical:   "/paper",
+	ogType:      "article",
 }
 
 templ paperPage() {
@@ -75,6 +77,12 @@ templ paperPage() {
 			>
 				View all volumes
 			</a>
+			<noscript>
+				<p class="mt-8 leading-relaxed text-stone-600">
+					This is a JSBEE student research paper on sustainability, business or economics in emerging economies.
+					Enable JavaScript to read its details, or <a href="/volumes" class="font-medium text-[#33523B] hover:underline hover:underline-offset-4">browse all volumes</a>.
+				</p>
+			</noscript>
 		</main>
 		@siteFooter(provider.SiteName)
 		<script>

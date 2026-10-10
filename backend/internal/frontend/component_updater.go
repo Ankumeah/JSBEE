@@ -164,6 +164,7 @@ func (u *ComponentUpdater) UpdateAll(
 		func() error { return u.UpdateAuthor(ctx) },
 		func() error { return u.UpdateTeam(ctx) },
 		func() error { return u.UpdateContact(ctx) },
+		func() error { return u.UpdateSEO(ctx) },
 	} {
 		if err := f(); err != nil {
 			return err

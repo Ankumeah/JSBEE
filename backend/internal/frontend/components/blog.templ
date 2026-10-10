@@ -5,8 +5,10 @@ import (
 )
 
 var blogInfo = pageInfo{
-	title:       "Blog",
-	description: "Blog posts",
+	title:       "Blog | JSBEE notes on research, sustainability and business",
+	description: "Notes from the JSBEE editors — research explainers, sustainability and business ideas, and community updates from a student-led journal.",
+	canonical:   "/blog",
+	ogType:      "article",
 }
 
 templ blogPage() {
@@ -34,6 +36,12 @@ templ blogPage() {
 				<p id="blog-post-date" class="mt-2 text-sm text-stone-500"></p>
 				<article id="blog-post-content" class="blog-content mt-6"></article>
 			</div>
+			<noscript>
+				<p class="mt-8 leading-relaxed text-stone-600">
+					The JSBEE blog carries notes from student editors on research, sustainability, business and economics.
+					Enable JavaScript to read posts, or <a href="/volumes" class="font-medium text-[#33523B] hover:underline hover:underline-offset-4">browse the research library</a>.
+				</p>
+			</noscript>
 		</main>
 		@siteFooter(provider.SiteName)
 		<span class="hidden border-b border-[#DDD5C2] py-5 jsbee-row-hover"></span>
