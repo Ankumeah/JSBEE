@@ -20,22 +20,16 @@ templ contactPage() {
 		</header>
 		<main class="mx-auto w-full max-w-3xl flex-1 px-4 py-10 sm:px-6">
 			<ul class="mt-8 space-y-4 border-y border-[#DDD5C2] py-6 text-sm">
-				<li class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
-					<span class="font-medium text-stone-500">Email</span>
-					<a href={ templ.SafeURL("mailto:" + provider.SupportEmail) } class="font-medium text-[#33523B] hover:underline">{ provider.SupportEmail }</a>
-				</li>
-				<li class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
-					<span class="font-medium text-stone-500">Instagram</span>
-					<a href={ templ.SafeURL(provider.InstagramLink) } target="_blank" rel="noopener" class="font-medium text-[#33523B] hover:underline">Instagram</a>
-				</li>
-				<li class="flex items-center justify-between gap-4 border-b border-stone-100 pb-3">
-					<span class="font-medium text-stone-500">X</span>
-					<a href={ templ.SafeURL(provider.XLink) } target="_blank" rel="noopener" class="font-medium text-[#33523B] hover:underline">X</a>
-				</li>
-				<li class="flex items-center justify-between gap-4">
-					<span class="font-medium text-stone-500">LinkedIn</span>
-					<a href={ templ.SafeURL(provider.LinkedInLink) } target="_blank" rel="noopener" class="font-medium text-[#33523B] hover:underline">LinkedIn</a>
-				</li>
+				for i, s := range orderedSocials() {
+					<li class={ "flex items-center justify-between gap-4", templ.KV("border-b border-stone-100 pb-3", i+1 < len(orderedSocials())) }>
+						<span class="font-medium text-stone-500">{ s.name }</span>
+						if s.isEmail {
+							<a href={ templ.SafeURL(s.url) } class="font-medium text-[#33523B] hover:underline">{ s.text }</a>
+						} else {
+							<a href={ templ.SafeURL(s.url) } target="_blank" rel="noopener" class="font-medium text-[#33523B] hover:underline">{ s.text }</a>
+						}
+					</li>
+				}
 			</ul>
 		</main>
 		@siteFooter(provider.SiteName)

@@ -43,8 +43,8 @@ const AboutSeedContent = "# Welcome to JSBEE\n" +
 	"\n" +
 	"Welcome to JSBEE.\n"
 
-const CityLeadEmail = "citylead@exmaple.com"
-const SupportEmail = "supportemail@exmaple.com"
-const InstagramLink = "instagram"
-const XLink = "x"
-const LinkedInLink = "linkedin"
+var Soicals = map[string][2]string{
+	"Email":     [2]string{"jsbee.research2@gmail.com", "jsbee.research2@gmail.com"},
+	"Instagram": [2]string{"jsbee.research", "https://www.instagram.com/jsbee.research"},
+	"LinkedIn":  [2]string{"Journal of Sustainable Business in Emerging Economies", "https://www.linkedin.com/company/journal-of-sustainable-business-in-emerging-economies"},
+}

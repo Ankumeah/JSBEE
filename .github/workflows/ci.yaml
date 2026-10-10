@@ -21,8 +21,7 @@ jobs:
           cache: true
           cache-dependency-path: "**/go.mod"
 
-      - name: Set CI env
-        run: echo 'CI=true' >> $GITHUB_ENV
-
       - name: Run ci
+        env:
+          CI: true
         run: ./.ci.sh -tags=sqlite,modernc,init

@@ -36,9 +36,9 @@ templ teamPage() {
 				<p class="mt-4 max-w-2xl leading-relaxed text-[#B9C2B2]">
 					The core members building JSBEE, and the city leaders representing it.
 				</p>
-				if provider.CityLeadEmail != "" {
+				if contactEmail() != "" {
 					<p class="mt-3 max-w-2xl leading-relaxed text-[#B9C2B2]">
-						Want to become a city leader? <a href={ templ.SafeURL("mailto:" + provider.CityLeadEmail) } class="font-medium text-[#F2F3EA] underline underline-offset-4 hover:text-white">Email us</a>
+						Want to become a city leader? <a href={ templ.SafeURL("mailto:" + contactEmail()) } class="font-medium text-[#F2F3EA] underline underline-offset-4 hover:text-white">Email us</a>
 					</p>
 				}
 			</div>
